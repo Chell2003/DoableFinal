@@ -1,0 +1,119 @@
+@model DoableFinal.ViewModels.CreateTaskViewModel
+
+@{
+    ViewData["Title"] = "Create Task";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">Create Task</h1>
+            <p class="text-muted">Create a new task and assign it to a project</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="CreateTask" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label"></label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DueDate" class="form-label"></label>
+                            <input asp-for="DueDate" class="form-control" />
+                            <span asp-validation-for="DueDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Status" class="form-label"></label>
+                                    <select asp-for="Status" class="form-select">
+                                        <option value="Not Started">Not Started</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="On Hold">On Hold</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                    <span asp-validation-for="Status" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Priority" class="form-label"></label>
+                                    <select asp-for="Priority" class="form-select">
+                                        <option value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                    </select>
+                                    <span asp-validation-for="Priority" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ProjectId" class="form-label"></label>
+                            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                                <option value="">-- Select Project --</option>
+                            </select>
+                            <span asp-validation-for="ProjectId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="AssignedToId" class="form-label"></label>
+                            <select asp-for="AssignedToId" asp-items="Model.Employees" class="form-select">
+                                <option value="">-- Select Employee --</option>
+                            </select>
+                            <span asp-validation-for="AssignedToId" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-square"></i> Create Task
+                            </button>
+                            <a asp-action="Tasks" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to List
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Information</h5>
+                    <p class="card-text">
+                        Creating a task will:
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle text-success"></i> Add task to project timeline</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Notify assigned employee</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Update project progress</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Enable task tracking</li>
+                    </ul>
+                    <p class="card-text">
+                        The assigned employee will receive a notification email about the new task.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+} 

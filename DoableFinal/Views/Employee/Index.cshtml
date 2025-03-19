@@ -1,0 +1,158 @@
+@{
+    ViewData["Title"] = "Employee Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">Employee Dashboard</h1>
+            <p class="text-muted">Task Overview and Project Status</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Task Statistics -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-list-task"></i>
+                </div>
+                <div class="stat-value">@ViewBag.TotalTasks</div>
+                <div class="stat-label">My Tasks</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-value">@ViewBag.CompletedTasks</div>
+                <div class="stat-label">Completed Tasks</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="stat-value">@ViewBag.OverdueTasks</div>
+                <div class="stat-label">Overdue Tasks</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <div class="stat-value">@ViewBag.ProjectCount</div>
+                <div class="stat-label">My Projects</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- My Tasks -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">My Tasks</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        @foreach (var task in ViewBag.MyTasks ?? new List<ProjectTask>())
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@task.Title</h6>
+                                    <small class="text-muted">Due: @task.DueDate.ToString("MMM dd, yyyy")</small>
+                                </div>
+                                <p class="mb-1">@task.Description</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-@(task.Status switch {
+                                            "Not Started" => "secondary",
+                                            "In Progress" => "primary",
+                                            "On Hold" => "warning",
+                                            "Completed" => "success",
+                                            _ => "secondary"
+                                        })">@task.Status</span>
+                                        <span class="badge bg-@(task.Priority switch {
+                                            "Low" => "info",
+                                            "Medium" => "warning",
+                                            "High" => "danger",
+                                            _ => "secondary"
+                                        })">@task.Priority</span>
+                                    </div>
+                                    <a href="@Url.Action("UpdateTaskStatus", "Employee", new { id = task.Id })" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        Update Status
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Projects -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">My Projects</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        @foreach (var project in ViewBag.MyProjects ?? new List<Project>())
+                        {
+                            <a href="@Url.Action("ProjectDetails", new { id = project.Id })" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@project.Name</h6>
+                                    <small class="text-muted">@project.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                </div>
+                                <p class="mb-1">@project.Description</p>
+                                <div>
+                                    <span class="badge bg-@(project.Status switch {
+                                        "Not Started" => "secondary",
+                                        "In Progress" => "primary",
+                                        "On Hold" => "warning",
+                                        "Completed" => "success",
+                                        _ => "secondary"
+                                    })">@project.Status</span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Recent Activity -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        @foreach (var activity in ViewBag.RecentActivity ?? new List<dynamic>())
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <div>
+                                        <h6 class="mb-1">@activity.Title</h6>
+                                        <p class="mb-1">@activity.Description</p>
+                                    </div>
+                                    <small class="text-muted">@activity.Timestamp.ToString("MMM dd, yyyy HH:mm")</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

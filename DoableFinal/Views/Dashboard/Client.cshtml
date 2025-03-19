@@ -1,0 +1,254 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_ClientLayout";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">Client Dashboard</h1>
+            <p class="text-muted">Welcome to your project management dashboard</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Statistics Cards -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Projects</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.ProjectCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-folder fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Tasks</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.TotalTasks</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-list-task fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Completed Tasks</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.CompletedTasks</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Overdue Tasks</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.OverdueTasks</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-exclamation-circle fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- My Projects -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="m-0 font-weight-bold text-primary">My Projects</h6>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.MyProjects != null && ViewBag.MyProjects.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Status</th>
+                                        <th>Progress</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var project in ViewBag.MyProjects)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@project.Id">
+                                                    @project.Name
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@(project.Status switch {
+                                                    "Not Started" => "secondary",
+                                                    "In Progress" => "primary",
+                                                    "On Hold" => "warning",
+                                                    "Completed" => "success",
+                                                    _ => "secondary"
+                                                })">@project.Status</span>
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var progress = ViewBag.ProjectProgress != null && ViewBag.ProjectProgress.ContainsKey(project.Id)
+                                                        ? ViewBag.ProjectProgress[project.Id]
+                                                        : 0;
+                                                }
+                                                <div class="progress">
+                                                    <div class="progress-bar" role="progressbar" style="width: @progress%"
+                                                         aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">
+                                                        @progress%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No projects found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Team -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="m-0 font-weight-bold text-primary">Project Team</h6>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.ProjectTeam != null && ViewBag.ProjectTeam.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Tasks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var member in ViewBag.ProjectTeam)
+                                    {
+                                        <tr>
+                                            <td>@member.FirstName @member.LastName</td>
+                                            <td>@member.Role</td>
+                                            <td>@(ViewBag.MemberTaskCounts != null && ViewBag.MemberTaskCounts.ContainsKey(member.Id) ? ViewBag.MemberTaskCounts[member.Id] : 0)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No team members found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Tasks</h6>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.ProjectTasks != null && ViewBag.ProjectTasks.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Project</th>
+                                        <th>Assigned To</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var task in ViewBag.ProjectTasks)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a asp-controller="Client" asp-action="TaskDetails" asp-route-id="@task.Id">
+                                                    @task.Title
+                                                </a>
+                                            </td>
+                                            <td>@task.Project.Name</td>
+                                            <td>@(task.AssignedTo != null ? $"{task.AssignedTo.FirstName} {task.AssignedTo.LastName}" : "Unassigned")</td>
+                                            <td>@task.DueDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                <span class="badge bg-@(task.Status switch {
+                                                    "Not Started" => "secondary",
+                                                    "In Progress" => "primary",
+                                                    "On Hold" => "warning",
+                                                    "Completed" => "success",
+                                                    _ => "secondary"
+                                                })">@task.Status</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@(task.Priority switch {
+                                                    "Low" => "success",
+                                                    "Medium" => "warning",
+                                                    "High" => "danger",
+                                                    _ => "secondary"
+                                                })">@task.Priority</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No tasks found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

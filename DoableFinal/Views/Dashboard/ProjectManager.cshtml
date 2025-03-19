@@ -1,0 +1,138 @@
+@{
+    ViewData["Title"] = "Project Manager Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">Project Manager Dashboard</h1>
+            <p class="text-muted">Project Overview and Team Management</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Project Statistics -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <div class="stat-value">@ViewBag.MyProjects</div>
+                <div class="stat-label">My Projects</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-list-task"></i>
+                </div>
+                <div class="stat-value">@ViewBag.MyTasks</div>
+                <div class="stat-label">My Tasks</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-value">@ViewBag.TeamMembers</div>
+                <div class="stat-label">Team Members</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="stat-value">@ViewBag.OverdueTasks</div>
+                <div class="stat-label">Overdue Tasks</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- My Projects -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">My Projects</h5>
+                    <a asp-controller="Projects" asp-action="Create" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg"></i> New Project
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        @foreach (var project in ViewBag.MyProjects ?? new List<Project>())
+                        {
+                            <a href="@Url.Action("Details", "Projects", new { id = project.Id })" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@project.Name</h6>
+                                    <small class="text-muted">@project.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                </div>
+                                <p class="mb-1">@project.Description</p>
+                                <small class="text-muted">Status: @project.Status</small>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Overview -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Team Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        @foreach (var member in ViewBag.TeamMembers ?? new List<ApplicationUser>())
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">@member.FirstName @member.LastName</h6>
+                                        <small class="text-muted">@member.Email</small>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-primary">@member.Role</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Tasks Overview -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Tasks Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        @foreach (var task in ViewBag.MyTasks ?? new List<ProjectTask>())
+                        {
+                            <a href="@Url.Action("Details", "Tasks", new { id = task.Id })" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@task.Title</h6>
+                                    <small class="text-muted">Due: @task.DueDate.ToString("MMM dd, yyyy")</small>
+                                </div>
+                                <p class="mb-1">@task.Description</p>
+                                <small class="text-muted">
+                                    Priority: @task.Priority | Status: @task.Status
+                                </small>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

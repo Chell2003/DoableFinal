@@ -1,0 +1,107 @@
+@model DoableFinal.Models.ProjectTask
+
+@{
+    ViewData["Title"] = "Task Details";
+    var dateFormat = "MMM dd, yyyy";
+    var dateTimeFormat = "MMM dd, yyyy HH:mm";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Task Details</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Tasks">Tasks</a></li>
+        <li class="breadcrumb-item active">Task Details</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-tasks me-1"></i>
+                        Task Information
+                    </div>
+                    <div>
+                        <a asp-controller="Admin" asp-action="EditTask" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i> Edit Task
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Title:</div>
+                        <div class="col-md-9">@Model.Title</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Description:</div>
+                        <div class="col-md-9">@Model.Description</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Project:</div>
+                        <div class="col-md-9">
+                            <a asp-controller="Admin" asp-action="ProjectDetails" asp-route-id="@Model.ProjectId">@Model.Project.Name</a>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Assigned To:</div>
+                        <div class="col-md-9">@($"{Model.AssignedTo.FirstName} {Model.AssignedTo.LastName}")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Status:</div>
+                        <div class="col-md-9">
+                            <span class="badge bg-@(Model.Status switch {
+                                "Not Started" => "secondary",
+                                "In Progress" => "primary",
+                                "On Hold" => "warning",
+                                "Completed" => "success",
+                                _ => "secondary"
+                            })">@Model.Status</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Priority:</div>
+                        <div class="col-md-9">
+                            <span class="badge bg-@(Model.Priority switch {
+                                "Low" => "info",
+                                "Medium" => "warning",
+                                "High" => "danger",
+                                _ => "secondary"
+                            })">@Model.Priority</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Start Date:</div>
+                        <div class="col-md-9">@Model.StartDate.ToString(dateFormat)</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Due Date:</div>
+                        <div class="col-md-9">
+                            <span class="@(Model.DueDate < DateTime.Now && Model.Status != "Completed" ? "text-danger" : "")">
+                                @Model.DueDate.ToString(dateFormat)
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Created:</div>
+                        <div class="col-md-9">@Model.CreatedAt.ToString(dateTimeFormat)</div>
+                    </div>
+                    @if (Model.UpdatedAt.HasValue)
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-3 fw-bold">Last Updated:</div>
+                            <div class="col-md-9">@Model.UpdatedAt.Value.ToString(dateTimeFormat)</div>
+                        </div>
+                    }
+                    @if (Model.CompletedAt.HasValue)
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-3 fw-bold">Completed:</div>
+                            <div class="col-md-9">@Model.CompletedAt.Value.ToString(dateTimeFormat)</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

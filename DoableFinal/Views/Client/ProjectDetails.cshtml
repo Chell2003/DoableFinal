@@ -1,0 +1,284 @@
+@model DoableFinal.Models.Project
+
+@{
+    ViewData["Title"] = "Project Details";
+    Layout = "_ClientLayout";
+    var dateFormat = "MMM dd, yyyy";
+    var dateTimeFormat = "MMM dd, yyyy HH:mm";
+}
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.css" rel="stylesheet">
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Project Details</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Projects">My Projects</a></li>
+        <li class="breadcrumb-item active">Project Details</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-project-diagram me-1"></i>
+                    Project Information
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Name:</div>
+                        <div class="col-md-9">@Model.Name</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Description:</div>
+                        <div class="col-md-9">@Model.Description</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Project Manager:</div>
+                        <div class="col-md-9">@($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Status:</div>
+                        <div class="col-md-9">
+                            <span class="badge bg-@(Model.Status switch {
+                                "Not Started" => "secondary",
+                                "In Progress" => "primary",
+                                "On Hold" => "warning",
+                                "Completed" => "success",
+                                _ => "secondary"
+                            })">@Model.Status</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Start Date:</div>
+                        <div class="col-md-9">@Model.StartDate.ToString(dateFormat)</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">End Date:</div>
+                        <div class="col-md-9">
+                            @if (Model.EndDate.HasValue)
+                            {
+                                <span class="@(Model.EndDate.Value < DateTime.Now && Model.Status != "Completed" ? "text-danger" : "")">
+                                    @Model.EndDate.Value.ToString(dateFormat)
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not set</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Created:</div>
+                        <div class="col-md-9">@Model.CreatedAt.ToString(dateTimeFormat)</div>
+                    </div>
+                    @if (Model.UpdatedAt.HasValue)
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-3 fw-bold">Last Updated:</div>
+                            <div class="col-md-9">@Model.UpdatedAt.Value.ToString(dateTimeFormat)</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Gantt Chart -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Project Timeline
+                </div>
+                <div class="card-body">
+                    <div id="ganttChart"></div>
+                </div>
+            </div>
+
+            <!-- Project Team -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    Project Team
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.ProjectTeam != null && ViewBag.ProjectTeam.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Tasks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var member in ViewBag.ProjectTeam)
+                                    {
+                                        <tr>
+                                            <td>@member.FirstName @member.LastName</td>
+                                            <td>@member.Role</td>
+                                            <td>@(ViewBag.MemberTaskCounts != null && ViewBag.MemberTaskCounts.ContainsKey(member.Id) ? ViewBag.MemberTaskCounts[member.Id] : 0)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No team members found.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Project Tasks -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-tasks me-1"></i>
+                    Project Tasks
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Assigned To</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var task in Model.Tasks ?? Enumerable.Empty<DoableFinal.Models.ProjectTask>())
+                                {
+                                    <tr>
+                                        <td>@(task.Title ?? "N/A")</td>
+                                        <td>@(task.AssignedTo != null ? $"{task.AssignedTo.FirstName} {task.AssignedTo.LastName}" : "Unassigned")</td>
+                                        <td>
+                                            <span class="@(task.DueDate < DateTime.Now && task.Status != "Completed" ? "text-danger" : "")">
+                                                @task.DueDate.ToString(dateFormat)
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@(task.Status switch {
+                                                "Not Started" => "secondary",
+                                                "In Progress" => "primary",
+                                                "On Hold" => "warning",
+                                                "Completed" => "success",
+                                                _ => "secondary"
+                                            })">@(task.Status ?? "Not Set")</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@(task.Priority switch {
+                                                "Low" => "info",
+                                                "Medium" => "warning",
+                                                "High" => "danger",
+                                                _ => "secondary"
+                                            })">@(task.Priority ?? "Not Set")</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var tasks = @Html.Raw(Json.Serialize(Model.Tasks?.Select(t => new {
+                id = t.Id,
+                name = t.Title ?? "Untitled Task",
+                start = t.StartDate.ToString("yyyy-MM-dd"),
+                end = t.DueDate.ToString("yyyy-MM-dd"),
+                status = t.Status ?? "Not Set",
+                assignee = t.AssignedTo != null ? $"{t.AssignedTo.FirstName} {t.AssignedTo.LastName}" : "Unassigned"
+            }) ?? Enumerable.Empty<object>()));
+
+            var options = {
+                series: [{
+                    data: tasks.map(function(task) {
+                        return {
+                            x: task.name,
+                            y: [
+                                new Date(task.start).getTime(),
+                                new Date(task.end).getTime()
+                            ],
+                            fillColor: task.status === 'Completed' ? '#198754' :
+                                     task.status === 'In Progress' ? '#0d6efd' :
+                                     task.status === 'On Hold' ? '#ffc107' : '#6c757d',
+                            assignee: task.assignee,
+                            status: task.status
+                        }
+                    })
+                }],
+                chart: {
+                    height: Math.max(350, tasks.length * 50),
+                    type: 'rangeBar',
+                    toolbar: {
+                        show: true,
+                        tools: {
+                            download: true,
+                            selection: true,
+                            zoom: true,
+                            zoomin: true,
+                            zoomout: true,
+                            pan: true,
+                        }
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        distributed: true,
+                        dataLabels: {
+                            hideOverflowingLabels: false
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        var task = tasks[opts.dataPointIndex];
+                        return task.assignee + ' - ' + task.status;
+                    }
+                },
+                xaxis: {
+                    type: 'datetime'
+                },
+                yaxis: {
+                    show: true
+                },
+                grid: {
+                    row: {
+                        colors: ['#f3f4f5', '#fff'],
+                        opacity: 1
+                    }
+                },
+                tooltip: {
+                    custom: function({series, seriesIndex, dataPointIndex, w}) {
+                        var task = tasks[dataPointIndex];
+                        return '<div class="p-2">' +
+                               '<div><strong>' + task.name + '</strong></div>' +
+                               '<div>Start: ' + task.start + '</div>' +
+                               '<div>End: ' + task.end + '</div>' +
+                               '<div>Status: ' + task.status + '</div>' +
+                               '<div>Assignee: ' + task.assignee + '</div>' +
+                               '</div>';
+                    }
+                }
+            };
+
+            var chart = new ApexCharts(document.querySelector("#ganttChart"), options);
+            chart.render();
+        });
+    </script>
+} 

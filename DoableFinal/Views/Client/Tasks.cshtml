@@ -1,0 +1,93 @@
+@model IEnumerable<DoableFinal.Models.ProjectTask>
+
+@{
+    ViewData["Title"] = ViewBag.ProjectName != null ? $"Tasks - {ViewBag.ProjectName}" : "All Tasks";
+    var dateFormat = "MMM dd, yyyy";
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-4">@(ViewBag.ProjectName != null ? $"Tasks for {ViewBag.ProjectName}" : "All Tasks")</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Index">Dashboard</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Projects">Projects</a></li>
+                @if (ViewBag.ProjectName != null)
+                {
+                    <li class="breadcrumb-item">
+                        <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@ViewBag.ProjectId">
+                            @ViewBag.ProjectName
+                        </a>
+                    </li>
+                }
+                <li class="breadcrumb-item active">Tasks</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-tasks me-1"></i>
+            @(ViewBag.ProjectName != null ? $"{ViewBag.ProjectName} Tasks" : "All Tasks")
+        </div>
+        <div class="card-body">
+            @if (!Model.Any())
+            {
+                <p class="text-muted">No tasks found.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Project</th>
+                                <th>Assigned To</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var task in Model)
+                            {
+                                <tr>
+                                    <td>@task.Title</td>
+                                    <td>
+                                        <a asp-action="ProjectDetails" asp-route-id="@task.ProjectId">
+                                            @task.Project.Name
+                                        </a>
+                                    </td>
+                                    <td>@($"{task.AssignedTo?.FirstName} {task.AssignedTo?.LastName}")</td>
+                                    <td>
+                                        <span class="@(task.DueDate < DateTime.Now && task.Status != "Completed" ? "text-danger" : "")">
+                                            @task.DueDate.ToString(dateFormat)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-@(task.Status switch {
+                                            "Not Started" => "secondary",
+                                            "In Progress" => "primary",
+                                            "On Hold" => "warning",
+                                            "Completed" => "success",
+                                            _ => "secondary"
+                                        })">@task.Status</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-@(task.Priority switch {
+                                            "Low" => "info",
+                                            "Medium" => "warning",
+                                            "High" => "danger",
+                                            _ => "secondary"
+                                        })">@task.Priority</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div> 

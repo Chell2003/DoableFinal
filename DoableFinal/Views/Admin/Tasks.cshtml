@@ -1,0 +1,117 @@
+@model IEnumerable<DoableFinal.Models.ProjectTask>
+
+@{
+    ViewData["Title"] = "Tasks";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3">Tasks</h1>
+                    <p class="text-muted">Manage all tasks in the system</p>
+                </div>
+                <a asp-action="CreateTask" class="btn btn-primary">
+                    <i class="bi bi-plus-square"></i> Create Task
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Project</th>
+                            <th>Assigned To</th>
+                            <th>Start Date</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var task in Model)
+                        {
+                            <tr>
+                                <td>@task.Title</td>
+                                <td>@task.Project.Name</td>
+                                <td>@($"{task.AssignedTo.FirstName} {task.AssignedTo.LastName}")</td>
+                                <td>@task.StartDate.ToString("MMM dd, yyyy")</td>
+                                <td>@task.DueDate.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <span class="badge bg-@(task.Status switch {
+                                        "Not Started" => "secondary",
+                                        "In Progress" => "primary",
+                                        "On Hold" => "warning",
+                                        "Completed" => "success",
+                                        _ => "secondary"
+                                    })">@task.Status</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@(task.Priority switch {
+                                        "Low" => "info",
+                                        "Medium" => "warning",
+                                        "High" => "danger",
+                                        _ => "secondary"
+                                    })">@task.Priority</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-controller="Admin" asp-action="EditTask" asp-route-id="@task.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-controller="Admin" asp-action="TaskDetails" asp-route-id="@task.Id" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-info-circle"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                onclick="showDeleteModal(@task.Id, '@task.Title')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the task "<span id="taskTitle"></span>"?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showDeleteModal(taskId, taskTitle) {
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            document.getElementById('taskTitle').textContent = taskTitle;
+            document.getElementById('deleteForm').action = `/Admin/DeleteTask/${taskId}`;
+            modal.show();
+        }
+    </script>
+} 

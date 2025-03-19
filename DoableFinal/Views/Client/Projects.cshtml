@@ -1,0 +1,99 @@
+@model IEnumerable<DoableFinal.Models.Project>
+
+@{
+    ViewData["Title"] = "My Projects";
+    Layout = "_ClientLayout";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">My Projects</h1>
+            <p class="text-muted">View and manage your projects</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    @if (Model != null && Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Project Manager</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Status</th>
+                                        <th>Progress</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var project in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a asp-action="ProjectDetails" asp-route-id="@project.Id">
+                                                    @project.Name
+                                                </a>
+                                            </td>
+                                            <td>@(project.Description?.Length > 50 ? project.Description.Substring(0, 47) + "..." : project.Description)</td>
+                                            <td>@($"{project.ProjectManager?.FirstName} {project.ProjectManager?.LastName}")</td>
+                                            <td>@project.StartDate.ToShortDateString()</td>
+                                            <td>@(project.EndDate?.ToShortDateString() ?? "Not set")</td>
+                                            <td>
+                                                <span class="badge bg-@(project.Status switch {
+                                                    "Not Started" => "secondary",
+                                                    "In Progress" => "primary",
+                                                    "On Hold" => "warning",
+                                                    "Completed" => "success",
+                                                    _ => "secondary"
+                                                })">@project.Status</span>
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var progress = ViewBag.ProjectProgress != null && ViewBag.ProjectProgress.ContainsKey(project.Id)
+                                                        ? ViewBag.ProjectProgress[project.Id]
+                                                        : 0;
+                                                }
+                                                <div class="progress">
+                                                    <div class="progress-bar" role="progressbar" style="width: @progress%"
+                                                         aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">
+                                                        @progress%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small class="text-muted">Started: @project.StartDate.ToString("MMM dd, yyyy")</small>
+                                                    <div>
+                                                        <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@project.Id" 
+                                                           class="btn btn-sm btn-outline-primary me-2">View Details</a>
+                                                        <a asp-controller="Client" asp-action="Tasks" asp-route-projectId="@project.Id" 
+                                                           class="btn btn-sm btn-outline-info">View Tasks</a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-folder-x display-4 text-muted"></i>
+                            <p class="text-muted mt-3">No projects found.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

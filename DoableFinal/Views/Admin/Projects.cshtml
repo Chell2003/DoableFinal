@@ -1,0 +1,117 @@
+@model IEnumerable<DoableFinal.Models.Project>
+
+@{
+    ViewData["Title"] = "Projects";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3">Projects</h1>
+                    <p class="text-muted">Manage all projects in the system</p>
+                </div>
+                <a asp-action="CreateProject" class="btn btn-primary">
+                    <i class="bi bi-folder-plus"></i> Create Project
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Client</th>
+                            <th>Project Manager</th>
+                            <th>Start Date</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var project in Model)
+                        {
+                            <tr>
+                                <td>@project.Name</td>
+                                <td>@($"{project.Client.FirstName} {project.Client.LastName}")</td>
+                                <td>@($"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}")</td>
+                                <td>@project.StartDate.ToString("MMM dd, yyyy")</td>
+                                <td>@(project.EndDate?.ToString("MMM dd, yyyy") ?? "-")</td>
+                                <td>
+                                    <span class="badge bg-@(project.Status switch {
+                                        "Not Started" => "secondary",
+                                        "In Progress" => "primary",
+                                        "On Hold" => "warning",
+                                        "Completed" => "success",
+                                        _ => "secondary"
+                                    })">@project.Status</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@(project.Priority switch {
+                                        "Low" => "info",
+                                        "Medium" => "warning",
+                                        "High" => "danger",
+                                        _ => "secondary"
+                                    })">@project.Priority</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="EditProject" asp-route-id="@project.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="ProjectDetails" asp-route-id="@project.Id" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-info-circle"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                onclick="showDeleteModal(@project.Id, '@project.Name')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the project "<span id="projectName"></span>"?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showDeleteModal(projectId, projectName) {
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            document.getElementById('projectName').textContent = projectName;
+            document.getElementById('deleteForm').action = `/Admin/DeleteProject/${projectId}`;
+            modal.show();
+        }
+    </script>
+} 

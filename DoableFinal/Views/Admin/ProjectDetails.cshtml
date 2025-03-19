@@ -1,0 +1,185 @@
+@model DoableFinal.Models.Project
+
+@{
+    ViewData["Title"] = "Project Details";
+    var dateFormat = "MMM dd, yyyy";
+    var dateTimeFormat = "MMM dd, yyyy HH:mm";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Project Details</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Projects">Projects</a></li>
+        <li class="breadcrumb-item active">Project Details</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-project-diagram me-1"></i>
+                        Project Information
+                    </div>
+                    <div>
+                        <a asp-action="EditProject" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i> Edit Project
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Name:</div>
+                        <div class="col-md-9">@Model.Name</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Description:</div>
+                        <div class="col-md-9">@Model.Description</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Client:</div>
+                        <div class="col-md-9">@($"{Model.Client.FirstName} {Model.Client.LastName}")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Project Manager:</div>
+                        <div class="col-md-9">@($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Status:</div>
+                        <div class="col-md-9">
+                            <span class="badge bg-@(Model.Status switch {
+                                "Not Started" => "secondary",
+                                "In Progress" => "primary",
+                                "On Hold" => "warning",
+                                "Completed" => "success",
+                                _ => "secondary"
+                            })">@Model.Status</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Start Date:</div>
+                        <div class="col-md-9">@Model.StartDate.ToString(dateFormat)</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">End Date:</div>
+                        <div class="col-md-9">
+                            @if (Model.EndDate.HasValue)
+                            {
+                                <span class="@(Model.EndDate.Value < DateTime.Now && Model.Status != "Completed" ? "text-danger" : "")">
+                                    @Model.EndDate.Value.ToString(dateFormat)
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not set</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Created:</div>
+                        <div class="col-md-9">@Model.CreatedAt.ToString(dateTimeFormat)</div>
+                    </div>
+                    @if (Model.UpdatedAt.HasValue)
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-3 fw-bold">Last Updated:</div>
+                            <div class="col-md-9">@Model.UpdatedAt.Value.ToString(dateTimeFormat)</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Project Team -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    Project Team
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Joined Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var member in Model.ProjectTeams)
+                                {
+                                    <tr>
+                                        <td>@($"{member.User.FirstName} {member.User.LastName}")</td>
+                                        <td>@member.Role</td>
+                                        <td>@member.JoinedAt.ToString(dateFormat)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Tasks -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-tasks me-1"></i>
+                    Project Tasks
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Assigned To</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var task in Model.Tasks)
+                                {
+                                    <tr>
+                                        <td>@task.Title</td>
+                                        <td>@($"{task.AssignedTo.FirstName} {task.AssignedTo.LastName}")</td>
+                                        <td>
+                                            <span class="@(task.DueDate < DateTime.Now && task.Status != "Completed" ? "text-danger" : "")">
+                                                @task.DueDate.ToString(dateFormat)
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@(task.Status switch {
+                                                "Not Started" => "secondary",
+                                                "In Progress" => "primary",
+                                                "On Hold" => "warning",
+                                                "Completed" => "success",
+                                                _ => "secondary"
+                                            })">@task.Status</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@(task.Priority switch {
+                                                "Low" => "info",
+                                                "Medium" => "warning",
+                                                "High" => "danger",
+                                                _ => "secondary"
+                                            })">@task.Priority</span>
+                                        </td>
+                                        <td>
+                                            <a asp-controller="Admin" asp-action="TaskDetails" asp-route-id="@task.Id" class="btn btn-sm btn-outline-primary">
+                                                View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
