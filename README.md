@@ -23,3 +23,18 @@ cd DoableFinal
 ```
 ### 2️⃣ **Restore Dependencies
 Run the following command to restore NuGet packages:
+```sh
+dotnet restore
+```
+###3️⃣ **Set Up the Database
+This project uses Entity Framework Core and LocalDB.
+✅ Apply Migrations
+Run the following command to create the database:
+```sh
+dotnet ef database update
+```
+⚠️ Note: Ensure you have the EF Core tools installed. If not, install them using:
+```sh
+dotnet tool install --global dotnet-ef
+```
+▶️ Running the Application
