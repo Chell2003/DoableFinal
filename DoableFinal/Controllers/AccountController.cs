@@ -35,7 +35,7 @@ namespace DoableFinal.Controllers
                     Email = model.Email,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
-                    Role = "Employee",
+                    Role = "Client",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -44,7 +44,7 @@ namespace DoableFinal.Controllers
 
                 if (result.Succeeded)
                 {
-                    await _userManager.AddToRoleAsync(user, "Admin");
+                    await _userManager.AddToRoleAsync(user, "Client");
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToAction("Index", "Dashboard");
                 }
