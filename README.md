@@ -106,7 +106,7 @@ dotnet build
 ---
 
 ## 👨‍💻 Contributors
-- **Your Name** - [GitHub](https://github.com/Chell2003)
+- **Chell2003** - [GitHub](https://github.com/Chell2003)
 
 ---
 
