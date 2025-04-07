@@ -6,6 +6,8 @@
     var dateTimeFormat = "MMM dd, yyyy HH:mm";
 }
 
+
+
 <div class="container-fluid px-4">
     <h1 class="mt-4">Project Details</h1>
     <ol class="breadcrumb mb-4">
@@ -87,6 +89,17 @@
                             <div class="col-md-9">@Model.UpdatedAt.Value.ToString(dateTimeFormat)</div>
                         </div>
                     }
+                </div>
+            </div>
+
+            <!-- Gantt Chart -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Project Timeline
+                </div>
+                <div class="card-body">
+                    <div id="ganttChart"></div>
                 </div>
             </div>
 
@@ -182,4 +195,97 @@
             </div>
         </div>
     </div>
-</div> 
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var tasks = @Html.Raw(Json.Serialize(Model.Tasks?.Select(t => new {
+                id = t.Id,
+                name = t.Title ?? "Untitled Task",
+                start = t.StartDate.ToString("yyyy-MM-dd"),
+                end = t.DueDate.ToString("yyyy-MM-dd"),
+                status = t.Status ?? "Not Set",
+                assignee = t.AssignedTo != null ? $"{t.AssignedTo.FirstName} {t.AssignedTo.LastName}" : "Unassigned"
+            }) ?? Enumerable.Empty<object>()));
+
+            var options = {
+                series: [{
+                    data: tasks.map(function(task) {
+                        return {
+                            x: task.name,
+                            y: [
+                                new Date(task.start).getTime(),
+                                new Date(task.end).getTime()
+                            ],
+                            fillColor: task.status === 'Completed' ? '#198754' :
+                                     task.status === 'In Progress' ? '#0d6efd' :
+                                     task.status === 'On Hold' ? '#ffc107' : '#6c757d',
+                            assignee: task.assignee,
+                            status: task.status
+                        }
+                    })
+                }],
+                chart: {
+                    height: Math.max(350, tasks.length * 50),
+                    type: 'rangeBar',
+                    toolbar: {
+                        show: true,
+                        tools: {
+                            download: true,
+                            selection: true,
+                            zoom: true,
+                            zoomin: true,
+                            zoomout: true,
+                            pan: true,
+                        }
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        distributed: true,
+                        dataLabels: {
+                            hideOverflowingLabels: false
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        var task = tasks[opts.dataPointIndex];
+                        return task.assignee + ' - ' + task.status;
+                    }
+                },
+                xaxis: {
+                    type: 'datetime'
+                },
+                yaxis: {
+                    show: true
+                },
+                grid: {
+                    row: {
+                        colors: ['#f3f4f5', '#fff'],
+                        opacity: 1
+                    }
+                },
+                tooltip: {
+                    custom: function({series, seriesIndex, dataPointIndex, w}) {
+                        var task = tasks[dataPointIndex];
+                        return '<div class="p-2">' +
+                               '<div><strong>' + task.name + '</strong></div>' +
+                               '<div>Start: ' + task.start + '</div>' +
+                               '<div>End: ' + task.end + '</div>' +
+                               '<div>Status: ' + task.status + '</div>' +
+                               '<div>Assignee: ' + task.assignee + '</div>' +
+                               '</div>';
+                    }
+                }
+            };
+
+            var chart = new ApexCharts(document.querySelector("#ganttChart"), options);
+            chart.render();
+        });
+    </script>
+} 
