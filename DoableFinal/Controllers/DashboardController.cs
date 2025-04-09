@@ -38,10 +38,11 @@ namespace DoableFinal.Controllers
                     .Take(5)
                     .ToListAsync();
 
-                // Get recent tasks
+                // Get recent tasks with their assignments
                 ViewBag.RecentTasks = await _context.Tasks
                     .Include(t => t.Project)
-                    .Include(t => t.AssignedTo)
+                    .Include(t => t.TaskAssignments)
+                        .ThenInclude(ta => ta.Employee)
                     .OrderByDescending(t => t.CreatedAt)
                     .Take(5)
                     .ToListAsync();
@@ -60,17 +61,23 @@ namespace DoableFinal.Controllers
                 ViewBag.MyProjects = await _context.Projects
                     .Where(p => p.ProjectManagerId == currentUser.Id)
                     .CountAsync();
-                ViewBag.MyTasks = await _context.Tasks
-                    .Where(t => t.AssignedToId == currentUser.Id)
+
+                // Count tasks assigned to the current user
+                ViewBag.MyTasks = await _context.TaskAssignments
+                    .Where(ta => ta.EmployeeId == currentUser.Id)
                     .CountAsync();
+
                 ViewBag.TeamMembers = await _context.ProjectTeams
                     .Where(pt => pt.Project.ProjectManagerId == currentUser.Id)
                     .Select(pt => pt.UserId)
                     .Distinct()
                     .CountAsync();
+
+                // Get overdue tasks that are either assigned to the current user or belong to projects managed by the current user
                 ViewBag.OverdueTasks = await _context.Tasks
-                    .Where(t => t.DueDate < DateTime.UtcNow && t.Status != "Completed" && 
-                               (t.AssignedToId == currentUser.Id || 
+                    .Where(t => t.DueDate < DateTime.UtcNow &&
+                               t.Status != "Completed" &&
+                               (t.TaskAssignments.Any(ta => ta.EmployeeId == currentUser.Id) ||
                                 t.Project.ProjectManagerId == currentUser.Id))
                     .CountAsync();
 
@@ -92,11 +99,12 @@ namespace DoableFinal.Controllers
                     .Take(5)
                     .ToListAsync();
 
-                // Get my tasks
+                // Get tasks assigned to the current user or in projects managed by the current user
                 ViewBag.MyTasks = await _context.Tasks
                     .Include(t => t.Project)
-                    .Include(t => t.AssignedTo)
-                    .Where(t => t.AssignedToId == currentUser.Id || 
+                    .Include(t => t.TaskAssignments)
+                        .ThenInclude(ta => ta.Employee)
+                    .Where(t => t.TaskAssignments.Any(ta => ta.EmployeeId == currentUser.Id) ||
                                t.Project.ProjectManagerId == currentUser.Id)
                     .OrderByDescending(t => t.CreatedAt)
                     .Take(5)
@@ -117,7 +125,8 @@ namespace DoableFinal.Controllers
                     .Where(t => t.Project.ClientId == currentUser.Id && t.Status == "Completed")
                     .CountAsync();
                 ViewBag.OverdueTasks = await _context.Tasks
-                    .Where(t => t.DueDate < DateTime.UtcNow && t.Status != "Completed" && 
+                    .Where(t => t.DueDate < DateTime.UtcNow &&
+                               t.Status != "Completed" &&
                                t.Project.ClientId == currentUser.Id)
                     .CountAsync();
 
@@ -139,10 +148,11 @@ namespace DoableFinal.Controllers
                     .Take(5)
                     .ToListAsync();
 
-                // Get project tasks
+                // Get project tasks with their assignments
                 ViewBag.ProjectTasks = await _context.Tasks
                     .Include(t => t.Project)
-                    .Include(t => t.AssignedTo)
+                    .Include(t => t.TaskAssignments)
+                        .ThenInclude(ta => ta.Employee)
                     .Where(t => t.Project.ClientId == currentUser.Id)
                     .OrderByDescending(t => t.CreatedAt)
                     .Take(5)
@@ -152,4 +162,4 @@ namespace DoableFinal.Controllers
             }
         }
     }
-} 
+}

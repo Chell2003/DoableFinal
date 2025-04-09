@@ -30,17 +30,33 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            // Get task statistics
-            ViewBag.TotalTasks = await _context.Tasks
-                .Where(t => t.AssignedToId == user.Id)
+            // Get task statistics using TaskAssignments
+            ViewBag.TotalTasks = await _context.TaskAssignments
+                .Where(ta => ta.EmployeeId == user.Id)
+                .Select(ta => ta.ProjectTaskId)
+                .Distinct()
                 .CountAsync();
 
-            ViewBag.CompletedTasks = await _context.Tasks
-                .Where(t => t.AssignedToId == user.Id && t.Status == "Completed")
+            ViewBag.CompletedTasks = await _context.TaskAssignments
+                .Where(ta => ta.EmployeeId == user.Id)
+                .Join(_context.Tasks,
+                      ta => ta.ProjectTaskId,
+                      t => t.Id,
+                      (ta, t) => new { Task = t })
+                .Where(x => x.Task.Status == "Completed")
+                .Select(x => x.Task.Id)
+                .Distinct()
                 .CountAsync();
 
-            ViewBag.OverdueTasks = await _context.Tasks
-                .Where(t => t.AssignedToId == user.Id && t.Status != "Completed" && t.DueDate < DateTime.UtcNow)
+            ViewBag.OverdueTasks = await _context.TaskAssignments
+                .Where(ta => ta.EmployeeId == user.Id)
+                .Join(_context.Tasks,
+                      ta => ta.ProjectTaskId,
+                      t => t.Id,
+                      (ta, t) => new { Task = t })
+                .Where(x => x.Task.Status != "Completed" && x.Task.DueDate < DateTime.UtcNow)
+                .Select(x => x.Task.Id)
+                .Distinct()
                 .CountAsync();
 
             // Get project count
@@ -49,9 +65,12 @@ namespace DoableFinal.Controllers
                 .CountAsync();
 
             // Get assigned tasks
-            ViewBag.MyTasks = await _context.Tasks
-                .Include(t => t.Project)
-                .Where(t => t.AssignedToId == user.Id)
+            ViewBag.MyTasks = await _context.TaskAssignments
+                .Where(ta => ta.EmployeeId == user.Id)
+                .Include(ta => ta.ProjectTask)
+                    .ThenInclude(pt => pt.Project)
+                .Select(ta => ta.ProjectTask)
+                .Distinct()
                 .OrderByDescending(t => t.CreatedAt)
                 .Take(5)
                 .ToListAsync();
@@ -67,11 +86,14 @@ namespace DoableFinal.Controllers
 
             // Get recent activity
             var recentActivity = new List<dynamic>();
-            
+
             // Add recent task updates
-            var recentTasks = await _context.Tasks
-                .Include(t => t.Project)
-                .Where(t => t.AssignedToId == user.Id)
+            var recentTasks = await _context.TaskAssignments
+                .Where(ta => ta.EmployeeId == user.Id)
+                .Include(ta => ta.ProjectTask)
+                    .ThenInclude(pt => pt.Project)
+                .Select(ta => ta.ProjectTask)
+                .Distinct()
                 .OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt)
                 .Take(5)
                 .ToListAsync();
@@ -114,6 +136,7 @@ namespace DoableFinal.Controllers
             return View();
         }
 
+        // Profile method remains the same
         public async Task<IActionResult> Profile()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -168,6 +191,7 @@ namespace DoableFinal.Controllers
             return View(model);
         }
 
+        // Projects method remains the same
         public async Task<IActionResult> Projects()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -186,6 +210,7 @@ namespace DoableFinal.Controllers
             return View(projects);
         }
 
+        // Update Tasks method to use TaskAssignments
         public async Task<IActionResult> Tasks()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -194,9 +219,12 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            var tasks = await _context.Tasks
-                .Include(t => t.Project)
-                .Where(t => t.AssignedToId == user.Id)
+            var tasks = await _context.TaskAssignments
+                .Where(ta => ta.EmployeeId == user.Id)
+                .Include(ta => ta.ProjectTask)
+                    .ThenInclude(pt => pt.Project)
+                .Select(ta => ta.ProjectTask)
+                .Distinct()
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
@@ -212,9 +240,18 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
+            // Check if user is assigned to this task
+            var isUserAssigned = await _context.TaskAssignments
+                .AnyAsync(ta => ta.ProjectTaskId == id && ta.EmployeeId == user.Id);
+
+            if (!isUserAssigned)
+            {
+                return NotFound();
+            }
+
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.Id == id && t.AssignedToId == user.Id);
+                .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
             {
@@ -245,8 +282,17 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
+            // Check if user is assigned to this task
+            var isUserAssigned = await _context.TaskAssignments
+                .AnyAsync(ta => ta.ProjectTaskId == id && ta.EmployeeId == user.Id);
+
+            if (!isUserAssigned)
+            {
+                return NotFound();
+            }
+
             var task = await _context.Tasks
-                .FirstOrDefaultAsync(t => t.Id == id && t.AssignedToId == user.Id);
+                .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
             {
@@ -281,8 +327,17 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
+            // Check if user is assigned to this task
+            var isUserAssigned = await _context.TaskAssignments
+                .AnyAsync(ta => ta.ProjectTaskId == id && ta.EmployeeId == user.Id);
+
+            if (!isUserAssigned)
+            {
+                return NotFound();
+            }
+
             var task = await _context.Tasks
-                .FirstOrDefaultAsync(t => t.Id == id && t.AssignedToId == user.Id);
+                .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
             {
@@ -309,7 +364,8 @@ namespace DoableFinal.Controllers
                 .Include(p => p.ProjectTeams)
                     .ThenInclude(pt => pt.User)
                 .Include(p => p.Tasks)
-                    .ThenInclude(t => t.AssignedTo)
+                    .ThenInclude(t => t.TaskAssignments)
+                        .ThenInclude(ta => ta.Employee)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (project == null)
@@ -334,7 +390,8 @@ namespace DoableFinal.Controllers
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.AssignedTo)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
                 .Include(t => t.CreatedBy)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
@@ -345,7 +402,9 @@ namespace DoableFinal.Controllers
 
             // Check if the current user is assigned to this task
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (task.AssignedToId != userId)
+            var isUserAssigned = task.TaskAssignments.Any(ta => ta.EmployeeId == userId);
+
+            if (!isUserAssigned)
             {
                 return Forbid();
             }
@@ -353,4 +412,4 @@ namespace DoableFinal.Controllers
             return View(task);
         }
     }
-} 
+}

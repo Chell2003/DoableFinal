@@ -39,8 +39,8 @@ namespace DoableFinal.Controllers
                 .CountAsync();
 
             ViewBag.OverdueTasks = await _context.Tasks
-                .Where(t => t.Project.ClientId == currentUser.Id && 
-                           t.DueDate < DateTime.UtcNow && 
+                .Where(t => t.Project.ClientId == currentUser.Id &&
+                           t.DueDate < DateTime.UtcNow &&
                            t.Status != "Completed")
                 .CountAsync();
 
@@ -67,10 +67,11 @@ namespace DoableFinal.Controllers
             // Get member task counts
             ViewBag.MemberTaskCounts = await GetMemberTaskCounts(ViewBag.ProjectTeam);
 
-            // Get recent tasks
+            // Get recent tasks with their assignments
             ViewBag.ProjectTasks = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.AssignedTo)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
                 .Where(t => t.Project.ClientId == currentUser.Id)
                 .OrderByDescending(t => t.CreatedAt)
                 .Take(5)
@@ -120,9 +121,10 @@ namespace DoableFinal.Controllers
             // Get member task counts
             ViewBag.MemberTaskCounts = await GetMemberTaskCounts(ViewBag.ProjectTeam);
 
-            // Get recent tasks
+            // Get recent tasks with their assignments
             ViewBag.RecentTasks = await _context.Tasks
-                .Include(t => t.AssignedTo)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
                 .Where(t => t.ProjectId == id)
                 .OrderByDescending(t => t.CreatedAt)
                 .Take(5)
@@ -226,7 +228,8 @@ namespace DoableFinal.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var query = _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.AssignedTo)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
                 .Include(t => t.CreatedBy)
                 .Where(t => t.Project.ClientId == userId);
 
@@ -234,16 +237,16 @@ namespace DoableFinal.Controllers
             {
                 // If projectId is provided, filter tasks for that specific project
                 query = query.Where(t => t.ProjectId == projectId);
-                
+
                 // Get the project details to show in the view
                 var project = await _context.Projects
                     .FirstOrDefaultAsync(p => p.Id == projectId && p.ClientId == userId);
-                    
+
                 if (project == null)
                 {
                     return NotFound();
                 }
-                
+
                 ViewBag.ProjectName = project.Name;
                 ViewBag.ProjectId = project.Id;
             }
@@ -268,8 +271,8 @@ namespace DoableFinal.Controllers
                     .Where(t => t.ProjectId == project.Id && t.Status == "Completed")
                     .CountAsync();
 
-                progress[project.Id] = totalTasks > 0 
-                    ? (int)Math.Round((double)completedTasks / totalTasks * 100) 
+                progress[project.Id] = totalTasks > 0
+                    ? (int)Math.Round((double)completedTasks / totalTasks * 100)
                     : 0;
             }
             return progress;
@@ -280,12 +283,12 @@ namespace DoableFinal.Controllers
             var counts = new Dictionary<string, int>();
             foreach (var member in members)
             {
-                var taskCount = await _context.Tasks
-                    .Where(t => t.AssignedToId == member.Id)
+                var taskCount = await _context.TaskAssignments
+                    .Where(ta => ta.EmployeeId == member.Id)
                     .CountAsync();
                 counts[member.Id] = taskCount;
             }
             return counts;
         }
     }
-} 
+}

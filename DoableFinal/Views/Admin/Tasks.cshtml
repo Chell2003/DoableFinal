@@ -41,7 +41,31 @@
                             <tr>
                                 <td>@task.Title</td>
                                 <td>@task.Project.Name</td>
-                                <td>@($"{task.AssignedTo.FirstName} {task.AssignedTo.LastName}")</td>
+                                <td>
+                                    @if (task.TaskAssignments != null && task.TaskAssignments.Any())
+                                    {
+                                        <div class="assigned-users">
+                                            @foreach (var assignment in task.TaskAssignments.Take(3))
+                                            {
+                                                <span class="badge bg-light text-dark me-1">
+                                                    @($"{assignment.Employee.FirstName} {assignment.Employee.LastName}")
+                                                </span>
+                                            }
+                                            @if (task.TaskAssignments.Count() > 3)
+                                            {
+                                                <span class="badge bg-secondary" 
+                                                      data-bs-toggle="tooltip" 
+                                                      title="@string.Join(", ", task.TaskAssignments.Skip(3).Select(a => $"{a.Employee.FirstName} {a.Employee.LastName}"))">
+                                                    +@(task.TaskAssignments.Count() - 3) more
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Unassigned</span>
+                                    }
+                                </td>
                                 <td>@task.StartDate.ToString("MMM dd, yyyy")</td>
                                 <td>@task.DueDate.ToString("MMM dd, yyyy")</td>
                                 <td>
@@ -113,5 +137,13 @@
             document.getElementById('deleteForm').action = `/Admin/DeleteTask/${taskId}`;
             modal.show();
         }
+        
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
     </script>
-} 
+}

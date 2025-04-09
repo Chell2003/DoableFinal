@@ -140,7 +140,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var task in Model.Tasks.Where(t => t.AssignedToId == ViewBag.CurrentUserId))
+                               @foreach (var task in Model.Tasks.Where(t => t.TaskAssignments.Any(a => a.EmployeeId == ViewBag.CurrentUserId)))
                                 {
                                     <tr>
                                         <td>@task.Title</td>
@@ -191,7 +191,9 @@
                 start = t.StartDate.ToString("yyyy-MM-dd"),
                 end = t.DueDate.ToString("yyyy-MM-dd"),
                 status = t.Status ?? "Not Set",
-                assignee = t.AssignedTo != null ? $"{t.AssignedTo.FirstName} {t.AssignedTo.LastName}" : "Unassigned"
+                assignee = t.TaskAssignments != null && t.TaskAssignments.Any()
+                ? string.Join(", ", t.TaskAssignments.Select(a => a.Employee.FirstName))
+                : "Unassigned"
             }) ?? Enumerable.Empty<object>()));
 
             var options = {

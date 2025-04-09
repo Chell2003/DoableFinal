@@ -1,4 +1,7 @@
+using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Collections.Generic;
 
 namespace DoableFinal.ViewModels
 {
@@ -7,7 +10,6 @@ namespace DoableFinal.ViewModels
         public int Id { get; set; }
 
         [Required]
-        [StringLength(100)]
         public string Title { get; set; }
 
         [Required]
@@ -33,8 +35,13 @@ namespace DoableFinal.ViewModels
         [Display(Name = "Project")]
         public int ProjectId { get; set; }
 
-        [Required]
+        // Updated to support multiple employees
         [Display(Name = "Assigned To")]
-        public string AssignedToId { get; set; }
+        public List<string> AssignedToIds { get; set; }
+
+        public EditTaskViewModel()
+        {
+            AssignedToIds = new List<string>();
+        }
     }
-} 
+}

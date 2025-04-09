@@ -32,6 +32,12 @@
                         </div>
 
                         <div class="mb-3">
+                            <label asp-for="StartDate" class="form-label"></label>
+                            <input asp-for="StartDate" class="form-control" />
+                            <span asp-validation-for="StartDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
                             <label asp-for="DueDate" class="form-label"></label>
                             <input asp-for="DueDate" class="form-control" />
                             <span asp-validation-for="DueDate" class="text-danger"></span>
@@ -72,11 +78,11 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="AssignedToId" class="form-label"></label>
-                            <select asp-for="AssignedToId" asp-items="Model.Employees" class="form-select">
-                                <option value="">-- Select Employee --</option>
+                            <label asp-for="AssignedToIds" class="form-label">Assigned To</label>
+                            <select asp-for="AssignedToIds" asp-items="Model.Employees" class="form-select" multiple>
                             </select>
-                            <span asp-validation-for="AssignedToId" class="text-danger"></span>
+                            <small class="form-text text-muted">Hold Ctrl (or Cmd on Mac) to select multiple employees</small>
+                            <span asp-validation-for="AssignedToIds" class="text-danger"></span>
                         </div>
 
                         <div class="d-grid gap-2">
@@ -101,12 +107,12 @@
                     </p>
                     <ul class="list-unstyled">
                         <li><i class="bi bi-check-circle text-success"></i> Add task to project timeline</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Notify assigned employee</li>
+                        <li><i class="bi bi-check-circle text-success"></i> Notify assigned employees</li>
                         <li><i class="bi bi-check-circle text-success"></i> Update project progress</li>
                         <li><i class="bi bi-check-circle text-success"></i> Enable task tracking</li>
                     </ul>
                     <p class="card-text">
-                        The assigned employee will receive a notification email about the new task.
+                        All assigned employees will receive a notification email about the new task.
                     </p>
                 </div>
             </div>
@@ -115,5 +121,17 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-} 
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function() {
+            // Optional: Add select2 for a better multi-select experience
+            // Requires adding Select2 library to your project
+            // $('#AssignedToIds').select2({
+            //     placeholder: "Select employees",
+            //     allowClear: true
+            // });
+        });
+    </script>
+}

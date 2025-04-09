@@ -80,11 +80,11 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="AssignedToId" class="form-label"></label>
-                            <select asp-for="AssignedToId" class="form-select" asp-items="@(new SelectList(ViewBag.Employees, "Id", "Email"))">
+                            <label asp-for="AssignedToIds" class="form-label"></label>
+                            <select asp-for="AssignedToIds" class="form-select" asp-items="@(new SelectList(ViewBag.Employees, "Id", "Email"))">
                                 <option value="">-- Select Employee --</option>
                             </select>
-                            <span asp-validation-for="AssignedToId" class="text-danger"></span>
+                            <span asp-validation-for="AssignedToIds" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">

@@ -158,7 +158,10 @@
                                 {
                                     <tr>
                                         <td>@task.Title</td>
-                                        <td>@($"{task.AssignedTo.FirstName} {task.AssignedTo.LastName}")</td>
+                                        <td>@(task.TaskAssignments != null && task.TaskAssignments.Any()
+                                            ? string.Join(", ", task.TaskAssignments.Select(a => a.Employee.FirstName))
+                                            : "Unassigned")
+                                        </td>
                                         <td>
                                             <span class="@(task.DueDate < DateTime.Now && task.Status != "Completed" ? "text-danger" : "")">
                                                 @task.DueDate.ToString(dateFormat)
@@ -207,7 +210,9 @@
                 start = t.StartDate.ToString("yyyy-MM-dd"),
                 end = t.DueDate.ToString("yyyy-MM-dd"),
                 status = t.Status ?? "Not Set",
-                assignee = t.AssignedTo != null ? $"{t.AssignedTo.FirstName} {t.AssignedTo.LastName}" : "Unassigned"
+                assignee = t.TaskAssignments != null && t.TaskAssignments.Any()
+                ? string.Join(", ", t.TaskAssignments.Select(a => a.Employee.FirstName))
+                : "Unassigned"
             }) ?? Enumerable.Empty<object>()));
 
             var options = {

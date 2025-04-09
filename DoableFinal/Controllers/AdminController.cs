@@ -43,10 +43,11 @@ namespace DoableFinal.Controllers
                 .Take(5)
                 .ToListAsync();
 
-            // Get recent tasks
+            // Get recent tasks - Update to handle multiple assignments
             ViewBag.RecentTasks = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.AssignedTo)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
                 .OrderByDescending(t => t.CreatedAt)
                 .Take(5)
                 .ToListAsync();
@@ -223,7 +224,8 @@ namespace DoableFinal.Controllers
         {
             var tasks = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.AssignedTo)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
             return View(tasks);
@@ -260,24 +262,6 @@ namespace DoableFinal.Controllers
             {
                 var currentUser = await _userManager.GetUserAsync(User);
 
-                // Check if employee is already in project team
-                var isInTeam = await _context.ProjectTeams
-                    .AnyAsync(pt => pt.ProjectId == model.ProjectId && pt.UserId == model.AssignedToId);
-
-                // If not in team, add them and save changes immediately
-                if (!isInTeam)
-                {
-                    var projectTeam = new ProjectTeam
-                    {
-                        ProjectId = model.ProjectId,
-                        UserId = model.AssignedToId,
-                        Role = "Team Member",
-                        JoinedAt = DateTime.UtcNow
-                    };
-                    _context.ProjectTeams.Add(projectTeam);
-                    await _context.SaveChangesAsync(); // Save the project team first
-                }
-
                 var task = new ProjectTask
                 {
                     Title = model.Title,
@@ -287,13 +271,47 @@ namespace DoableFinal.Controllers
                     Status = model.Status,
                     Priority = model.Priority,
                     ProjectId = model.ProjectId,
-                    AssignedToId = model.AssignedToId,
                     CreatedById = currentUser.Id,
                     CreatedAt = DateTime.UtcNow
                 };
 
                 _context.Tasks.Add(task);
                 await _context.SaveChangesAsync();
+
+                // Handle multiple task assignments
+                if (model.AssignedToIds != null && model.AssignedToIds.Any())
+                {
+                    foreach (var employeeId in model.AssignedToIds)
+                    {
+                        // Check if employee is already in project team
+                        var isInTeam = await _context.ProjectTeams
+                            .AnyAsync(pt => pt.ProjectId == model.ProjectId && pt.UserId == employeeId);
+
+                        // If not in team, add them
+                        if (!isInTeam)
+                        {
+                            var projectTeam = new ProjectTeam
+                            {
+                                ProjectId = model.ProjectId,
+                                UserId = employeeId,
+                                Role = "Team Member",
+                                JoinedAt = DateTime.UtcNow
+                            };
+                            _context.ProjectTeams.Add(projectTeam);
+                        }
+
+                        // Create task assignment
+                        var taskAssignment = new TaskAssignment
+                        {
+                            ProjectTaskId = task.Id,
+                            EmployeeId = employeeId,
+                            AssignedAt = DateTime.UtcNow
+                        };
+                        _context.TaskAssignments.Add(taskAssignment);
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
 
                 TempData["SuccessMessage"] = "Task created successfully.";
                 return RedirectToAction(nameof(Tasks));
@@ -423,7 +441,7 @@ namespace DoableFinal.Controllers
 
             var currentStatus = await _userManager.GetTwoFactorEnabledAsync(user);
             await _userManager.SetTwoFactorEnabledAsync(user, !currentStatus);
-            
+
             TempData["SuccessMessage"] = $"Two-factor authentication has been {(!currentStatus ? "enabled" : "disabled")}.";
             return RedirectToAction(nameof(Profile));
         }
@@ -602,7 +620,8 @@ namespace DoableFinal.Controllers
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.AssignedTo)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
@@ -620,7 +639,8 @@ namespace DoableFinal.Controllers
                 Status = task.Status,
                 Priority = task.Priority,
                 ProjectId = task.ProjectId,
-                AssignedToId = task.AssignedToId
+                // Get list of assigned employees
+                AssignedToIds = task.TaskAssignments.Select(ta => ta.EmployeeId).ToList()
             };
 
             ViewBag.Projects = await _context.Projects.ToListAsync();
@@ -635,7 +655,10 @@ namespace DoableFinal.Controllers
         {
             if (ModelState.IsValid)
             {
-                var task = await _context.Tasks.FindAsync(model.Id);
+                var task = await _context.Tasks
+                    .Include(t => t.TaskAssignments)
+                    .FirstOrDefaultAsync(t => t.Id == model.Id);
+
                 if (task == null)
                 {
                     return NotFound();
@@ -648,24 +671,47 @@ namespace DoableFinal.Controllers
                 task.Status = model.Status;
                 task.Priority = model.Priority;
                 task.ProjectId = model.ProjectId;
-                task.AssignedToId = model.AssignedToId;
                 task.UpdatedAt = DateTime.UtcNow;
 
-                // Check if employee is already in project team
-                var isInTeam = await _context.ProjectTeams
-                    .AnyAsync(pt => pt.ProjectId == model.ProjectId && pt.UserId == model.AssignedToId);
+                // Handle task assignments - first remove existing assignments
+                var currentAssignments = await _context.TaskAssignments
+                    .Where(ta => ta.ProjectTaskId == task.Id)
+                    .ToListAsync();
 
-                // If not in team, add them
-                if (!isInTeam)
+                _context.TaskAssignments.RemoveRange(currentAssignments);
+                await _context.SaveChangesAsync();
+
+                // Add new assignments
+                if (model.AssignedToIds != null && model.AssignedToIds.Any())
                 {
-                    var projectTeam = new ProjectTeam
+                    foreach (var employeeId in model.AssignedToIds)
                     {
-                        ProjectId = model.ProjectId,
-                        UserId = model.AssignedToId,
-                        Role = "Team Member",
-                        JoinedAt = DateTime.UtcNow
-                    };
-                    _context.ProjectTeams.Add(projectTeam);
+                        // Check if employee is already in project team
+                        var isInTeam = await _context.ProjectTeams
+                            .AnyAsync(pt => pt.ProjectId == model.ProjectId && pt.UserId == employeeId);
+
+                        // If not in team, add them
+                        if (!isInTeam)
+                        {
+                            var projectTeam = new ProjectTeam
+                            {
+                                ProjectId = model.ProjectId,
+                                UserId = employeeId,
+                                Role = "Team Member",
+                                JoinedAt = DateTime.UtcNow
+                            };
+                            _context.ProjectTeams.Add(projectTeam);
+                        }
+
+                        // Create new task assignment
+                        var taskAssignment = new TaskAssignment
+                        {
+                            ProjectTaskId = task.Id,
+                            EmployeeId = employeeId,
+                            AssignedAt = DateTime.UtcNow
+                        };
+                        _context.TaskAssignments.Add(taskAssignment);
+                    }
                 }
 
                 await _context.SaveChangesAsync();
@@ -701,7 +747,8 @@ namespace DoableFinal.Controllers
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.AssignedTo)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
                 .Include(t => t.CreatedBy)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
@@ -722,7 +769,8 @@ namespace DoableFinal.Controllers
                 .Include(p => p.ProjectTeams)
                     .ThenInclude(pt => pt.User)
                 .Include(p => p.Tasks)
-                    .ThenInclude(t => t.AssignedTo)
+                    .ThenInclude(t => t.TaskAssignments)
+                        .ThenInclude(ta => ta.Employee)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (project == null)
@@ -733,4 +781,4 @@ namespace DoableFinal.Controllers
             return View(project);
         }
     }
-} 
+}

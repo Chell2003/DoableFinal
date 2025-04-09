@@ -59,7 +59,7 @@
                                             @task.Project.Name
                                         </a>
                                     </td>
-                                    <td>@($"{task.AssignedTo?.FirstName} {task.AssignedTo?.LastName}")</td>
+                                    <td>@($"{task.TaskAssignments} {task.TaskAssignments}")</td>
                                     <td>
                                         <span class="@(task.DueDate < DateTime.Now && task.Status != "Completed" ? "text-danger" : "")">
                                             @task.DueDate.ToString(dateFormat)

@@ -10,7 +10,7 @@ namespace DoableFinal.Data
             : base(options)
         {
         }
-
+        public DbSet<TaskAssignment> TaskAssignments { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTask> Tasks { get; set; }
         public DbSet<Comment> Comments { get; set; }
@@ -39,16 +39,30 @@ namespace DoableFinal.Data
                 .HasForeignKey(t => t.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<ProjectTask>()
-                .HasOne(t => t.AssignedTo)
-                .WithMany()
-                .HasForeignKey(t => t.AssignedToId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Comment out or remove this single assignment relationship
+            // builder.Entity<ProjectTask>()
+            //     .HasOne(t => t.AssignedTo)
+            //     .WithMany()
+            //     .HasForeignKey(t => t.AssignedToId)
+            //     .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<ProjectTask>()
                 .HasOne(t => t.CreatedBy)
                 .WithMany()
                 .HasForeignKey(t => t.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Add the TaskAssignment relationship configurations
+            builder.Entity<TaskAssignment>()
+                .HasOne(ta => ta.ProjectTask)
+                .WithMany(t => t.TaskAssignments)
+                .HasForeignKey(ta => ta.ProjectTaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<TaskAssignment>()
+                .HasOne(ta => ta.Employee)
+                .WithMany()
+                .HasForeignKey(ta => ta.EmployeeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Comment>()

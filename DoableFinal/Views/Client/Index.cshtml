@@ -187,68 +187,71 @@
     </div>
 
     <!-- Recent Tasks -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h6 class="m-0 font-weight-bold text-primary">Recent Tasks</h6>
-                </div>
-                <div class="card-body">
-                    @if (ViewBag.ProjectTasks != null && ViewBag.ProjectTasks.Count > 0)
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Title</th>
-                                        <th>Project</th>
-                                        <th>Assigned To</th>
-                                        <th>Due Date</th>
-                                        <th>Status</th>
-                                        <th>Priority</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var task in ViewBag.ProjectTasks)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <a asp-controller="Client" asp-action="TaskDetails" asp-route-id="@task.Id">
-                                                    @task.Title
-                                                </a>
-                                            </td>
-                                            <td>@task.Project.Name</td>
-                                            <td>@(task.AssignedTo != null ? $"{task.AssignedTo.FirstName} {task.AssignedTo.LastName}" : "Unassigned")</td>
-                                            <td>@task.DueDate.ToString("MMM dd, yyyy")</td>
-                                            <td>
-                                                <span class="badge bg-@(task.Status switch {
-                                                    "Not Started" => "secondary",
-                                                    "In Progress" => "primary",
-                                                    "On Hold" => "warning",
-                                                    "Completed" => "success",
-                                                    _ => "secondary"
-                                                })">@task.Status</span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-@(task.Priority switch {
-                                                    "Low" => "success",
-                                                    "Medium" => "warning",
-                                                    "High" => "danger",
-                                                    _ => "secondary"
-                                                })">@task.Priority</span>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted mb-0">No tasks found.</p>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
+    @* <div class="row"> *@
+    @*     <div class="col-12"> *@
+    @*         <div class="card"> *@
+    @*             <div class="card-header bg-white"> *@
+    @*                 <h6 class="m-0 font-weight-bold text-primary">Recent Tasks</h6> *@
+    @*             </div> *@
+    @*             <div class="card-body"> *@
+    @*                 @if (ViewBag.ProjectTasks != null && ViewBag.ProjectTasks.Count > 0) *@
+    @*                 { *@
+    @*                     <div class="table-responsive"> *@
+    @*                         <table class="table table-hover"> *@
+    @*                             <thead> *@
+    @*                                 <tr> *@
+    @*                                     <th>Title</th> *@
+    @*                                     <th>Project</th> *@
+    @*                                     <th>Assigned To</th> *@
+    @*                                     <th>Due Date</th> *@
+    @*                                     <th>Status</th> *@
+    @*                                     <th>Priority</th> *@
+    @*                                 </tr> *@
+    @*                             </thead> *@
+    @*                             <tbody> *@
+    @*                                 @foreach (var task in ViewBag.ProjectTasks) *@
+    @*                                 { *@
+    @*                                     <tr> *@
+    @*                                         <td> *@
+    @*                                             <a asp-controller="Client" asp-action="TaskDetails" asp-route-id="@task.Id"> *@
+    @*                                                 @task.Title *@
+    @*                                             </a> *@
+    @*                                         </td> *@
+    @*                                         <td>@task.Project.Name</td> *@
+    @*                                         <td>@(task.TaskAssignments != null && task.TaskAssignments.Any() *@
+    @*                                             ? string.Join(", ", task.TaskAssignments.Select(a => a.Employee.FirstName)) *@
+    @*                                             : "Unassigned") *@
+    @*                                         </td> *@
+    @*                                         <td>@task.DueDate.ToString("MMM dd, yyyy")</td> *@
+    @*                                         <td> *@
+    @*                                             <span class="badge bg-@(task.Status switch { *@
+    @*                                                 "Not Started" => "secondary", *@
+    @*                                                 "In Progress" => "primary", *@
+    @*                                                 "On Hold" => "warning", *@
+    @*                                                 "Completed" => "success", *@
+    @*                                                 _ => "secondary" *@
+    @*                                             })">@task.Status</span> *@
+    @*                                         </td> *@
+    @*                                         <td> *@
+    @*                                             <span class="badge bg-@(task.Priority switch { *@
+    @*                                                 "Low" => "success", *@
+    @*                                                 "Medium" => "warning", *@
+    @*                                                 "High" => "danger", *@
+    @*                                                 _ => "secondary" *@
+    @*                                             })">@task.Priority</span> *@
+    @*                                         </td> *@
+    @*                                     </tr> *@
+    @*                                 } *@
+    @*                             </tbody> *@
+    @*                         </table> *@
+    @*                     </div> *@
+    @*                 } *@
+    @*                 else *@
+    @*                 { *@
+    @*                     <p class="text-muted mb-0">No tasks found.</p> *@
+    @*                 } *@
+    @*             </div> *@
+    @*         </div> *@
+    @*     </div> *@
+    @* </div> *@
 </div> 
