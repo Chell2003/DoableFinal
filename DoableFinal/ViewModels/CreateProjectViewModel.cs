@@ -26,9 +26,6 @@ namespace DoableFinal.ViewModels
         public string Status { get; set; }
 
         [Required]
-        public string Priority { get; set; }
-
-        [Required]
         [Display(Name = "Client")]
         public string ClientId { get; set; }
 
@@ -47,7 +44,6 @@ namespace DoableFinal.ViewModels
             StartDate = DateTime.Today;
             EndDate = DateTime.Today.AddMonths(1);
             Status = "Not Started";
-            Priority = "Medium";
         }
     }
-} 
+}

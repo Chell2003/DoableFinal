@@ -258,6 +258,25 @@ namespace DoableFinal.Controllers
             return View(tasks);
         }
 
+        [Authorize(Roles = "Client")]
+        public async Task<IActionResult> TaskDetails(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
+                .FirstOrDefaultAsync(t => t.Id == id && t.Project.ClientId == userId);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            return View(task);
+        }
+
         private async Task<Dictionary<int, int>> GetProjectProgress(IEnumerable<Project> projects)
         {
             var progress = new Dictionary<int, int>();

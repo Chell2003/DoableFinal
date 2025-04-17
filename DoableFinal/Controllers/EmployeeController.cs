@@ -357,6 +357,56 @@ namespace DoableFinal.Controllers
             return RedirectToAction(nameof(Tasks));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadProof(int id, IFormFile proofFile)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Check if the user is assigned to the task
+            var task = await _context.Tasks
+                .Include(t => t.TaskAssignments)
+                .FirstOrDefaultAsync(t => t.Id == id && t.TaskAssignments.Any(ta => ta.EmployeeId == user.Id));
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            if (proofFile != null && proofFile.Length > 0)
+            {
+                // Save the file to the server
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                Directory.CreateDirectory(uploadsFolder); // Ensure the folder exists
+                var filePath = Path.Combine(uploadsFolder, $"{Guid.NewGuid()}_{proofFile.FileName}");
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await proofFile.CopyToAsync(stream);
+                }
+
+                // Update the task with the file path and mark it as "Pending Confirmation"
+                task.ProofFilePath = $"/uploads/{Path.GetFileName(filePath)}";
+                task.Status = "Pending Confirmation";
+                task.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Proof uploaded successfully. Waiting for Project Manager confirmation.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Please upload a valid file.";
+            }
+
+            return RedirectToAction(nameof(TaskDetails), new { id });
+        }
+
+
         public async Task<IActionResult> ProjectDetails(int id)
         {
             var project = await _context.Projects
@@ -390,24 +440,14 @@ namespace DoableFinal.Controllers
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.TaskAssignments)
-                    .ThenInclude(ta => ta.Employee)
-                .Include(t => t.CreatedBy)
+                .Include(t => t.TaskAssignments) // Include task assignments
+                    .ThenInclude(ta => ta.Employee) // Include the employee assigned to the task   
+                .Include(t => t.CreatedBy) // Include the user who created the task
+                .Include(t => t.Project.ProjectManager) // Include the project manager
+                .Include(t => t.TaskAssignments) // Include task assignments
                 .FirstOrDefaultAsync(t => t.Id == id);
 
-            if (task == null)
-            {
-                return NotFound();
-            }
-
-            // Check if the current user is assigned to this task
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isUserAssigned = task.TaskAssignments.Any(ta => ta.EmployeeId == userId);
-
-            if (!isUserAssigned)
-            {
-                return Forbid();
-            }
+            if (task == null) return NotFound();
 
             return View(task);
         }

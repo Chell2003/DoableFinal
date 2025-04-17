@@ -26,17 +26,15 @@ namespace DoableFinal.Models
         public int ProjectId { get; set; }
         public Project Project { get; set; }
 
-        // Remove this single assignment property
-        // [Required]
-        // public string AssignedToId { get; set; }
-        // public ApplicationUser AssignedTo { get; set; }
+        public string? ProofFilePath { get; set; } // Path to the uploaded file
+        public bool IsConfirmed { get; set; } = false; // Whether the task is confirmed by the Project Manager
 
-        // Add the collection of task assignments
         public virtual ICollection<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
 
         [Required]
         public string CreatedById { get; set; }
         public ApplicationUser CreatedBy { get; set; }
-        public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public virtual ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
+        public virtual ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
     }
 }

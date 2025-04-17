@@ -1,0 +1,88 @@
+@model IEnumerable<DoableFinal.Models.ProjectTask>
+
+@{
+    ViewData["Title"] = "Tasks";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3">Tasks</h1>
+                    <p class="text-muted">View and manage all tasks for your projects.</p>
+                </div>
+                <a asp-action="CreateTask" class="btn btn-primary">
+                    <i class="bi bi-plus-square"></i> Create Task
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Project</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Due Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var task in Model)
+                        {
+                            <tr>
+                                <td>@task.Title</td>
+                                <td>@task.Project.Name</td>
+                                <td>
+                                    @if (task.TaskAssignments != null && task.TaskAssignments.Any())
+                                    {
+                                        <ul class="list-unstyled mb-0">
+                                            @foreach (var assignment in task.TaskAssignments)
+                                            {
+                                                <li>@($"{assignment.Employee.FirstName} {assignment.Employee.LastName}")</li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Unassigned</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-@(task.Status switch {
+                                        "Not Started" => "secondary",
+                                        "In Progress" => "primary",
+                                        "On Hold" => "warning",
+                                        "Completed" => "success",
+                                        _ => "secondary"
+                                    })">@task.Status</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@(task.Priority switch {
+                                        "Low" => "info",
+                                        "Medium" => "warning",
+                                        "High" => "danger",
+                                        _ => "secondary"
+                                    })">@task.Priority</span>
+                                </td>
+                                <td>@task.DueDate.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <a asp-controller="ProjectManager" asp-action="TaskDetails" asp-route-id="@task.Id" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

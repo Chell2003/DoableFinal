@@ -29,7 +29,7 @@
             <div class="sidebar-user">
                 <div class="user-info">
                     <i class="bi bi-person-circle"></i>
-                    <span>@((await UserManager.GetUserAsync(User))?.FirstName) @((await UserManager.GetUserAsync(User))?.LastName)</span>
+                    <span>@User.Identity.Name</span>
                 </div>
             </div>
 

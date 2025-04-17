@@ -1,0 +1,187 @@
+@model DoableFinal.Models.ProjectTask
+
+@{
+    ViewData["Title"] = "Task Details";
+    var dateFormat = "MMM dd, yyyy";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Task Details</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Tasks">My Tasks</a></li>
+        <li class="breadcrumb-item active">Task Details</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-tasks me-1"></i>
+                    Task Information
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Title:</div>
+                        <div class="col-md-9">@Model.Title</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Description:</div>
+                        <div class="col-md-9">@Model.Description</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Project:</div>
+                        <div class="col-md-9">
+                            <a asp-controller="ProjectManager" asp-action="ProjectDetails" asp-route-id="@Model.ProjectId">@Model.Project.Name</a>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Start Date:</div>
+                        <div class="col-md-9">@Model.StartDate.ToString(dateFormat)</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Due Date:</div>
+                        <div class="col-md-9">@Model.DueDate.ToString(dateFormat)</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Status:</div>
+                        <div class="col-md-9">
+                            <span class="badge bg-@(Model.Status switch {
+                                "Not Started" => "secondary",
+                                "In Progress" => "primary",
+                                "On Hold" => "warning",
+                                "Completed" => "success",
+                                _ => "secondary"
+                            })">@Model.Status</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Priority:</div>
+                        <div class="col-md-9">
+                            <span class="badge bg-@(Model.Priority switch {
+                                "Low" => "info",
+                                "Medium" => "warning",
+                                "High" => "danger",
+                                _ => "secondary"
+                            })">@Model.Priority</span>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.ProofFilePath))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-3 fw-bold">Proof of Completion:</div>
+                            <div class="col-md-9">
+                                <a href="@Url.Content(Model.ProofFilePath)" target="_blank" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-file-alt"></i> View Proof
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-3 fw-bold">Proof of Completion:</div>
+                            <div class="col-md-9">
+                                <span class="text-muted">No proof uploaded.</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (Model.Status == "Pending Confirmation" && !Model.IsConfirmed)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Confirm Task Completion
+                    </div>
+                    <div class="card-body">
+                        <p>Proof of completion has been uploaded. Please review and confirm the task.</p>
+                        <a href="@Model.ProofFilePath" target="_blank" class="btn btn-outline-primary">
+                            <i class="fas fa-file"></i> View Proof
+                        </a>
+                        <form asp-action="ConfirmTask" asp-route-id="@Model.Id" method="post" class="mt-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-circle"></i> Confirm Task
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+
+
+            <!-- Assigned Employees -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    Assigned Employees
+                </div>
+                <div class="card-body">
+                    @if (Model.TaskAssignments != null && Model.TaskAssignments.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var assignment in Model.TaskAssignments)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@assignment.Employee.FirstName @assignment.Employee.LastName</strong>
+                                    <br />
+                                    <small class="text-muted">@assignment.Employee.Email</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No employees assigned to this task.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Gantt Chart -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Task Timeline
+                </div>
+                <div class="card-body">
+                    <div id="taskGanttChart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var options = {
+                series: [{
+                    data: [{
+                        x: "@Model.Title",
+                        y: [
+                            new Date("@Model.StartDate.ToString("yyyy-MM-dd")").getTime(),
+                            new Date("@Model.DueDate.ToString("yyyy-MM-dd")").getTime()
+                        ],
+                        fillColor: '#0d6efd'
+                    }]
+                }],
+                chart: {
+                    height: 350,
+                    type: 'rangeBar'
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true
+                    }
+                },
+                xaxis: {
+                    type: 'datetime'
+                }
+            };
+
+            var chart = new ApexCharts(document.querySelector("#taskGanttChart"), options);
+            chart.render();
+        });
+    </script>
+}

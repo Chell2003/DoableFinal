@@ -24,6 +24,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Register the TimelineAdjustmentService
+builder.Services.AddScoped<TimelineAdjustmentService>();
+
 // Configure cookie policy
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -73,5 +76,9 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+app.MapControllerRoute(
+    name: "projectManager",
+    pattern: "{controller=ProjectManager}/{action=Index}/{id?}");
 
 app.Run();

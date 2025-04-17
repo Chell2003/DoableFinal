@@ -13,77 +13,53 @@ namespace DoableFinal.Data
         public DbSet<TaskAssignment> TaskAssignments { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTask> Tasks { get; set; }
-        public DbSet<Comment> Comments { get; set; }
         public DbSet<ProjectTeam> ProjectTeams { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(builder);
+            base.OnModelCreating(modelBuilder);
 
-            // Configure relationships and constraints
-            builder.Entity<Project>()
+            modelBuilder.Entity<ProjectTask>()
+                .HasOne(t => t.Project)
+                .WithMany(p => p.Tasks)
+                .HasForeignKey(t => t.ProjectId);
+
+            modelBuilder.Entity<TaskAssignment>()
+                .HasOne(ta => ta.ProjectTask)
+                .WithMany(t => t.TaskAssignments)
+                .HasForeignKey(ta => ta.ProjectTaskId);
+
+            modelBuilder.Entity<TaskAssignment>()
+                .HasOne(ta => ta.Employee)
+                .WithMany()
+                .HasForeignKey(ta => ta.EmployeeId);
+
+            modelBuilder.Entity<Project>()
                 .HasOne(p => p.Client)
                 .WithMany()
                 .HasForeignKey(p => p.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<Project>()
+            modelBuilder.Entity<Project>()
                 .HasOne(p => p.ProjectManager)
                 .WithMany()
                 .HasForeignKey(p => p.ProjectManagerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<ProjectTask>()
-                .HasOne(t => t.Project)
-                .WithMany(p => p.Tasks)
-                .HasForeignKey(t => t.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Comment out or remove this single assignment relationship
-            // builder.Entity<ProjectTask>()
-            //     .HasOne(t => t.AssignedTo)
-            //     .WithMany()
-            //     .HasForeignKey(t => t.AssignedToId)
-            //     .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<ProjectTask>()
+            modelBuilder.Entity<ProjectTask>()
                 .HasOne(t => t.CreatedBy)
                 .WithMany()
                 .HasForeignKey(t => t.CreatedById)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Add the TaskAssignment relationship configurations
-            builder.Entity<TaskAssignment>()
-                .HasOne(ta => ta.ProjectTask)
-                .WithMany(t => t.TaskAssignments)
-                .HasForeignKey(ta => ta.ProjectTaskId)
-                .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<TaskAssignment>()
-                .HasOne(ta => ta.Employee)
-                .WithMany()
-                .HasForeignKey(ta => ta.EmployeeId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<Comment>()
-                .HasOne(c => c.Task)
-                .WithMany(t => t.Comments)
-                .HasForeignKey(c => c.TaskId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Entity<Comment>()
-                .HasOne(c => c.User)
-                .WithMany()
-                .HasForeignKey(c => c.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            builder.Entity<ProjectTeam>()
+            modelBuilder.Entity<ProjectTeam>()
                 .HasOne(pt => pt.Project)
                 .WithMany(p => p.ProjectTeams)
                 .HasForeignKey(pt => pt.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<ProjectTeam>()
+            modelBuilder.Entity<ProjectTeam>()
                 .HasOne(pt => pt.User)
                 .WithMany()
                 .HasForeignKey(pt => pt.UserId)

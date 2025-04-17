@@ -1,5 +1,4 @@
 @model DoableFinal.Models.ProjectTask
-@using System.IO
 
 @{
     ViewData["Title"] = "Task Details";
@@ -10,24 +9,17 @@
 <div class="container-fluid px-4">
     <h1 class="mt-4">Task Details</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a asp-controller="Employee" asp-action="Index">Dashboard</a></li>
-        <li class="breadcrumb-item"><a asp-controller="Employee" asp-action="Tasks">My Tasks</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Tasks">Tasks</a></li>
         <li class="breadcrumb-item active">Task Details</li>
     </ol>
 
     <div class="row">
         <div class="col-xl-8">
             <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <i class="fas fa-tasks me-1"></i>
-                        Task Information
-                    </div>
-                    <div>
-                        <a asp-controller="Employee" asp-action="UpdateTaskStatus" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
-                            <i class="fas fa-edit"></i> Update Status
-                        </a>
-                    </div>
+                <div class="card-header">
+                    <i class="fas fa-tasks me-1"></i>
+                    Task Information
                 </div>
                 <div class="card-body">
                     <div class="row mb-3">
@@ -41,7 +33,18 @@
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Project:</div>
                         <div class="col-md-9">
-                            <a asp-controller="Employee" asp-action="ProjectDetails" asp-route-id="@Model.ProjectId">@Model.Project.Name</a>
+                            <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@Model.ProjectId">
+                                @Model.Project.Name
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Assigned To:</div>
+                        <div class="col-md-9">
+                            @foreach (var assignment in Model.TaskAssignments)
+                            {
+                                <span>@assignment.Employee.FirstName @assignment.Employee.LastName</span><br />
+                            }
                         </div>
                     </div>
                     <div class="row mb-3">
@@ -52,7 +55,6 @@
                                 "In Progress" => "primary",
                                 "On Hold" => "warning",
                                 "Completed" => "success",
-                                "Pending Confirmation" => "info",
                                 _ => "secondary"
                             })">@Model.Status</span>
                         </div>
@@ -80,48 +82,28 @@
                             </span>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Created:</div>
-                        <div class="col-md-9">@Model.CreatedAt.ToString(dateTimeFormat)</div>
-                    </div>
-                    @if (Model.UpdatedAt.HasValue)
+                    @if (!string.IsNullOrEmpty(Model.ProofFilePath))
                     {
                         <div class="row mb-3">
-                            <div class="col-md-3 fw-bold">Last Updated:</div>
-                            <div class="col-md-9">@Model.UpdatedAt.Value.ToString(dateTimeFormat)</div>
+                            <div class="col-md-3 fw-bold">Proof of Completion:</div>
+                            <div class="col-md-9">
+                                <a href="@Url.Content(Model.ProofFilePath)" target="_blank" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-file-alt"></i> View Proof
+                                </a>
+                            </div>
                         </div>
                     }
-                    @if (Model.CompletedAt.HasValue)
+                    else
                     {
                         <div class="row mb-3">
-                            <div class="col-md-3 fw-bold">Completed:</div>
-                            <div class="col-md-9">@Model.CompletedAt.Value.ToString(dateTimeFormat)</div>
+                            <div class="col-md-3 fw-bold">Proof of Completion:</div>
+                            <div class="col-md-9">
+                                <span class="text-muted">No proof uploaded.</span>
+                            </div>
                         </div>
                     }
                 </div>
             </div>
-
-            <!-- Upload Proof -->
-            @if (Model.Status == "Completed" || Model.Status == "Pending Confirmation")
-            {
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="fas fa-upload me-1"></i>
-                        Upload Proof of Completion
-                    </div>
-                    <div class="card-body">
-                        <form asp-action="UploadProof" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="proofFile" class="form-label">Upload File</label>
-                                <input type="file" name="proofFile" id="proofFile" class="form-control" />
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-upload"></i> Upload Proof
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            }
         </div>
     </div>
 </div>

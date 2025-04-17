@@ -1,0 +1,74 @@
+@model IEnumerable<DoableFinal.Models.Project>
+
+@{
+    ViewData["Title"] = "My Projects";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3">My Projects</h1>
+            <p class="text-muted">View and manage the projects assigned to you.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            @if (!Model.Any())
+            {
+                <p class="text-muted">No projects found.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var project in Model)
+                            {
+                                <tr>
+                                    <td>@project.Name</td>
+                                    <td>@(project.Description?.Length > 50 ? project.Description.Substring(0, 47) + "..." : project.Description)</td>
+                                    <td>@project.StartDate.ToString("MMM dd, yyyy")</td>
+                                    <td>@(project.EndDate?.ToString("MMM dd, yyyy") ?? "Not set")</td>
+                                    <td>
+                                        <span class="badge bg-@(project.Status switch {
+                                            "Not Started" => "secondary",
+                                            "In Progress" => "primary",
+                                            "On Hold" => "warning",
+                                            "Completed" => "success",
+                                            _ => "secondary"
+                                        })">@project.Status</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-@(project.Priority switch {
+                                            "Low" => "info",
+                                            "Medium" => "warning",
+                                            "High" => "danger",
+                                            _ => "secondary"
+                                        })">@project.Priority</span>
+                                    </td>
+                                    <td>
+                                        <a asp-controller="ProjectManager" asp-action="ProjectDetails" asp-route-id="@project.Id" class="btn btn-sm btn-outline-primary">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

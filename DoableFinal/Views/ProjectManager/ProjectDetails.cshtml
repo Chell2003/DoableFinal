@@ -2,24 +2,20 @@
 
 @{
     ViewData["Title"] = "Project Details";
-    Layout = "_ClientLayout";
     var dateFormat = "MMM dd, yyyy";
     var dateTimeFormat = "MMM dd, yyyy HH:mm";
-}
-
-@section Styles {
-    <link href="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.css" rel="stylesheet">
 }
 
 <div class="container-fluid px-4">
     <h1 class="mt-4">Project Details</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Index">Dashboard</a></li>
-        <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Projects">My Projects</a></li>
+        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Projects">Projects</a></li>
         <li class="breadcrumb-item active">Project Details</li>
     </ol>
 
     <div class="row">
+        <!-- Project Information -->
         <div class="col-xl-8">
             <div class="card mb-4">
                 <div class="card-header">
@@ -36,8 +32,8 @@
                         <div class="col-md-9">@Model.Description</div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Project Manager:</div>
-                        <div class="col-md-9">@($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")</div>
+                        <div class="col-md-3 fw-bold">Client:</div>
+                        <div class="col-md-9">@($"{Model.Client.FirstName} {Model.Client.LastName}")</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Status:</div>
@@ -70,17 +66,6 @@
                             }
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Created:</div>
-                        <div class="col-md-9">@Model.CreatedAt.ToString(dateTimeFormat)</div>
-                    </div>
-                    @if (Model.UpdatedAt.HasValue)
-                    {
-                        <div class="row mb-3">
-                            <div class="col-md-3 fw-bold">Last Updated:</div>
-                            <div class="col-md-9">@Model.UpdatedAt.Value.ToString(dateTimeFormat)</div>
-                        </div>
-                    }
                 </div>
             </div>
 
@@ -92,44 +77,6 @@
                 </div>
                 <div class="card-body">
                     <div id="ganttChart"></div>
-                </div>
-            </div>
-
-            <!-- Project Team -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-users me-1"></i>
-                    Project Team
-                </div>
-                <div class="card-body">
-                    @if (ViewBag.ProjectTeam != null && ViewBag.ProjectTeam.Count > 0)
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Role</th>
-                                        <th>Tasks</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var member in ViewBag.ProjectTeam)
-                                    {
-                                        <tr>
-                                            <td>@member.FirstName @member.LastName</td>
-                                            <td>@member.Role</td>
-                                            <td>@(ViewBag.MemberTaskCounts != null && ViewBag.MemberTaskCounts.ContainsKey(member.Id) ? ViewBag.MemberTaskCounts[member.Id] : 0)</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted mb-0">No team members found.</p>
-                    }
                 </div>
             </div>
 
@@ -152,10 +99,10 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var task in Model.Tasks ?? Enumerable.Empty<DoableFinal.Models.ProjectTask>())
+                                @foreach (var task in Model.Tasks)
                                 {
                                     <tr>
-                                        <td>@(task.Title ?? "N/A")</td>
+                                        <td>@task.Title</td>
                                         <td>@(task.TaskAssignments != null && task.TaskAssignments.Any()
                                             ? string.Join(", ", task.TaskAssignments.Select(a => a.Employee.FirstName))
                                             : "Unassigned")
@@ -172,7 +119,7 @@
                                                 "On Hold" => "warning",
                                                 "Completed" => "success",
                                                 _ => "secondary"
-                                            })">@(task.Status ?? "Not Set")</span>
+                                            })">@task.Status</span>
                                         </td>
                                         <td>
                                             <span class="badge bg-@(task.Priority switch {
@@ -180,8 +127,39 @@
                                                 "Medium" => "warning",
                                                 "High" => "danger",
                                                 _ => "secondary"
-                                            })">@(task.Priority ?? "Not Set")</span>
+                                            })">@task.Priority</span>
                                         </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Team -->
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    Project Team
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var member in Model.ProjectTeams)
+                                {
+                                    <tr>
+                                        <td>@($"{member.User.FirstName} {member.User.LastName}")</td>
+                                        <td>@member.Role</td>
                                     </tr>
                                 }
                             </tbody>

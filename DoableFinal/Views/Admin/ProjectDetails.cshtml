@@ -204,6 +204,11 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Get project start and end dates
+            var projectStart = new Date("@Model.StartDate.ToString("yyyy-MM-dd")").getTime();
+            var projectEnd = new Date("@Model.EndDate?.ToString("yyyy-MM-dd")").getTime();
+
+            // Prepare task data
             var tasks = @Html.Raw(Json.Serialize(Model.Tasks?.Select(t => new {
                 id = t.Id,
                 name = t.Title ?? "Untitled Task",
@@ -211,10 +216,11 @@
                 end = t.DueDate.ToString("yyyy-MM-dd"),
                 status = t.Status ?? "Not Set",
                 assignee = t.TaskAssignments != null && t.TaskAssignments.Any()
-                ? string.Join(", ", t.TaskAssignments.Select(a => a.Employee.FirstName))
-                : "Unassigned"
+                    ? string.Join(", ", t.TaskAssignments.Select(a => a.Employee.FirstName))
+                    : "Unassigned"
             }) ?? Enumerable.Empty<object>()));
 
+            // Configure the Gantt chart
             var options = {
                 series: [{
                     data: tasks.map(function(task) {
@@ -225,26 +231,18 @@
                                 new Date(task.end).getTime()
                             ],
                             fillColor: task.status === 'Completed' ? '#198754' :
-                                     task.status === 'In Progress' ? '#0d6efd' :
-                                     task.status === 'On Hold' ? '#ffc107' : '#6c757d',
+                                       task.status === 'In Progress' ? '#0d6efd' :
+                                       task.status === 'On Hold' ? '#ffc107' : '#6c757d',
                             assignee: task.assignee,
                             status: task.status
-                        }
+                        };
                     })
                 }],
                 chart: {
                     height: Math.max(350, tasks.length * 50),
                     type: 'rangeBar',
                     toolbar: {
-                        show: true,
-                        tools: {
-                            download: true,
-                            selection: true,
-                            zoom: true,
-                            zoomin: true,
-                            zoomout: true,
-                            pan: true,
-                        }
+                        show: false // Disable zooming and other toolbar options
                     }
                 },
                 plotOptions: {
@@ -264,7 +262,17 @@
                     }
                 },
                 xaxis: {
-                    type: 'datetime'
+                    type: 'datetime',
+                    min: projectStart, // Set the minimum to the project's start date
+                    max: projectEnd,   // Set the maximum to the project's end date
+                    labels: {
+                        datetimeFormatter: {
+                            year: 'yyyy',
+                            month: 'MMM yyyy',
+                            day: 'dd MMM',
+                            hour: 'HH:mm'
+                        }
+                    }
                 },
                 yaxis: {
                     show: true
@@ -289,8 +297,9 @@
                 }
             };
 
+            // Render the chart
             var chart = new ApexCharts(document.querySelector("#ganttChart"), options);
             chart.render();
         });
     </script>
-} 
+}

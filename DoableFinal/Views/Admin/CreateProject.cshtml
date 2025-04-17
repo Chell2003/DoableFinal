@@ -60,16 +60,6 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Priority" class="form-label"></label>
-                            <select asp-for="Priority" class="form-select">
-                                <option value="Low">Low</option>
-                                <option value="Medium">Medium</option>
-                                <option value="High">High</option>
-                            </select>
-                            <span asp-validation-for="Priority" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
                             <label asp-for="ClientId" class="form-label"></label>
                             <select asp-for="ClientId" asp-items="Model.Clients" class="form-select">
                                 <option value="">-- Select Client --</option>
@@ -97,29 +87,9 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Information</h5>
-                    <p class="card-text">
-                        Creating a project will:
-                    </p>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-check-circle text-success"></i> Set up project workspace</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Assign client and project manager</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Enable task creation</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Allow team member assignment</li>
-                    </ul>
-                    <p class="card-text">
-                        The project manager and client will be notified via email when the project is created.
-                    </p>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-} 
+}
