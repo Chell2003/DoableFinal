@@ -31,7 +31,6 @@
                             <th>Start Date</th>
                             <th>Due Date</th>
                             <th>Status</th>
-                            <th>Priority</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -52,14 +51,6 @@
                                         "Completed" => "success",
                                         _ => "secondary"
                                     })">@project.Status</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-@(project.Priority switch {
-                                        "Low" => "info",
-                                        "Medium" => "warning",
-                                        "High" => "danger",
-                                        _ => "secondary"
-                                    })">@project.Priority</span>
                                 </td>
                                 <td>
                                     <div class="btn-group">

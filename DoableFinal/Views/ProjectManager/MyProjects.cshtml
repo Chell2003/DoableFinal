@@ -29,7 +29,6 @@
                                 <th>Start Date</th>
                                 <th>End Date</th>
                                 <th>Status</th>
-                                <th>Priority</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -49,14 +48,6 @@
                                             "Completed" => "success",
                                             _ => "secondary"
                                         })">@project.Status</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-@(project.Priority switch {
-                                            "Low" => "info",
-                                            "Medium" => "warning",
-                                            "High" => "danger",
-                                            _ => "secondary"
-                                        })">@project.Priority</span>
                                     </td>
                                     <td>
                                         <a asp-controller="ProjectManager" asp-action="ProjectDetails" asp-route-id="@project.Id" class="btn btn-sm btn-outline-primary">

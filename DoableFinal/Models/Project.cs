@@ -18,9 +18,6 @@ namespace DoableFinal.Models
         public string Status { get; set; } // Not Started, In Progress, Completed, On Hold
 
         [Required]
-        public string Priority { get; set; } // Low, Medium, High
-
-        [Required]
         public string ClientId { get; set; }
         public ApplicationUser Client { get; set; }
 
