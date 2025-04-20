@@ -149,7 +149,7 @@ namespace DoableFinal.Controllers
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                Email = user.Email,
+                Email = user.Email ?? string.Empty,
                 Role = "Employee",
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
@@ -406,6 +406,44 @@ namespace DoableFinal.Controllers
             return RedirectToAction(nameof(TaskDetails), new { id });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddComment(int taskId, string commentText)
+        {
+            if (string.IsNullOrWhiteSpace(commentText))
+            {
+                TempData["ErrorMessage"] = "Comment text cannot be empty.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
+            }
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                TempData["ErrorMessage"] = "You must be logged in to post a comment.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
+            }
+
+            var task = await _context.Tasks.FindAsync(taskId);
+            if (task == null)
+            {
+                TempData["ErrorMessage"] = "Task not found.";
+                return RedirectToAction("Tasks");
+            }
+
+            var comment = new TaskComment
+            {
+                ProjectTaskId = taskId,
+                CommentText = commentText,
+                CreatedById = currentUser.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.TaskComments.Add(comment);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Comment posted successfully.";
+            return RedirectToAction("TaskDetails", new { id = taskId });
+        }
 
         public async Task<IActionResult> ProjectDetails(int id)
         {
@@ -440,11 +478,10 @@ namespace DoableFinal.Controllers
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.TaskAssignments) // Include task assignments
-                    .ThenInclude(ta => ta.Employee) // Include the employee assigned to the task   
-                .Include(t => t.CreatedBy) // Include the user who created the task
-                .Include(t => t.Project.ProjectManager) // Include the project manager
-                .Include(t => t.TaskAssignments) // Include task assignments
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
+                .Include(t => t.Comments)
+                    .ThenInclude(c => c.CreatedBy) // Include comment creator details
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null) return NotFound();

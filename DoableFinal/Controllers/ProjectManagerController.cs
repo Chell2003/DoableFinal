@@ -28,25 +28,31 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> Index()
         {
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null)
+            {
+                return NotFound();
+            }
+
+            var userId = currentUser.Id;
 
             // Get statistics
             ViewBag.MyProjects = await _context.Projects
-                .Where(p => p.ProjectManagerId == currentUser.Id)
+                .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == userId)
                 .CountAsync();
 
             ViewBag.MyTasks = await _context.Tasks
-                .Where(t => t.Project.ProjectManagerId == currentUser.Id)
+                .Where(t => t.Project != null && t.Project.ProjectManagerId != null && t.Project.ProjectManagerId == userId)
                 .CountAsync();
 
             ViewBag.OverdueTasks = await _context.Tasks
-                .Where(t => t.Project.ProjectManagerId == currentUser.Id &&
+                .Where(t => t.Project != null && t.Project.ProjectManagerId != null && t.Project.ProjectManagerId == userId &&
                             t.DueDate < DateTime.UtcNow &&
                             t.Status != "Completed")
                 .CountAsync();
 
             // Get recent projects
             ViewBag.RecentProjects = await _context.Projects
-                .Where(p => p.ProjectManagerId == currentUser.Id)
+                .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == userId)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(5)
                 .ToListAsync();
@@ -54,7 +60,7 @@ namespace DoableFinal.Controllers
             // Get team members
             ViewBag.TeamMembers = await _context.ProjectTeams
                 .Include(pt => pt.User)
-                .Where(pt => pt.Project.ProjectManagerId == currentUser.Id)
+                .Where(pt => pt.Project != null && pt.Project.ProjectManagerId != null && pt.Project.ProjectManagerId == userId)
                 .Select(pt => pt.User)
                 .Distinct()
                 .ToListAsync();
@@ -66,8 +72,7 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> Tasks()
         {
             var currentUser = await _userManager.GetUserAsync(User);
-
-            if (currentUser == null)
+            if (currentUser?.Id == null)
             {
                 return NotFound();
             }
@@ -77,27 +82,39 @@ namespace DoableFinal.Controllers
                 .Include(t => t.Project)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
-                .Where(t => t.Project.ProjectManagerId == currentUser.Id)
+                .Where(t => t.Project != null && t.Project.ProjectManagerId != null && t.Project.ProjectManagerId == currentUser.Id)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
             return View(tasks);
         }
 
-        [Authorize(Roles = "Project Manager")]
+        [HttpGet]
         public async Task<IActionResult> TaskDetails(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var task = await _context.Tasks
                 .Include(t => t.Project)
+                    .ThenInclude(p => p.ProjectTeams)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
-                .FirstOrDefaultAsync(t => t.Id == id && t.Project.ProjectManagerId == userId);
+                .Include(t => t.Comments)
+                    .ThenInclude(c => c.CreatedBy)
+                .FirstOrDefaultAsync(t => t.Id == id);
 
-            if (task == null)
+            if (task == null || task.Project == null || task.Project.ProjectTeams == null)
             {
                 return NotFound();
+            }
+
+            // Check if the user is part of the project team or assigned to the task
+            var isUserInProject = task.Project.ProjectTeams?.Any(pt => pt.UserId == userId) ?? false;
+            var isUserAssignedToTask = task.TaskAssignments?.Any(ta => ta.EmployeeId == userId) ?? false;
+
+            if (!isUserInProject && !isUserAssignedToTask && task.Project.ProjectManagerId != userId && task.Project.ClientId != userId)
+            {
+                return Forbid();
             }
 
             return View(task);
@@ -107,10 +124,14 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> CreateTask()
         {
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null)
+            {
+                return NotFound();
+            }
 
             // Fetch projects managed by the current Project Manager
             var projects = await _context.Projects
-                .Where(p => p.ProjectManagerId == currentUser.Id)
+                .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == currentUser.Id)
                 .ToListAsync();
 
             // Fetch employees assigned to the projects managed by the Project Manager
@@ -145,81 +166,67 @@ namespace DoableFinal.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Fetch the project to validate the dates
-                var project = await _context.Projects.FindAsync(model.ProjectId);
-                if (project == null)
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser?.Id == null)
                 {
-                    ModelState.AddModelError(string.Empty, "The selected project does not exist.");
-                }
-                else
-                {
-                    // Validate task dates against project dates
-                    if (model.StartDate < project.StartDate || model.DueDate > project.EndDate)
-                    {
-                        ModelState.AddModelError(string.Empty, $"Task dates must be within the project's start and end dates: {project.StartDate:yyyy-MM-dd} to {project.EndDate:yyyy-MM-dd}.");
-                    }
+                    ModelState.AddModelError(string.Empty, "Unable to identify the current user.");
+                    return View(model);
                 }
 
-                if (ModelState.IsValid)
+                var task = new ProjectTask
                 {
-                    var task = new ProjectTask
-                    {
-                        Title = model.Title,
-                        Description = model.Description,
-                        StartDate = model.StartDate,
-                        DueDate = model.DueDate,
-                        Status = model.Status,
-                        Priority = model.Priority,
-                        ProjectId = model.ProjectId,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                    Title = model.Title,
+                    Description = model.Description,
+                    StartDate = model.StartDate,
+                    DueDate = model.DueDate,
+                    Status = model.Status,
+                    Priority = model.Priority,
+                    ProjectId = model.ProjectId,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedById = currentUser.Id
+                };
 
-                    _context.Tasks.Add(task);
-                    await _context.SaveChangesAsync();
+                _context.Tasks.Add(task);
+                await _context.SaveChangesAsync();
 
-                    // Assign employees to the task
-                    if (model.AssignedToIds != null && model.AssignedToIds.Any())
+                // Add assignments if specified
+                if (model.AssignedToIds != null && model.AssignedToIds.Any())
+                {
+                    foreach (var employeeId in model.AssignedToIds)
                     {
-                        foreach (var employeeId in model.AssignedToIds)
+                        var taskAssignment = new TaskAssignment
                         {
-                            var taskAssignment = new TaskAssignment
-                            {
-                                ProjectTaskId = task.Id,
-                                EmployeeId = employeeId,
-                                AssignedAt = DateTime.UtcNow
-                            };
-                            _context.TaskAssignments.Add(taskAssignment);
-                        }
-                        await _context.SaveChangesAsync();
+                            ProjectTaskId = task.Id,
+                            EmployeeId = employeeId,
+                            AssignedAt = DateTime.UtcNow
+                        };
+                        _context.TaskAssignments.Add(taskAssignment);
                     }
-
-                    TempData["SuccessMessage"] = "Task created successfully.";
-                    return RedirectToAction(nameof(Index));
+                    await _context.SaveChangesAsync();
                 }
+
+                TempData["SuccessMessage"] = "Task created successfully.";
+                return RedirectToAction(nameof(Tasks));
             }
 
             // Reload dropdowns if validation fails
-            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUserReload = await _userManager.GetUserAsync(User);
+            if (currentUserReload?.Id == null)
+            {
+                return NotFound();
+            }
+
             var projects = await _context.Projects
-                .Where(p => p.ProjectManagerId == currentUser.Id)
+                .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == currentUserReload.Id)
                 .ToListAsync();
 
-            var employeesWithIncompleteTasks = await _context.TaskAssignments
-                .Where(ta => ta.ProjectTask.Status != "Completed")
-                .Select(ta => ta.EmployeeId)
-                .Distinct()
-                .ToListAsync();
-
+            // Get list of employees
             var employees = await _context.ProjectTeams
                 .Include(pt => pt.User)
-                .Where(pt => projects.Select(p => p.Id).Contains(pt.ProjectId))
+                .Where(pt => pt.Project != null && projects.Select(p => p.Id).Contains(pt.ProjectId))
                 .Select(pt => pt.User)
                 .Distinct()
                 .ToListAsync();
-
-            var assignableEmployees = employees
-                .Where(e => !employeesWithIncompleteTasks.Contains(e.Id))
-                .ToList();
 
             model.Projects = projects.Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
             {
@@ -227,7 +234,7 @@ namespace DoableFinal.Controllers
                 Text = p.Name
             }).ToList();
 
-            model.Employees = assignableEmployees.Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            model.Employees = employees.Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
             {
                 Value = e.Id,
                 Text = $"{e.FirstName} {e.LastName}"
@@ -258,13 +265,71 @@ namespace DoableFinal.Controllers
             return RedirectToAction(nameof(TaskDetails), new { id });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddComment(int taskId, string commentText)
+        {
+            if (string.IsNullOrWhiteSpace(commentText))
+            {
+                TempData["ErrorMessage"] = "Comment text cannot be empty.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
+            }
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                TempData["ErrorMessage"] = "You must be logged in to post a comment.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
+            }
+
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.Project.ProjectTeams)
+                .Include(t => t.TaskAssignments)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null)
+            {
+                TempData["ErrorMessage"] = "Task not found.";
+                return RedirectToAction("Tasks");
+            }
+
+            // Check if the user is part of the project team or assigned to the task
+            var isUserInProject = task.Project.ProjectTeams.Any(pt => pt.UserId == currentUser.Id);
+            var isUserAssignedToTask = task.TaskAssignments.Any(ta => ta.EmployeeId == currentUser.Id);
+
+            if (!isUserInProject && !isUserAssignedToTask && task.Project.ProjectManagerId != currentUser.Id && task.Project.ClientId != currentUser.Id)
+            {
+                TempData["ErrorMessage"] = "You are not authorized to comment on this task.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
+            }
+
+            var comment = new TaskComment
+            {
+                ProjectTaskId = taskId,
+                CommentText = commentText,
+                CreatedById = currentUser.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.TaskComments.Add(comment);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Comment posted successfully.";
+            return RedirectToAction("TaskDetails", new { id = taskId });
+        }
+
         public async Task<IActionResult> MyProjects()
         {
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null)
+            {
+                return NotFound();
+            }
 
             // Fetch projects assigned to the current Project Manager
             var projects = await _context.Projects
-                .Where(p => p.ProjectManagerId == currentUser.Id)
+                .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == currentUser.Id)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -304,7 +369,7 @@ namespace DoableFinal.Controllers
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                Email = user.Email,
+                Email = user.Email ?? string.Empty,
                 Role = "Project Manager",
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,

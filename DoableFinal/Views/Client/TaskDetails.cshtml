@@ -104,6 +104,107 @@
                     }
                 </div>
             </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-comments me-1"></i>
+                    Comments
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        @foreach (var comment in Model.Comments)
+                        {
+                            <li class="list-group-item">
+                                <strong>@comment.CreatedBy.FirstName @comment.CreatedBy.LastName</strong>
+                                <br />
+                                <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                <p>@comment.CommentText</p>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-comments me-1"></i>
+                    Comments
+                </div>
+                <div class="card-body">
+                    @if (User.IsInRole("Admin") || Model.TaskAssignments.Any(a => a.Employee.Email == User.Identity.Name) || User.Identity.Name == Model.Project.ProjectManager.Email || User.Identity.Name == Model.Project.Client.Email)
+                    {
+                        <form asp-action="AddComment" method="post">
+                            <div class="mb-3">
+                                <textarea name="CommentText" class="form-control" placeholder="Add a comment..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Post Comment</button>
+                        </form>
+                    }
+                    <hr />
+                    <ul class="list-group">
+                        @foreach (var comment in Model.Comments)
+                        {
+                            <li class="list-group-item">
+                                <strong>@comment.CreatedBy.FirstName @comment.CreatedBy.LastName</strong>
+                                <br />
+                                <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                <p>@comment.CommentText</p>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Gantt Chart -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Task Timeline
+                </div>
+                <div class="card-body">
+                    <div id="taskGanttChart"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var options = {
+                series: [{
+                    data: [{
+                        x: "@Model.Title",
+                        y: [
+                            new Date("@Model.StartDate.ToString("yyyy-MM-dd")").getTime(),
+                            new Date("@Model.DueDate.ToString("yyyy-MM-dd")").getTime()
+                        ],
+                        fillColor: '@(Model.Status switch {
+                            "Completed" => "#198754",
+                            "In Progress" => "#0d6efd",
+                            "On Hold" => "#ffc107",
+                            _ => "#6c757d"
+                        })'
+                    }]
+                }],
+                chart: {
+                    height: 350,
+                    type: 'rangeBar'
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true
+                    }
+                },
+                xaxis: {
+                    type: 'datetime'
+                }
+            };
+
+            var chart = new ApexCharts(document.querySelector("#taskGanttChart"), options);
+            chart.render();
+        });
+    </script>
+}

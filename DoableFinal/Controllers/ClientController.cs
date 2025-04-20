@@ -24,6 +24,10 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> Index()
         {
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null)
+            {
+                return NotFound();
+            }
 
             // Get statistics
             ViewBag.ProjectCount = await _context.Projects
@@ -31,14 +35,17 @@ namespace DoableFinal.Controllers
                 .CountAsync();
 
             ViewBag.TotalTasks = await _context.Tasks
+                .Include(t => t.Project)
                 .Where(t => t.Project.ClientId == currentUser.Id)
                 .CountAsync();
 
             ViewBag.CompletedTasks = await _context.Tasks
+                .Include(t => t.Project)
                 .Where(t => t.Project.ClientId == currentUser.Id && t.Status == "Completed")
                 .CountAsync();
 
             ViewBag.OverdueTasks = await _context.Tasks
+                .Include(t => t.Project)
                 .Where(t => t.Project.ClientId == currentUser.Id &&
                            t.DueDate < DateTime.UtcNow &&
                            t.Status != "Completed")
@@ -58,6 +65,7 @@ namespace DoableFinal.Controllers
             // Get project team members
             ViewBag.ProjectTeam = await _context.ProjectTeams
                 .Include(pt => pt.User)
+                .Include(pt => pt.Project)
                 .Where(pt => pt.Project.ClientId == currentUser.Id)
                 .Select(pt => pt.User)
                 .Distinct()
@@ -83,6 +91,10 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> Projects()
         {
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null)
+            {
+                return NotFound();
+            }
 
             var projects = await _context.Projects
                 .Include(p => p.ProjectManager)
@@ -98,6 +110,10 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> ProjectDetails(int id)
         {
             var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null)
+            {
+                return NotFound();
+            }
 
             var project = await _context.Projects
                 .Include(p => p.ProjectManager)
@@ -145,7 +161,7 @@ namespace DoableFinal.Controllers
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                Email = user.Email,
+                Email = user.Email ?? string.Empty,
                 Role = user.Role,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
@@ -267,14 +283,65 @@ namespace DoableFinal.Controllers
                 .Include(t => t.Project)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
+                .Include(t => t.Comments)
+                    .ThenInclude(c => c.CreatedBy)
                 .FirstOrDefaultAsync(t => t.Id == id && t.Project.ClientId == userId);
 
-            if (task == null)
+            if (task == null || task.Project == null)
             {
                 return NotFound();
             }
 
+            // Load project manager details to ensure it's available for the view
+            await _context.Entry(task.Project)
+                .Reference(p => p.ProjectManager)
+                .LoadAsync();
+
+            // Load client details
+            await _context.Entry(task.Project)
+                .Reference(p => p.Client)
+                .LoadAsync();
+
             return View(task);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddComment(int taskId, string commentText)
+        {
+            if (string.IsNullOrWhiteSpace(commentText))
+            {
+                TempData["ErrorMessage"] = "Comment text cannot be empty.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
+            }
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                TempData["ErrorMessage"] = "You must be logged in to post a comment.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
+            }
+
+            var task = await _context.Tasks.FindAsync(taskId);
+            if (task == null)
+            {
+                TempData["ErrorMessage"] = "Task not found.";
+                return RedirectToAction("Tasks");
+            }
+
+            var comment = new TaskComment
+            {
+                ProjectTaskId = taskId,
+                CommentText = commentText,
+                CreatedById = currentUser.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.TaskComments.Add(comment);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Comment posted successfully.";
+            return RedirectToAction("TaskDetails", new { id = taskId });
         }
 
         private async Task<Dictionary<int, int>> GetProjectProgress(IEnumerable<Project> projects)

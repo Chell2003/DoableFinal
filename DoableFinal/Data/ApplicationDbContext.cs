@@ -14,6 +14,7 @@ namespace DoableFinal.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTask> Tasks { get; set; }
         public DbSet<ProjectTeam> ProjectTeams { get; set; }
+        public DbSet<TaskComment> TaskComments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
