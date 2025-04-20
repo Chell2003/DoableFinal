@@ -15,6 +15,7 @@ namespace DoableFinal.Data
         public DbSet<ProjectTask> Tasks { get; set; }
         public DbSet<ProjectTeam> ProjectTeams { get; set; }
         public DbSet<TaskComment> TaskComments { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -53,7 +54,6 @@ namespace DoableFinal.Data
                 .HasForeignKey(t => t.CreatedById)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
             modelBuilder.Entity<ProjectTeam>()
                 .HasOne(pt => pt.Project)
                 .WithMany(p => p.ProjectTeams)
@@ -65,6 +65,12 @@ namespace DoableFinal.Data
                 .WithMany()
                 .HasForeignKey(pt => pt.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

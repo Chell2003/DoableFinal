@@ -6,6 +6,7 @@ using DoableFinal.Data;
 using DoableFinal.Models;
 using DoableFinal.ViewModels;
 using System.Security.Claims;
+using DoableFinal.Services; // Replace with the correct namespace for NotificationService
 
 namespace DoableFinal.Controllers
 {
@@ -16,13 +17,15 @@ namespace DoableFinal.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly TimelineAdjustmentService _timelineAdjustmentService;
         private readonly ILogger<ProjectManagerController> _logger;
+        private readonly NotificationService _notificationService;
 
-        public ProjectManagerController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, TimelineAdjustmentService timelineAdjustmentService, ILogger<ProjectManagerController> logger)
+        public ProjectManagerController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, TimelineAdjustmentService timelineAdjustmentService, ILogger<ProjectManagerController> logger, NotificationService notificationService)
         {
             _context = context;
             _userManager = userManager;
             _timelineAdjustmentService = timelineAdjustmentService;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index()
@@ -134,13 +137,8 @@ namespace DoableFinal.Controllers
                 .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == currentUser.Id)
                 .ToListAsync();
 
-            // Fetch employees assigned to the projects managed by the Project Manager
-            var employees = await _context.ProjectTeams
-                .Include(pt => pt.User)
-                .Where(pt => projects.Select(p => p.Id).Contains(pt.ProjectId))
-                .Select(pt => pt.User)
-                .Distinct()
-                .ToListAsync();
+            // Get all employees
+            var employees = await _userManager.GetUsersInRoleAsync("Employee");
 
             var viewModel = new CreateTaskViewModel
             {
@@ -156,6 +154,25 @@ namespace DoableFinal.Controllers
                     Text = $"{e.FirstName} {e.LastName}"
                 }).ToList()
             };
+
+            // Store full list of employees in ViewBag to filter dynamically via JavaScript
+            ViewBag.AllEmployees = await _context.Users
+                .Where(u => u.Role == "Employee")
+                .Select(u => new
+                {
+                    Id = u.Id,
+                    FullName = $"{u.FirstName} {u.LastName}",
+                    IncompleteTasks = _context.TaskAssignments
+                        .Where(ta => ta.EmployeeId == u.Id)
+                        .Join(_context.Tasks,
+                            ta => ta.ProjectTaskId,
+                            t => t.Id,
+                            (ta, t) => new { ProjectId = t.ProjectId, Status = t.Status })
+                        .Where(x => x.Status != "Completed")
+                        .Select(x => x.ProjectId)
+                        .ToList()
+                })
+                .ToListAsync();
 
             return View(viewModel);
         }
@@ -247,21 +264,45 @@ namespace DoableFinal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmTask(int id)
         {
-            var task = await _context.Tasks.FindAsync(id);
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                    .ThenInclude(p => p.Tasks)
+                .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
             {
                 return NotFound();
             }
 
-            // Confirm the task
+            // Verify the Project Manager is authorized for this task
+            if (task.Project.ProjectManagerId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+            {
+                return Forbid();
+            }
+
+            // Only allow confirmation if task is in "For Review" status
+            if (task.Status != "For Review")
+            {
+                TempData["ErrorMessage"] = "Task must be in 'For Review' status to be confirmed.";
+                return RedirectToAction(nameof(TaskDetails), new { id });
+            }
+
             task.Status = "Completed";
-            task.IsConfirmed = true;
+            task.CompletedAt = DateTime.UtcNow;
             task.UpdatedAt = DateTime.UtcNow;
+
+            // If task was overdue when completed, adjust other task timelines
+            if (task.DueDate < DateTime.UtcNow)
+            {
+                _timelineAdjustmentService.AdjustTaskTimelines(task.Project.Tasks);
+            }
 
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Task confirmed successfully.";
+            // Send notification
+            await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been marked as completed");
+
+            TempData["SuccessMessage"] = "Task has been confirmed as completed.";
             return RedirectToAction(nameof(TaskDetails), new { id });
         }
 
@@ -375,6 +416,90 @@ namespace DoableFinal.Controllers
                 LastLoginAt = user.LastLoginAt,
                 EmailNotificationsEnabled = user.EmailNotificationsEnabled
             };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditTask(EditTaskViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var task = await _context.Tasks
+                    .Include(t => t.TaskAssignments)
+                    .FirstOrDefaultAsync(t => t.Id == model.Id);
+
+                if (task == null)
+                {
+                    return NotFound();
+                }
+
+                var oldStatus = task.Status;
+                task.Title = model.Title;
+                task.Description = model.Description;
+                task.StartDate = model.StartDate;
+                task.DueDate = model.DueDate;
+                task.Status = model.Status;
+                task.Priority = model.Priority;
+                task.ProjectId = model.ProjectId;
+                task.UpdatedAt = DateTime.UtcNow;
+
+                // Handle task assignments - first remove existing assignments
+                var currentAssignments = await _context.TaskAssignments
+                    .Where(ta => ta.ProjectTaskId == task.Id)
+                    .ToListAsync();
+
+                _context.TaskAssignments.RemoveRange(currentAssignments);
+                await _context.SaveChangesAsync();
+
+                // Add new assignments
+                if (model.AssignedToIds != null && model.AssignedToIds.Any())
+                {
+                    foreach (var employeeId in model.AssignedToIds)
+                    {
+                        // Check if employee is already in project team
+                        var isInTeam = await _context.ProjectTeams
+                            .AnyAsync(pt => pt.ProjectId == model.ProjectId && pt.UserId == employeeId);
+
+                        // If not in team, add them
+                        if (!isInTeam)
+                        {
+                            var projectTeam = new ProjectTeam
+                            {
+                                ProjectId = model.ProjectId,
+                                UserId = employeeId,
+                                Role = "Team Member",
+                                JoinedAt = DateTime.UtcNow
+                            };
+                            _context.ProjectTeams.Add(projectTeam);
+                        }
+
+                        // Create new task assignment
+                        var taskAssignment = new TaskAssignment
+                        {
+                            ProjectTaskId = task.Id,
+                            EmployeeId = employeeId,
+                            AssignedAt = DateTime.UtcNow
+                        };
+                        _context.TaskAssignments.Add(taskAssignment);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Send notification if status changed
+                if (oldStatus != task.Status)
+                {
+                    await _notificationService.NotifyTaskUpdateAsync(task, $"Task status updated from {oldStatus} to {task.Status}");
+                }
+
+                TempData["SuccessMessage"] = "Task updated successfully.";
+                return RedirectToAction(nameof(Tasks));
+            }
+
+            ViewBag.Projects = await _context.Projects.ToListAsync();
+            ViewBag.Employees = await _context.Users.Where(u => u.Role == "Employee").ToListAsync();
 
             return View(model);
         }

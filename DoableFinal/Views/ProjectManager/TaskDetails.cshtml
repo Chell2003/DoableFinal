@@ -86,6 +86,25 @@
                             </div>
                         </div>
                     }
+                    @if (Model.Status == "For Review")
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-3 fw-bold">Proof of Completion:</div>
+                            <div class="col-md-9">
+                                @if (!string.IsNullOrEmpty(Model.ProofFilePath))
+                                {
+                                    <a href="@Url.Content(Model.ProofFilePath)" target="_blank" class="btn btn-outline-primary mb-2">
+                                        <i class="fas fa-file"></i> View Proof
+                                    </a>
+                                    <form asp-action="ConfirmTask" asp-route-id="@Model.Id" method="post">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-check-circle"></i> Confirm Completion
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
 

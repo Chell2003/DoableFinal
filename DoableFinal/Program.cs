@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using DoableFinal.Data;
 using DoableFinal.Models;
+using DoableFinal.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 // Register the TimelineAdjustmentService
 builder.Services.AddScoped<TimelineAdjustmentService>();
+builder.Services.AddScoped<NotificationService>();
 
 // Configure cookie policy
 builder.Services.ConfigureApplicationCookie(options =>

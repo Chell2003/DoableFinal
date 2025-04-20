@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using DoableFinal.Data;
 using DoableFinal.Models;
 using DoableFinal.ViewModels;
+using DoableFinal.Services; // Replace with the correct namespace for NotificationService
 
 namespace DoableFinal.Controllers
 {
@@ -14,12 +15,14 @@ namespace DoableFinal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly TimelineAdjustmentService _timelineAdjustmentService;
+        private readonly NotificationService _notificationService;
 
-        public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, TimelineAdjustmentService timelineAdjustmentService)
+        public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, TimelineAdjustmentService timelineAdjustmentService, NotificationService notificationService)
         {
             _context = context;
             _userManager = userManager;
             _timelineAdjustmentService = timelineAdjustmentService;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index()
@@ -236,18 +239,7 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> CreateTask()
         {
             var projects = await _context.Projects.ToListAsync();
-
-            // Fetch employees who do not have incomplete tasks
-            var employeesWithIncompleteTasks = await _context.TaskAssignments
-                .Where(ta => ta.ProjectTask.Status != "Completed")
-                .Select(ta => ta.EmployeeId)
-                .Distinct()
-                .ToListAsync();
-
             var employees = await _userManager.GetUsersInRoleAsync("Employee");
-            var assignableEmployees = employees
-                .Where(e => !employeesWithIncompleteTasks.Contains(e.Id))
-                .ToList();
 
             var viewModel = new CreateTaskViewModel
             {
@@ -257,12 +249,31 @@ namespace DoableFinal.Controllers
                     Text = p.Name
                 }).ToList(),
 
-                Employees = assignableEmployees.Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                Employees = employees.Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
                 {
                     Value = e.Id,
                     Text = $"{e.FirstName} {e.LastName}"
                 }).ToList()
             };
+
+            // Store full list of employees in ViewBag to filter dynamically via JavaScript
+            ViewBag.AllEmployees = await _context.Users
+                .Where(u => u.Role == "Employee")
+                .Select(u => new
+                {
+                    Id = u.Id,
+                    FullName = $"{u.FirstName} {u.LastName}",
+                    IncompleteTasks = _context.TaskAssignments
+                        .Where(ta => ta.EmployeeId == u.Id)
+                        .Join(_context.Tasks,
+                            ta => ta.ProjectTaskId,
+                            t => t.Id,
+                            (ta, t) => new { ProjectId = t.ProjectId, Status = t.Status })
+                        .Where(x => x.Status != "Completed")
+                        .Select(x => x.ProjectId)
+                        .ToList()
+                })
+                .ToListAsync();
 
             return View(viewModel);
         }
@@ -595,6 +606,7 @@ namespace DoableFinal.Controllers
                     return NotFound();
                 }
 
+                var oldStatus = project.Status;
                 project.Name = model.Name;
                 project.Description = model.Description;
                 project.StartDate = model.StartDate;
@@ -605,6 +617,13 @@ namespace DoableFinal.Controllers
                 project.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
+
+                // Send notification if status changed
+                if (oldStatus != project.Status)
+                {
+                    await _notificationService.NotifyProjectUpdateAsync(project, $"Project status updated from {oldStatus} to {project.Status}");
+                }
+
                 TempData["SuccessMessage"] = "Project updated successfully.";
                 return RedirectToAction(nameof(Projects));
             }
@@ -682,6 +701,7 @@ namespace DoableFinal.Controllers
                     return NotFound();
                 }
 
+                var oldStatus = task.Status;
                 task.Title = model.Title;
                 task.Description = model.Description;
                 task.StartDate = model.StartDate;
@@ -733,6 +753,13 @@ namespace DoableFinal.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                // Send notification if status changed
+                if (oldStatus != task.Status)
+                {
+                    await _notificationService.NotifyTaskUpdateAsync(task, $"Task status updated from {oldStatus} to {task.Status}");
+                }
+
                 TempData["SuccessMessage"] = "Task updated successfully.";
                 return RedirectToAction(nameof(Tasks));
             }
@@ -836,6 +863,35 @@ namespace DoableFinal.Controllers
             }
 
             return View(project);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmTask(int id)
+        {
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            // Only allow confirmation if task is in "For Review" status
+            if (task.Status != "For Review")
+            {
+                TempData["ErrorMessage"] = "Task must be in 'For Review' status to be confirmed.";
+                return RedirectToAction(nameof(TaskDetails), new { id });
+            }
+
+            task.Status = "Completed";
+            task.CompletedAt = DateTime.UtcNow;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Task has been confirmed as completed.";
+            return RedirectToAction(nameof(TaskDetails), new { id });
         }
     }
 }

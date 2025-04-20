@@ -15,11 +15,13 @@ namespace DoableFinal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly TimelineAdjustmentService _timelineAdjustmentService;
 
-        public EmployeeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public EmployeeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, TimelineAdjustmentService timelineAdjustmentService)
         {
             _context = context;
             _userManager = userManager;
+            _timelineAdjustmentService = timelineAdjustmentService;
         }
 
         public async Task<IActionResult> Index()
@@ -231,132 +233,6 @@ namespace DoableFinal.Controllers
             return View(tasks);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> UpdateTaskStatus(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            // Check if user is assigned to this task
-            var isUserAssigned = await _context.TaskAssignments
-                .AnyAsync(ta => ta.ProjectTaskId == id && ta.EmployeeId == user.Id);
-
-            if (!isUserAssigned)
-            {
-                return NotFound();
-            }
-
-            var task = await _context.Tasks
-                .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.Id == id);
-
-            if (task == null)
-            {
-                return NotFound();
-            }
-
-            var model = new UpdateTaskStatusViewModel
-            {
-                Id = task.Id,
-                Status = task.Status
-            };
-
-            return View(model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateTaskStatus(int id, UpdateTaskStatusViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            // Check if user is assigned to this task
-            var isUserAssigned = await _context.TaskAssignments
-                .AnyAsync(ta => ta.ProjectTaskId == id && ta.EmployeeId == user.Id);
-
-            if (!isUserAssigned)
-            {
-                return NotFound();
-            }
-
-            var task = await _context.Tasks
-                .FirstOrDefaultAsync(t => t.Id == id);
-
-            if (task == null)
-            {
-                return NotFound();
-            }
-
-            task.Status = model.Status;
-            task.UpdatedAt = DateTime.UtcNow;
-
-            if (model.Status == "Completed")
-            {
-                task.CompletedAt = DateTime.UtcNow;
-            }
-
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Task status updated successfully.";
-            return RedirectToAction(nameof(Tasks));
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateTaskStatusForm(int id, UpdateTaskStatusViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View("UpdateTaskStatus", model);
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            // Check if user is assigned to this task
-            var isUserAssigned = await _context.TaskAssignments
-                .AnyAsync(ta => ta.ProjectTaskId == id && ta.EmployeeId == user.Id);
-
-            if (!isUserAssigned)
-            {
-                return NotFound();
-            }
-
-            var task = await _context.Tasks
-                .FirstOrDefaultAsync(t => t.Id == id);
-
-            if (task == null)
-            {
-                return NotFound();
-            }
-
-            task.Status = model.Status;
-            task.UpdatedAt = DateTime.UtcNow;
-
-            if (model.Status == "Completed")
-            {
-                task.CompletedAt = DateTime.UtcNow;
-            }
-
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Task status updated successfully.";
-            return RedirectToAction(nameof(Tasks));
-        }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadProof(int id, IFormFile proofFile)
@@ -389,14 +265,14 @@ namespace DoableFinal.Controllers
                     await proofFile.CopyToAsync(stream);
                 }
 
-                // Update the task with the file path and mark it as "Pending Confirmation"
+                // Update the task with the file path and mark it as "For Review"
                 task.ProofFilePath = $"/uploads/{Path.GetFileName(filePath)}";
-                task.Status = "Pending Confirmation";
+                task.Status = "For Review";
                 task.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Proof uploaded successfully. Waiting for Project Manager confirmation.";
+                TempData["SuccessMessage"] = "Task submitted for review successfully. Waiting for Project Manager confirmation.";
             }
             else
             {

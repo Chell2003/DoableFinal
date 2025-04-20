@@ -344,6 +344,34 @@ namespace DoableFinal.Controllers
             return RedirectToAction("TaskDetails", new { id = taskId });
         }
 
+        public async Task<IActionResult> Notifications()
+        {
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier))
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync();
+
+            return View(notifications);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+
+            if (notification == null)
+            {
+                return NotFound();
+            }
+
+            notification.IsRead = true;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Notifications));
+        }
+
         private async Task<Dictionary<int, int>> GetProjectProgress(IEnumerable<Project> projects)
         {
             var progress = new Dictionary<int, int>();

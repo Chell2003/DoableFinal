@@ -104,3 +104,31 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            const allEmployees = @Html.Raw(Json.Serialize(ViewBag.AllEmployees));
+            
+            $('#ProjectId').change(function() {
+                const selectedProjectId = parseInt($(this).val());
+                const assignedToSelect = $('#AssignedToIds');
+                
+                // Clear current options
+                assignedToSelect.empty();
+                
+                // Filter employees based on the selected project
+                const availableEmployees = allEmployees.filter(employee => {
+                    // Employee can be assigned if they don't have incomplete tasks in this project
+                    return !employee.incompleteTasks.includes(selectedProjectId);
+                });
+                
+                // Add filtered employees to select
+                availableEmployees.forEach(employee => {
+                    assignedToSelect.append(new Option(employee.fullName, employee.id));
+                });
+            });
+        });
+    </script>
+}

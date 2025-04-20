@@ -23,11 +23,6 @@
                         <i class="fas fa-tasks me-1"></i>
                         Task Information
                     </div>
-                    <div>
-                        <a asp-controller="Employee" asp-action="UpdateTaskStatus" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
-                            <i class="fas fa-edit"></i> Update Status
-                        </a>
-                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row mb-3">
@@ -152,21 +147,22 @@
             </div>
 
             <!-- Upload Proof -->
-            @if (Model.Status == "Completed" || Model.Status == "Pending Confirmation")
+            @if (Model.Status != "For Review" && Model.Status != "Completed")
             {
                 <div class="card mb-4">
                     <div class="card-header">
                         <i class="fas fa-upload me-1"></i>
-                        Upload Proof of Completion
+                        Submit Task for Review
                     </div>
                     <div class="card-body">
                         <form asp-action="UploadProof" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <label for="proofFile" class="form-label">Upload File</label>
-                                <input type="file" name="proofFile" id="proofFile" class="form-control" />
+                                <p>Upload proof of work to submit this task for review. The task status will automatically change to "For Review".</p>
+                                <label for="proofFile" class="form-label">Upload Proof File</label>
+                                <input type="file" name="proofFile" id="proofFile" class="form-control" required />
                             </div>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-upload"></i> Upload Proof
+                                <i class="fas fa-upload"></i> Submit for Review
                             </button>
                         </form>
                     </div>

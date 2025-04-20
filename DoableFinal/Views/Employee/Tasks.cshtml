@@ -6,33 +6,6 @@
 }
 
 <div class="container-fluid px-4">
-    
-
-    <!-- Toast Notifications -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header bg-success text-white">
-                <i class="fas fa-check-circle me-2"></i>
-                <strong class="me-auto">Success</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body">
-                Task status updated successfully.
-            </div>
-        </div>
-
-        <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header bg-danger text-white">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                <strong class="me-auto">Error</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body">
-                Failed to update task status. Please try again.
-            </div>
-        </div>
-    </div>
-
     <div class="container py-4">
         <div class="row">
             <div class="col-12">
@@ -62,16 +35,9 @@
                                     {
                                         <tr data-task-id="@task.Id">
                                             <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="form-check me-2">
-                                                        <input class="form-check-input" type="checkbox" 
-                                                               @(task.Status == "Completed" ? "checked" : "") 
-                                                               onchange="updateTaskStatus(@task.Id, this.checked)">
-                                                    </div>
-                                                    <div>
-                                                        <h6 class="mb-0">@task.Title</h6>
-                                                        <small class="text-muted">@task.Description</small>
-                                                    </div>
+                                                <div>
+                                                    <h6 class="mb-0">@task.Title</h6>
+                                                    <small class="text-muted">@task.Description</small>
                                                 </div>
                                             </td>
                                             <td>
@@ -80,6 +46,7 @@
                                             </td>
                                             <td>
                                                 <span class="badge bg-@(task.Status == "Completed" ? "success" : 
+                                                            task.Status == "For Review" ? "info" :
                                                             task.Status == "In Progress" ? "primary" : 
                                                             task.Status == "On Hold" ? "warning" : "secondary")">
                                                     @task.Status
@@ -122,44 +89,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        function updateTaskStatus(taskId, isCompleted) {
-            const status = isCompleted ? 'Completed' : 'In Progress';
-            
-            // Make AJAX call to update task status
-            fetch(`/Employee/UpdateTaskStatus/${taskId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify({ status: status })
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Update UI
-                    const badge = document.querySelector(`tr[data-task-id="${taskId}"] .badge`);
-                    if (badge) {
-                        badge.textContent = status;
-                        badge.className = `badge bg-${isCompleted ? 'success' : 'primary'}`;
-                    }
-                    
-                    // Show success message
-                    const toast = new bootstrap.Toast(document.getElementById('successToast'));
-                    toast.show();
-                } else {
-                    // Show error message
-                    const toast = new bootstrap.Toast(document.getElementById('errorToast'));
-                    toast.show();
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                const toast = new bootstrap.Toast(document.getElementById('errorToast'));
-                toast.show();
-            });
-        }
-    </script>
-} 

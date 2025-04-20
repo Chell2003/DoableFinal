@@ -29,7 +29,7 @@
             <div class="sidebar-user">
                 <div class="user-info">
                     <i class="bi bi-person-circle"></i>
-                    <span>@User.Identity.Name</span>
+                    <span>@(User.Identity?.Name ?? "Guest")</span>
                 </div>
             </div>
 
@@ -44,6 +44,12 @@
                     <a asp-controller="Client" asp-action="Projects">
                         <i class="bi bi-folder"></i>
                         <span>Projects</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Client" asp-action="Notifications">
+                        <i class="bi bi-bell"></i>
+                        <span>Notifications</span>
                     </a>
                 </li>
                 <li>
@@ -74,6 +80,14 @@
                     <span class="navbar-text">
                         @ViewData["Title"]
                     </span>
+                    <div class="ms-auto">
+                        <ul class="navbar-nav">
+                            @if (User.IsInRole("Client"))
+                            {
+                                @await Html.PartialAsync("_NotificationsBadge")
+                            }
+                        </ul>
+                    </div>
                 </div>
             </nav>
 
@@ -100,4 +114,4 @@
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-</html> 
+</html>
