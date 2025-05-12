@@ -3,181 +3,72 @@
 @{
     ViewData["Title"] = "Task Details";
     var dateFormat = "MMM dd, yyyy";
+    var dateTimeFormat = "MMM dd, yyyy HH:mm";
 }
 
 <div class="container-fluid px-4">
     <h1 class="mt-4">Task Details</h1>
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Index">Dashboard</a></li>
-        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Tasks">My Tasks</a></li>
+        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Tasks">Tasks</a></li>
         <li class="breadcrumb-item active">Task Details</li>
     </ol>
 
     <div class="row">
         <div class="col-xl-8">
             <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-tasks me-1"></i>
-                    Task Information
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-tasks me-1"></i>
+                        Task Information
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Title:</div>
-                        <div class="col-md-9">@Model.Title</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Description:</div>
-                        <div class="col-md-9">@Model.Description</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Project:</div>
-                        <div class="col-md-9">
-                            <a asp-controller="ProjectManager" asp-action="ProjectDetails" asp-route-id="@Model.ProjectId">@Model.Project.Name</a>
+                    <h5 class="card-title">@Model.Title</h5>
+                    <p class="card-text">@Model.Description</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-@(Model.Status switch {
+                                    "Not Started" => "secondary",
+                                    "In Progress" => "primary",
+                                    "On Hold" => "warning",
+                                    "Completed" => "success",
+                                    _ => "secondary"
+                                })">@Model.Status</span>
+                            </p>
+                            <p><strong>Priority:</strong> 
+                                <span class="badge bg-@(Model.Priority switch {
+                                    "Low" => "info",
+                                    "Medium" => "warning",
+                                    "High" => "danger",
+                                    _ => "secondary"
+                                })">@Model.Priority</span>
+                            </p>
+                            <p><strong>Start Date:</strong> @Model.StartDate.ToString(dateFormat)</p>
+                            <p><strong>Due Date:</strong> 
+                                <span class="@(Model.DueDate < DateTime.Now && Model.Status != "Completed" ? "text-danger" : "")">
+                                    @Model.DueDate.ToString(dateFormat)
+                                </span>
+                            </p>
                         </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Start Date:</div>
-                        <div class="col-md-9">@Model.StartDate.ToString(dateFormat)</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Due Date:</div>
-                        <div class="col-md-9">@Model.DueDate.ToString(dateFormat)</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Status:</div>
-                        <div class="col-md-9">
-                            <span class="badge bg-@(Model.Status switch {
-                                "Not Started" => "secondary",
-                                "In Progress" => "primary",
-                                "On Hold" => "warning",
-                                "Completed" => "success",
-                                _ => "secondary"
-                            })">@Model.Status</span>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Priority:</div>
-                        <div class="col-md-9">
-                            <span class="badge bg-@(Model.Priority switch {
-                                "Low" => "info",
-                                "Medium" => "warning",
-                                "High" => "danger",
-                                _ => "secondary"
-                            })">@Model.Priority</span>
-                        </div>
-                    </div>
-                    @if (!string.IsNullOrEmpty(Model.ProofFilePath))
-                    {
-                        <div class="row mb-3">
-                            <div class="col-md-3 fw-bold">Proof of Completion:</div>
-                            <div class="col-md-9">
-                                <a href="@Url.Content(Model.ProofFilePath)" target="_blank" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-file-alt"></i> View Proof
+                        <div class="col-md-6">
+                            <p><strong>Project:</strong> 
+                                <a asp-controller="ProjectManager" asp-action="ProjectDetails" asp-route-id="@Model.ProjectId">
+                                    @Model.Project.Name
                                 </a>
-                            </div>
+                            </p>
+                            <p><strong>Created By:</strong> @Model.CreatedBy?.FirstName @Model.CreatedBy?.LastName</p>
+                            <p><strong>Created At:</strong> @Model.CreatedAt.ToString(dateTimeFormat)</p>
+                            @if (Model.UpdatedAt.HasValue)
+                            {
+                                <p><strong>Last Updated:</strong> @Model.UpdatedAt.Value.ToString(dateTimeFormat)</p>
+                            }
                         </div>
-                    }
-                    else
-                    {
-                        <div class="row mb-3">
-                            <div class="col-md-3 fw-bold">Proof of Completion:</div>
-                            <div class="col-md-9">
-                                <span class="text-muted">No proof uploaded.</span>
-                            </div>
-                        </div>
-                    }
-                    @if (Model.Status == "For Review")
-                    {
-                        <div class="row mb-3">
-                            <div class="col-md-3 fw-bold">Proof of Completion:</div>
-                            <div class="col-md-9">
-                                @if (!string.IsNullOrEmpty(Model.ProofFilePath))
-                                {
-                                    <a href="@Url.Content(Model.ProofFilePath)" target="_blank" class="btn btn-outline-primary mb-2">
-                                        <i class="fas fa-file"></i> View Proof
-                                    </a>
-                                    <form asp-action="ConfirmTask" asp-route-id="@Model.Id" method="post">
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-check-circle"></i> Confirm Completion
-                                        </button>
-                                    </form>
-                                }
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-comments me-1"></i>
-                    Comments
-                </div>
-                <div class="card-body">
-                    <ul class="list-group">
-                        @foreach (var comment in Model.Comments)
-                        {
-                            <li class="list-group-item">
-                                <strong>@comment.CreatedBy.FirstName @comment.CreatedBy.LastName</strong>
-                                <br />
-                                <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
-                                <p>@comment.CommentText</p>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
-
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-comments me-1"></i>
-                    Comments
-                </div>
-                <div class="card-body">
-                    @if (User.IsInRole("Admin") || (Model.TaskAssignments != null && Model.TaskAssignments.Any(a => a.Employee?.Email == User.Identity.Name)) || (Model.Project?.ProjectManager?.Email == User.Identity.Name) || (Model.Project?.Client?.Email == User.Identity.Name))
-                    {
-                        <form asp-action="AddComment" method="post">
-                            <div class="mb-3">
-                                <textarea name="CommentText" class="form-control" placeholder="Add a comment..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Post Comment</button>
-                        </form>
-                    }
-                    <hr />
-                    <ul class="list-group">
-                        @foreach (var comment in Model.Comments)
-                        {
-                            <li class="list-group-item">
-                                <strong>@comment.CreatedBy.FirstName @comment.CreatedBy.LastName</strong>
-                                <br />
-                                <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
-                                <p>@comment.CommentText</p>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
-            @if (Model.Status == "Pending Confirmation" && !Model.IsConfirmed)
-            {
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="fas fa-check-circle me-1"></i>
-                        Confirm Task Completion
-                    </div>
-                    <div class="card-body">
-                        <p>Proof of completion has been uploaded. Please review and confirm the task.</p>
-                        <a href="@Model.ProofFilePath" target="_blank" class="btn btn-outline-primary">
-                            <i class="fas fa-file"></i> View Proof
-                        </a>
-                        <form asp-action="ConfirmTask" asp-route-id="@Model.Id" method="post" class="mt-3">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-check-circle"></i> Confirm Task
-                            </button>
-                        </form>
                     </div>
                 </div>
-            }
-
+            </div>
 
             <!-- Assigned Employees -->
             <div class="card mb-4">
@@ -206,50 +97,73 @@
                 </div>
             </div>
 
-            <!-- Gantt Chart -->
+            <!-- Task Timeline -->
+            <partial name="_TaskTimeline" model="Model" />
+
+            <!-- Comments Section -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-chart-bar me-1"></i>
-                    Task Timeline
+                    <i class="fas fa-comments me-1"></i>
+                    Comments
                 </div>
                 <div class="card-body">
-                    <div id="taskGanttChart"></div>
+                    @if (Model.Comments != null && Model.Comments.Any())
+                    {
+                        foreach (var comment in Model.Comments.OrderByDescending(c => c.CreatedAt))
+                        {
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-circle">
+                                        <span class="initials">
+                                            @(comment.CreatedBy?.FirstName?.FirstOrDefault() ?? 'U')
+                                            @(comment.CreatedBy?.LastName?.FirstOrDefault() ?? 'S')
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-1">
+                                            @(comment.CreatedBy?.FirstName ?? "Unknown") @(comment.CreatedBy?.LastName ?? "User")
+                                        </h6>
+                                        <small class="text-muted">@comment.CreatedAt.ToString(dateTimeFormat)</small>
+                                    </div>
+                                    <p class="mb-1">@comment.CommentText</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No comments yet.</p>
+                    }
+
+                    <form asp-action="AddComment" method="post" class="mt-4">
+                        <input type="hidden" name="taskId" value="@Model.Id" />
+                        <div class="mb-3">
+                            <textarea name="commentText" class="form-control" rows="3" placeholder="Add a comment..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Post Comment</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var options = {
-                series: [{
-                    data: [{
-                        x: "@Model.Title",
-                        y: [
-                            new Date("@Model.StartDate.ToString("yyyy-MM-dd")").getTime(),
-                            new Date("@Model.DueDate.ToString("yyyy-MM-dd")").getTime()
-                        ],
-                        fillColor: '#0d6efd'
-                    }]
-                }],
-                chart: {
-                    height: 350,
-                    type: 'rangeBar'
-                },
-                plotOptions: {
-                    bar: {
-                        horizontal: true
-                    }
-                },
-                xaxis: {
-                    type: 'datetime'
-                }
-            };
+<style>
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        background-color: #0d6efd;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-            var chart = new ApexCharts(document.querySelector("#taskGanttChart"), options);
-            chart.render();
-        });
-    </script>
-}
+    .initials {
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+    }
+</style>

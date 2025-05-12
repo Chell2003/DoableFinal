@@ -7,6 +7,7 @@ using DoableFinal.Models;
 using DoableFinal.ViewModels;
 using System.Security.Claims;
 using DoableFinal.Services; // Replace with the correct namespace for NotificationService
+using System.Linq;
 
 namespace DoableFinal.Controllers
 {
@@ -111,9 +112,15 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
+            // Initialize Comments collection if null
+            if (task.Comments == null)
+            {
+                task.Comments = new List<TaskComment>();
+            }
+
             // Check if the user is part of the project team or assigned to the task
-            var isUserInProject = task.Project.ProjectTeams?.Any(pt => pt.UserId == userId) ?? false;
-            var isUserAssignedToTask = task.TaskAssignments?.Any(ta => ta.EmployeeId == userId) ?? false;
+            var isUserInProject = task.Project.ProjectTeams.Any(pt => pt.UserId == userId);
+            var isUserAssignedToTask = task.TaskAssignments.Any(ta => ta.EmployeeId == userId);
 
             if (!isUserInProject && !isUserAssignedToTask && task.Project.ProjectManagerId != userId && task.Project.ClientId != userId)
             {
@@ -325,7 +332,7 @@ namespace DoableFinal.Controllers
 
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.Project.ProjectTeams)
+                    .ThenInclude(p => p.ProjectTeams)
                 .Include(t => t.TaskAssignments)
                 .FirstOrDefaultAsync(t => t.Id == taskId);
 
@@ -335,11 +342,20 @@ namespace DoableFinal.Controllers
                 return RedirectToAction("Tasks");
             }
 
-            // Check if the user is part of the project team or assigned to the task
+            // Initialize ProjectTeams if null
+            if (task.Project.ProjectTeams == null)
+            {
+                task.Project.ProjectTeams = new List<ProjectTeam>();
+            }
+
+            // Check if the user is authorized to comment
             var isUserInProject = task.Project.ProjectTeams.Any(pt => pt.UserId == currentUser.Id);
             var isUserAssignedToTask = task.TaskAssignments.Any(ta => ta.EmployeeId == currentUser.Id);
+            var isUserProjectManager = task.Project.ProjectManagerId == currentUser.Id;
+            var isUserClient = task.Project.ClientId == currentUser.Id;
+            var isUserAdmin = await _userManager.IsInRoleAsync(currentUser, "Admin");
 
-            if (!isUserInProject && !isUserAssignedToTask && task.Project.ProjectManagerId != currentUser.Id && task.Project.ClientId != currentUser.Id)
+            if (!isUserInProject && !isUserAssignedToTask && !isUserProjectManager && !isUserClient && !isUserAdmin)
             {
                 TempData["ErrorMessage"] = "You are not authorized to comment on this task.";
                 return RedirectToAction("TaskDetails", new { id = taskId });
@@ -368,11 +384,26 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            // Fetch projects assigned to the current Project Manager
+            // Fetch projects managed by the current Project Manager
             var projects = await _context.Projects
-                .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == currentUser.Id)
+                .Include(p => p.Client)
+                .Include(p => p.ProjectManager)
+                .Include(p => p.Tasks)
+                .Where(p => p.ProjectManagerId == currentUser.Id)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
+
+            // Calculate project progress
+            var projectProgress = new Dictionary<int, int>();
+            foreach (var project in projects)
+            {
+                var totalTasks = project.Tasks.Count;
+                var completedTasks = project.Tasks.Count(t => t.Status == "Completed");
+                projectProgress[project.Id] = totalTasks > 0
+                    ? (int)Math.Round((double)completedTasks / totalTasks * 100)
+                    : 0;
+            }
+            ViewBag.ProjectProgress = projectProgress;
 
             return View(projects);
         }
@@ -385,14 +416,32 @@ namespace DoableFinal.Controllers
                 .Include(p => p.ProjectManager)
                 .Include(p => p.Tasks)
                     .ThenInclude(t => t.TaskAssignments)
+                        .ThenInclude(ta => ta.Employee)
                 .Include(p => p.ProjectTeams)
                     .ThenInclude(pt => pt.User)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (project == null)
             {
-                return NotFound(); // Handle the case where the project is not found
+                return NotFound();
             }
+
+            // Calculate project progress
+            var totalTasks = project.Tasks.Count;
+            var completedTasks = project.Tasks.Count(t => t.Status == "Completed");
+            ViewBag.ProjectProgress = totalTasks > 0
+                ? (int)Math.Round((double)completedTasks / totalTasks * 100)
+                : 0;
+
+            // Get member task counts
+            var memberTaskCounts = new Dictionary<string, int>();
+            foreach (var teamMember in project.ProjectTeams.Select(pt => pt.User))
+            {
+                var taskCount = project.Tasks
+                    .Count(t => t.TaskAssignments.Any(ta => ta.EmployeeId == teamMember.Id));
+                memberTaskCounts[teamMember.Id] = taskCount;
+            }
+            ViewBag.MemberTaskCounts = memberTaskCounts;
 
             return View(project);
         }

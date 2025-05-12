@@ -16,6 +16,10 @@ namespace DoableFinal.Data
         public DbSet<ProjectTeam> ProjectTeams { get; set; }
         public DbSet<TaskComment> TaskComments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<TicketComment> TicketComments { get; set; }
+        public DbSet<TicketAttachment> TicketAttachments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +58,50 @@ namespace DoableFinal.Data
                 .HasForeignKey(t => t.CreatedById)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Ticket relationships
+            modelBuilder.Entity<Ticket>()
+                .HasOne(t => t.Project)
+                .WithMany()
+                .HasForeignKey(t => t.ProjectId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Ticket>()
+                .HasOne(t => t.AssignedTo)
+                .WithMany()
+                .HasForeignKey(t => t.AssignedToId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Ticket>()
+                .HasOne(t => t.CreatedBy)
+                .WithMany()
+                .HasForeignKey(t => t.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TicketComment>()
+                .HasOne(tc => tc.Ticket)
+                .WithMany(t => t.Comments)
+                .HasForeignKey(tc => tc.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TicketComment>()
+                .HasOne(tc => tc.CreatedBy)
+                .WithMany()
+                .HasForeignKey(tc => tc.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TicketAttachment>()
+                .HasOne(ta => ta.Ticket)
+                .WithMany(t => t.Attachments)
+                .HasForeignKey(ta => ta.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TicketAttachment>()
+                .HasOne(ta => ta.UploadedBy)
+                .WithMany()
+                .HasForeignKey(ta => ta.UploadedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Other existing relationships
             modelBuilder.Entity<ProjectTeam>()
                 .HasOne(pt => pt.Project)
                 .WithMany(p => p.ProjectTeams)
@@ -71,6 +119,24 @@ namespace DoableFinal.Data
                 .WithMany()
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany()
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Receiver)
+                .WithMany()
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Project)
+                .WithMany()
+                .HasForeignKey(m => m.ProjectId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

@@ -7,59 +7,73 @@
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
-            <h1 class="h3">My Projects</h1>
-            <p class="text-muted">View and manage the projects assigned to you.</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3">My Projects</h1>
+                    <p class="text-muted">View and manage the projects assigned to you</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            @if (!Model.Any())
+    <div class="row">
+        @if (!Model.Any())
+        {
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-folder-open fa-3x text-muted"></i>
+                    </div>
+                    <h4>No Projects Found</h4>
+                    <p class="text-muted">You don't have any projects assigned to you at the moment.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var project in Model)
             {
-                <p class="text-muted">No projects found.</p>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var project in Model)
-                            {
-                                <tr>
-                                    <td>@project.Name</td>
-                                    <td>@(project.Description?.Length > 50 ? project.Description.Substring(0, 47) + "..." : project.Description)</td>
-                                    <td>@project.StartDate.ToString("MMM dd, yyyy")</td>
-                                    <td>@(project.EndDate?.ToString("MMM dd, yyyy") ?? "Not set")</td>
-                                    <td>
-                                        <span class="badge bg-@(project.Status switch {
-                                            "Not Started" => "secondary",
-                                            "In Progress" => "primary",
-                                            "On Hold" => "warning",
-                                            "Completed" => "success",
-                                            _ => "secondary"
-                                        })">@project.Status</span>
-                                    </td>
-                                    <td>
-                                        <a asp-controller="ProjectManager" asp-action="ProjectDetails" asp-route-id="@project.Id" class="btn btn-sm btn-outline-primary">
-                                            View
-                                        </a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@project.Name</h5>
+                            <p class="card-text text-muted">@project.Description</p>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">Progress</small>
+                                    <small class="text-muted">@(ViewBag.ProjectProgress[project.Id])%</small>
+                                </div>
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: @(ViewBag.ProjectProgress[project.Id])%;" 
+                                         aria-valuenow="@(ViewBag.ProjectProgress[project.Id])" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-@(project.Status switch {
+                                    "Not Started" => "secondary",
+                                    "In Progress" => "primary",
+                                    "On Hold" => "warning",
+                                    "Completed" => "success",
+                                    _ => "secondary"
+                                })">@project.Status</span>
+                                <small class="text-muted">Due: @(project.EndDate?.ToString("MMM dd, yyyy") ?? "No end date")</small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Started: @project.StartDate.ToString("MMM dd, yyyy")</small>
+                                <a asp-action="ProjectDetails" asp-route-id="@project.Id" 
+                                   class="btn btn-sm btn-outline-primary">View Details</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             }
-        </div>
+        }
     </div>
 </div>

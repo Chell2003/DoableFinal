@@ -1,0 +1,104 @@
+@model DoableFinal.Models.ProjectTask
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="fas fa-chart-bar me-1"></i>
+        Task Timeline
+    </div>
+    <div class="card-body">
+        <div id="taskGanttChart"></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get task data
+        var task = {
+            id: @Model.Id,
+            name: "@Model.Title",
+            start: "@Model.StartDate.ToString("yyyy-MM-dd")",
+            end: "@Model.DueDate.ToString("yyyy-MM-dd")",
+            status: "@Model.Status",
+            assignee: @Html.Raw(Json.Serialize(Model.TaskAssignments != null && Model.TaskAssignments.Any()
+                ? string.Join(", ", Model.TaskAssignments.Select(a => a.Employee.FirstName))
+                : "Unassigned"))
+        };
+
+        // Configure the Gantt chart
+        var options = {
+            series: [{
+                data: [{
+                    x: task.name,
+                    y: [
+                        new Date(task.start).getTime(),
+                        new Date(task.end).getTime()
+                    ],
+                    fillColor: task.status === 'Completed' ? '#198754' :
+                             task.status === 'In Progress' ? '#0d6efd' :
+                             task.status === 'On Hold' ? '#ffc107' : '#6c757d',
+                    assignee: task.assignee,
+                    status: task.status
+                }]
+            }],
+            chart: {
+                height: 350,
+                type: 'rangeBar',
+                toolbar: {
+                    show: false // Disable zooming and other toolbar options
+                }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    distributed: true,
+                    dataLabels: {
+                        hideOverflowingLabels: false
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val, opts) {
+                    return task.assignee + ' - ' + task.status;
+                }
+            },
+            xaxis: {
+                type: 'datetime',
+                min: new Date(task.start).getTime(),
+                max: new Date(task.end).getTime(),
+                labels: {
+                    datetimeFormatter: {
+                        year: 'yyyy',
+                        month: 'MMM yyyy',
+                        day: 'dd MMM',
+                        hour: 'HH:mm'
+                    }
+                }
+            },
+            yaxis: {
+                show: true
+            },
+            grid: {
+                row: {
+                    colors: ['#f3f4f5', '#fff'],
+                    opacity: 1
+                }
+            },
+            tooltip: {
+                custom: function({series, seriesIndex, dataPointIndex, w}) {
+                    return '<div class="p-2">' +
+                           '<div><strong>' + task.name + '</strong></div>' +
+                           '<div>Start: ' + task.start + '</div>' +
+                           '<div>End: ' + task.end + '</div>' +
+                           '<div>Status: ' + task.status + '</div>' +
+                           '<div>Assignee: ' + task.assignee + '</div>' +
+                           '</div>';
+                }
+            }
+        };
+
+        // Render the chart
+        var chart = new ApexCharts(document.querySelector("#taskGanttChart"), options);
+        chart.render();
+    });
+</script> 

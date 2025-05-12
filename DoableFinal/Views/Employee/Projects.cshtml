@@ -16,33 +16,6 @@
             </div>
 
             <div class="row">
-                @foreach (var project in Model)
-                {
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">@project.Name</h5>
-                                <p class="card-text text-muted">@project.Description</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-@(project.Status == "Completed" ? "success" : 
-                                                    project.Status == "In Progress" ? "primary" : 
-                                                    project.Status == "On Hold" ? "warning" : "secondary")">
-                                        @project.Status
-                                    </span>
-                                    <small class="text-muted">Due: @(project.EndDate?.ToString("MMM dd, yyyy") ?? "No end date")</small>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-transparent">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Started: @project.StartDate.ToString("MMM dd, yyyy")</small>
-                                    <a asp-controller="Employee" asp-action="ProjectDetails" asp-route-id="@project.Id" 
-                                       class="btn btn-sm btn-outline-primary">View</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-
                 @if (!Model.Any())
                 {
                     <div class="col-12">
@@ -54,6 +27,52 @@
                             <p class="text-muted">You don't have any projects assigned to you at the moment.</p>
                         </div>
                     </div>
+                }
+                else
+                {
+                    @foreach (var project in Model)
+                    {
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">@project.Name</h5>
+                                    <p class="card-text text-muted">@project.Description</p>
+                                    
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small class="text-muted">Progress</small>
+                                            <small class="text-muted">@(ViewBag.ProjectProgress[project.Id])%</small>
+                                        </div>
+                                        <div class="progress" style="height: 5px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: @(ViewBag.ProjectProgress[project.Id])%;" 
+                                                 aria-valuenow="@(ViewBag.ProjectProgress[project.Id])" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-@(project.Status switch {
+                                            "Not Started" => "secondary",
+                                            "In Progress" => "primary",
+                                            "On Hold" => "warning",
+                                            "Completed" => "success",
+                                            _ => "secondary"
+                                        })">@project.Status</span>
+                                        <small class="text-muted">Due: @(project.EndDate?.ToString("MMM dd, yyyy") ?? "No end date")</small>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Started: @project.StartDate.ToString("MMM dd, yyyy")</small>
+                                        <a asp-action="ProjectDetails" asp-route-id="@project.Id" 
+                                           class="btn btn-sm btn-outline-primary">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 }
             </div>
         </div>

@@ -63,5 +63,22 @@ namespace DoableFinal.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task CreateNotification(string userId, string title, string message, string? link = default)
+        {
+            var notification = new Notification
+            {
+                UserId = userId,
+                Title = title,
+                Message = message,
+                Link = link,
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false,
+                Type = NotificationType.General
+            };
+
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+        }
     }
 }

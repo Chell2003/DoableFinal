@@ -6,6 +6,7 @@ using DoableFinal.Data;
 using DoableFinal.Models;
 using DoableFinal.ViewModels;
 using System.Security.Claims;
+using System.Linq;
 
 namespace DoableFinal.Controllers
 {
@@ -281,6 +282,7 @@ namespace DoableFinal.Controllers
 
             var task = await _context.Tasks
                 .Include(t => t.Project)
+                    .ThenInclude(p => p.ProjectTeams)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
                 .Include(t => t.Comments)
@@ -290,6 +292,17 @@ namespace DoableFinal.Controllers
             if (task == null || task.Project == null)
             {
                 return NotFound();
+            }
+
+            // Initialize Comments collection if null
+            if (task.Comments == null)
+            {
+                task.Comments = new List<TaskComment>();
+            }
+            else
+            {
+                // Order comments by creation date
+                task.Comments = task.Comments.OrderByDescending(c => c.CreatedAt).ToList();
             }
 
             // Load project manager details to ensure it's available for the view
@@ -322,11 +335,35 @@ namespace DoableFinal.Controllers
                 return RedirectToAction("TaskDetails", new { id = taskId });
             }
 
-            var task = await _context.Tasks.FindAsync(taskId);
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                    .ThenInclude(p => p.ProjectTeams)
+                .Include(t => t.TaskAssignments)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
             if (task == null)
             {
                 TempData["ErrorMessage"] = "Task not found.";
                 return RedirectToAction("Tasks");
+            }
+
+            // Initialize ProjectTeams if null
+            if (task.Project.ProjectTeams == null)
+            {
+                task.Project.ProjectTeams = new List<ProjectTeam>();
+            }
+
+            // Check if the user is authorized to comment
+            var isUserInProject = task.Project.ProjectTeams.Any(pt => pt.UserId == currentUser.Id);
+            var isUserAssignedToTask = task.TaskAssignments.Any(ta => ta.EmployeeId == currentUser.Id);
+            var isUserProjectManager = task.Project.ProjectManagerId == currentUser.Id;
+            var isUserClient = task.Project.ClientId == currentUser.Id;
+            var isUserAdmin = await _userManager.IsInRoleAsync(currentUser, "Admin");
+
+            if (!isUserInProject && !isUserAssignedToTask && !isUserProjectManager && !isUserClient && !isUserAdmin)
+            {
+                TempData["ErrorMessage"] = "You are not authorized to comment on this task.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
             }
 
             var comment = new TaskComment

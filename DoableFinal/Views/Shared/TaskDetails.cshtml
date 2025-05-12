@@ -4,13 +4,24 @@
                     Comments
                 </div>
                 <div class="card-body">
+                    @if (User.IsInRole("Admin") || User.IsInRole("Project Manager") || User.IsInRole("Employee") || User.IsInRole("Client"))
+                    {
+                        <form asp-action="AddComment" method="post">
+                            <input type="hidden" name="taskId" value="@Model.Id" />
+                            <div class="mb-3">
+                                <textarea name="commentText" class="form-control" placeholder="Add a comment..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Post Comment</button>
+                        </form>
+                        <hr />
+                    }
                     @if (Model.Comments != null && Model.Comments.Any())
                     {
                         <ul class="list-group">
                             @foreach (var comment in Model.Comments)
                             {
                                 <li class="list-group-item">
-                                    <strong>@comment.CreatedBy.FirstName @comment.CreatedBy.LastName</strong>
+                                    <strong>@(comment.CreatedBy?.FirstName ?? "Unknown") @(comment.CreatedBy?.LastName ?? "User")</strong>
                                     <br />
                                     <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
                                     <p>@comment.CommentText</p>
@@ -21,16 +32,6 @@
                     else
                     {
                         <p class="text-muted">No comments yet.</p>
-                    }
-
-                    @if (User.IsInRole("Admin") || User.IsInRole("Project Manager") || User.IsInRole("Employee") || User.IsInRole("Client"))
-                    {
-                        <form asp-action="AddComment" method="post">
-                            <div class="mb-3">
-                                <textarea name="CommentText" class="form-control" placeholder="Add a comment..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Post Comment</button>
-                        </form>
                     }
                 </div>
             </div>

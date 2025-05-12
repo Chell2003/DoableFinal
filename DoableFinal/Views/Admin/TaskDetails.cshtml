@@ -147,35 +147,17 @@
                     Comments
                 </div>
                 <div class="card-body">
-                    <ul class="list-group">
-                        @foreach (var comment in Model.Comments)
-                        {
-                            <li class="list-group-item">
-                                <strong>@comment.CreatedBy.FirstName @comment.CreatedBy.LastName</strong>
-                                <br />
-                                <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
-                                <p>@comment.CommentText</p>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-comments me-1"></i>
-                    Comments
-                </div>
-                <div class="card-body">
                     @if (User.IsInRole("Admin") || Model.TaskAssignments.Any(a => a.Employee.Email == User.Identity.Name) || User.Identity.Name == Model.Project.ProjectManager.Email || User.Identity.Name == Model.Project.Client.Email)
                     {
                         <form asp-action="AddComment" method="post">
+                            <input type="hidden" name="taskId" value="@Model.Id" />
                             <div class="mb-3">
-                                <textarea name="CommentText" class="form-control" placeholder="Add a comment..." required></textarea>
+                                <textarea name="commentText" class="form-control" placeholder="Add a comment..." required></textarea>
                             </div>
                             <button type="submit" class="btn btn-primary">Post Comment</button>
                         </form>
+                        <hr />
                     }
-                    <hr />
                     <ul class="list-group">
                         @foreach (var comment in Model.Comments)
                         {

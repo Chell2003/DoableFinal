@@ -7,6 +7,7 @@ using DoableFinal.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Task = System.Threading.Tasks.Task;
 using System.Security.Claims;
+using System.Linq;
 
 namespace DoableFinal.Controllers
 {
@@ -204,10 +205,25 @@ namespace DoableFinal.Controllers
 
             var projects = await _context.ProjectTeams
                 .Include(pt => pt.Project)
+                    .ThenInclude(p => p.Tasks)
+                .Include(pt => pt.Project)
+                    .ThenInclude(p => p.ProjectManager)
                 .Where(pt => pt.UserId == user.Id)
                 .Select(pt => pt.Project)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
+
+            // Calculate project progress
+            var projectProgress = new Dictionary<int, int>();
+            foreach (var project in projects)
+            {
+                var totalTasks = project.Tasks.Count;
+                var completedTasks = project.Tasks.Count(t => t.Status == "Completed");
+                projectProgress[project.Id] = totalTasks > 0
+                    ? (int)Math.Round((double)completedTasks / totalTasks * 100)
+                    : 0;
+            }
+            ViewBag.ProjectProgress = projectProgress;
 
             return View(projects);
         }
@@ -299,11 +315,35 @@ namespace DoableFinal.Controllers
                 return RedirectToAction("TaskDetails", new { id = taskId });
             }
 
-            var task = await _context.Tasks.FindAsync(taskId);
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                    .ThenInclude(p => p.ProjectTeams)
+                .Include(t => t.TaskAssignments)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
             if (task == null)
             {
                 TempData["ErrorMessage"] = "Task not found.";
                 return RedirectToAction("Tasks");
+            }
+
+            // Initialize ProjectTeams if null
+            if (task.Project.ProjectTeams == null)
+            {
+                task.Project.ProjectTeams = new List<ProjectTeam>();
+            }
+
+            // Check if the user is authorized to comment
+            var isUserInProject = task.Project.ProjectTeams.Any(pt => pt.UserId == currentUser.Id);
+            var isUserAssignedToTask = task.TaskAssignments.Any(ta => ta.EmployeeId == currentUser.Id);
+            var isUserProjectManager = task.Project.ProjectManagerId == currentUser.Id;
+            var isUserClient = task.Project.ClientId == currentUser.Id;
+            var isUserAdmin = await _userManager.IsInRoleAsync(currentUser, "Admin");
+
+            if (!isUserInProject && !isUserAssignedToTask && !isUserProjectManager && !isUserClient && !isUserAdmin)
+            {
+                TempData["ErrorMessage"] = "You are not authorized to comment on this task.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
             }
 
             var comment = new TaskComment
@@ -324,12 +364,13 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> ProjectDetails(int id)
         {
             var project = await _context.Projects
+                .Include(p => p.Client)
                 .Include(p => p.ProjectManager)
-                .Include(p => p.ProjectTeams)
-                    .ThenInclude(pt => pt.User)
                 .Include(p => p.Tasks)
                     .ThenInclude(t => t.TaskAssignments)
                         .ThenInclude(ta => ta.Employee)
+                .Include(p => p.ProjectTeams)
+                    .ThenInclude(pt => pt.User)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (project == null)
@@ -346,6 +387,23 @@ namespace DoableFinal.Controllers
                 return Forbid();
             }
 
+            // Calculate project progress
+            var totalTasks = project.Tasks.Count;
+            var completedTasks = project.Tasks.Count(t => t.Status == "Completed");
+            ViewBag.ProjectProgress = totalTasks > 0
+                ? (int)Math.Round((double)completedTasks / totalTasks * 100)
+                : 0;
+
+            // Get member task counts
+            var memberTaskCounts = new Dictionary<string, int>();
+            foreach (var teamMember in project.ProjectTeams.Select(pt => pt.User))
+            {
+                var taskCount = project.Tasks
+                    .Count(t => t.TaskAssignments.Any(ta => ta.EmployeeId == teamMember.Id));
+                memberTaskCounts[teamMember.Id] = taskCount;
+            }
+            ViewBag.MemberTaskCounts = memberTaskCounts;
+
             ViewBag.CurrentUserId = userId;
             return View(project);
         }
@@ -354,13 +412,28 @@ namespace DoableFinal.Controllers
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
+                    .ThenInclude(p => p.ProjectTeams)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
                 .Include(t => t.Comments)
-                    .ThenInclude(c => c.CreatedBy) // Include comment creator details
+                    .ThenInclude(c => c.CreatedBy)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
-            if (task == null) return NotFound();
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            // Initialize Comments collection if null
+            if (task.Comments == null)
+            {
+                task.Comments = new List<TaskComment>();
+            }
+            else
+            {
+                // Order comments by creation date
+                task.Comments = task.Comments.OrderByDescending(c => c.CreatedAt).ToList();
+            }
 
             return View(task);
         }

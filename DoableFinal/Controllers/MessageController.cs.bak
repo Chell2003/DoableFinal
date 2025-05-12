@@ -1,0 +1,210 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using DoableFinal.Data;
+using DoableFinal.Models;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
+
+namespace DoableFinal.Controllers
+{
+    [Authorize]
+    public class MessageController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public MessageController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        {
+            _context = context;
+            _userManager = userManager;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            // Get all messages ordered by most recent first
+            var messages = await _context.Messages
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
+                .Where(m => m.SenderId == currentUser.Id || m.ReceiverId == currentUser.Id)
+                .OrderByDescending(m => m.CreatedAt)
+                .ToListAsync();            // Get all users except the current user first
+            var allUsers = await _userManager.Users
+                .Where(u => u.Id != currentUser.Id)
+                .OrderBy(u => u.FirstName)
+                .ToListAsync();
+
+            // Get users with messages and their most recent conversations
+            var usersWithMessages = messages
+                .GroupBy(m => m.SenderId == currentUser.Id ? m.ReceiverId : m.SenderId)
+                .Select(g =>
+                {
+                    var userId = g.Key;
+                    var user = allUsers.FirstOrDefault(u => u.Id == userId);
+                    var lastMessage = g.First(); // Already ordered by CreatedAt desc
+                    return new
+                    {
+                        UserId = userId,
+                        User = user,
+                        LastMessage = lastMessage,
+                        UnreadCount = g.Count(m => !m.IsRead && m.ReceiverId == currentUser.Id)
+                    };
+                })
+                .Where(x => x.User != null) // Filter out any messages where we couldn't find the user
+                .ToList();
+
+            // Get users who don't have any messages yet
+            var usersWithoutMessages = allUsers
+                .Where(u => !usersWithMessages.Any(m => m.UserId == u.Id))
+                .ToList();
+
+            // Get all projects user is part of
+            var projects = await _context.Projects
+                .Where(p => p.ProjectTeams.Any(pt => pt.UserId == currentUser.Id))
+                .OrderBy(p => p.Name)
+                .ToListAsync();            ViewBag.UsersWithMessages = usersWithMessages ?? new List<object>();
+            ViewBag.UsersWithoutMessages = usersWithoutMessages ?? new List<ApplicationUser>();
+            ViewBag.Projects = projects ?? new List<Project>();
+
+            return View(messages);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendMessage(string content, string receiverId, int? projectId)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var message = new Message
+            {
+                Content = content,
+                SenderId = currentUser.Id,
+                ReceiverId = receiverId,
+                ProjectId = projectId,
+                CreatedAt = DateTime.Now
+            };            _context.Messages.Add(message);
+            await _context.SaveChangesAsync();
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, message = "Message sent successfully" });
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkAsRead(int id)
+        {
+            var message = await _context.Messages.FindAsync(id);
+            if (message == null)
+            {
+                return NotFound();
+            }
+
+            message.IsRead = true;
+            message.ReadAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUnreadCount()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Json(0);
+            }
+
+            var count = await _context.Messages
+                .Where(m => m.ReceiverId == currentUser.Id && !m.IsRead)
+                .CountAsync();
+
+            return Json(count);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetConversation(string userId)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null || string.IsNullOrEmpty(userId))
+            {
+                return NotFound();
+            }
+
+            var messages = await _context.Messages
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
+                .Where(m => (m.SenderId == currentUser.Id && m.ReceiverId == userId) ||
+                           (m.SenderId == userId && m.ReceiverId == currentUser.Id))
+                .OrderBy(m => m.CreatedAt)
+                .Select(m => new
+                {
+                    m.Id,
+                    m.Content,
+                    m.CreatedAt,
+                    m.IsRead,
+                    m.SenderId,
+                    SenderName = $"{m.Sender.FirstName} {m.Sender.LastName}",
+                    m.ReceiverId,
+                    ReceiverName = $"{m.Receiver.FirstName} {m.Receiver.LastName}"
+                })
+                .ToListAsync();
+
+            // Mark messages as read
+            var unreadMessages = await _context.Messages
+                .Where(m => m.ReceiverId == currentUser.Id && m.SenderId == userId && !m.IsRead)
+                .ToListAsync();
+
+            if (unreadMessages.Any())
+            {
+                foreach (var message in unreadMessages)
+                {
+                    message.IsRead = true;
+                    message.ReadAt = DateTime.Now;
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            return Json(messages);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetConversations()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var conversations = await _context.Messages
+                .Include(m => m.Sender)
+                .Include(m => m.Receiver)
+                .Where(m => m.SenderId == currentUser.Id || m.ReceiverId == currentUser.Id)
+                .GroupBy(m => m.SenderId == currentUser.Id ? m.ReceiverId : m.SenderId)
+                .Select(g => new
+                {
+                    UserId = g.Key,
+                    User = g.First().SenderId == currentUser.Id ? g.First().Receiver : g.First().Sender,
+                    LastMessage = g.OrderByDescending(m => m.CreatedAt).First(),
+                    UnreadCount = g.Count(m => !m.IsRead && m.ReceiverId == currentUser.Id)
+                })
+                .OrderByDescending(c => c.LastMessage.CreatedAt)
+                .ToListAsync();
+
+            return Json(conversations);
+        }
+    }
+}

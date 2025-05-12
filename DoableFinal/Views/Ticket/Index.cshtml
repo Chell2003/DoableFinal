@@ -1,0 +1,96 @@
+@model IEnumerable<DoableFinal.Models.Ticket>
+
+@{
+    ViewData["Title"] = "Tickets";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Tickets</h2>
+        </div>
+        <div class="col text-end">
+            <a asp-action="Create" class="btn btn-primary">Create New Ticket</a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Project</th>
+                            <th>Assigned To</th>
+                            <th>Created By</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ticket in Model)
+                        {
+                            <tr>
+                                <td>@ticket.Id</td>
+                                <td>@ticket.Title</td>
+                                <td>
+                                    <span class="badge bg-secondary">@ticket.Type</span>
+                                </td>
+                                <td>
+                                    @{
+                                        var priorityClass = ticket.Priority switch
+                                        {
+                                            "Low" => "bg-success",
+                                            "Medium" => "bg-warning",
+                                            "High" => "bg-danger",
+                                            "Critical" => "bg-danger text-white",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @priorityClass">@ticket.Priority</span>
+                                </td>
+                                <td>
+                                    @{
+                                        var statusClass = ticket.Status switch
+                                        {
+                                            "Open" => "bg-danger",
+                                            "In Progress" => "bg-warning",
+                                            "Resolved" => "bg-success",
+                                            "Closed" => "bg-secondary",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @statusClass">@ticket.Status</span>
+                                </td>
+                                <td>@(ticket.Project?.Name ?? "N/A")</td>
+                                <td>@(ticket.AssignedTo != null ? $"{ticket.AssignedTo.FirstName} {ticket.AssignedTo.LastName}" : "Unassigned")</td>
+                                <td>@($"{ticket.CreatedBy.FirstName} {ticket.CreatedBy.LastName}")</td>
+                                <td>@ticket.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="Details" asp-route-id="@ticket.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
