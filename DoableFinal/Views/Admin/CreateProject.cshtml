@@ -92,4 +92,19 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            $("#StartDate").attr('min', new Date().toISOString().split('T')[0]);
+            $("#EndDate").attr('min', new Date().toISOString().split('T')[0]);
+
+            $("#StartDate").change(function() {
+                var startDate = $(this).val();
+                $("#EndDate").attr('min', startDate);
+                
+                if ($("#EndDate").val() < startDate) {
+                    $("#EndDate").val(startDate);
+                }
+            });
+        });
+    </script>
 }

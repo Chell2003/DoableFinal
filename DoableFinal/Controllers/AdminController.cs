@@ -1,12 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using DoableFinal.Models;
+using DoableFinal.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DoableFinal.Data;
-using DoableFinal.Models;
-using DoableFinal.ViewModels;
-using DoableFinal.Services; // Replace with the correct namespace for NotificationService
-using System.Linq;
+using DoableFinal.Services;
 
 namespace DoableFinal.Controllers
 {
@@ -61,89 +65,84 @@ namespace DoableFinal.Controllers
             return View();
         }
 
-        // Employee Management
-        public async Task<IActionResult> Employees()
+        // Consolidated User Management
+        public async Task<IActionResult> Users(string roleFilter = "")
         {
-            var employees = await _userManager.GetUsersInRoleAsync("Employee");
-            return View(employees);
+            var users = await _context.Users
+                .OrderByDescending(u => u.CreatedAt)
+                .ToListAsync();
+
+            if (!string.IsNullOrEmpty(roleFilter))
+            {
+                users = users.Where(u => u.Role == roleFilter).ToList();
+            }
+
+            ViewBag.RoleFilter = roleFilter;
+            return View(users);
         }
 
         [HttpGet]
-        public IActionResult CreateEmployee()
+        public IActionResult CreateUser(string role = "Employee")
         {
-            return View(new CreateEmployeeViewModel());
+            ViewBag.Role = role;
+            var viewModel = new CreateUserViewModel
+            {
+                Role = role
+            };
+            return View(viewModel);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateEmployee(CreateEmployeeViewModel model)
+        public async Task<IActionResult> CreateUser(CreateUserViewModel model)
         {
             if (ModelState.IsValid)
             {
                 var user = new ApplicationUser
                 {
                     UserName = model.Email,
-                    Email = model.Email ?? string.Empty,
+                    Email = model.Email,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
-                    Role = "Employee",
+                    Role = model.Role,
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    EmailConfirmed = true
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await _userManager.AddToRoleAsync(user, "Employee");
-                    TempData["SuccessMessage"] = "Employee account created successfully.";
+                    await _userManager.AddToRoleAsync(user, model.Role);
+                    TempData["SuccessMessage"] = $"{model.Role} account created successfully.";
                     return RedirectToAction(nameof(Users));
                 }
 
                 foreach (var error in result.Errors)
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    ModelState.AddModelError("", error.Description);
                 }
             }
-
+            ViewBag.Role = model.Role;
             return View(model);
         }
 
-        [HttpGet]
-        public IActionResult CreateProjectManager()
+        private async Task<bool> IsEmailInUseAsync(string email)
         {
-            return View(new CreateProjectManagerViewModel());
+            var existingUser = await _userManager.FindByEmailAsync(email);
+            return existingUser != null;
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateProjectManager(CreateProjectManagerViewModel model)
+        public async Task<IActionResult> ToggleUserStatus(string userId)
         {
-            if (ModelState.IsValid)
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null)
             {
-                var user = new ApplicationUser
-                {
-                    UserName = model.Email,
-                    Email = model.Email ?? string.Empty,
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
-                    Role = "Project Manager",
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                {
-                    await _userManager.AddToRoleAsync(user, "Project Manager");
-                    TempData["SuccessMessage"] = "Project Manager account created successfully.";
-                    return RedirectToAction(nameof(Users));
-                }
-
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                user.IsActive = !user.IsActive;
+                await _userManager.UpdateAsync(user);
+                TempData["SuccessMessage"] = $"User status updated to {(user.IsActive ? "active" : "inactive")}.";
             }
-
-            return View(model);
+            return RedirectToAction(nameof(Users));
         }
 
         // Project Management
@@ -186,6 +185,19 @@ namespace DoableFinal.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Additional server-side validation for dates
+                if (model.StartDate.Date < DateTime.Today)
+                {
+                    ModelState.AddModelError("StartDate", "Start date cannot be in the past");
+                    return await PrepareCreateProjectViewModel(model);
+                }
+
+                if (model.EndDate < model.StartDate)
+                {
+                    ModelState.AddModelError("EndDate", "End date must be after the start date");
+                    return await PrepareCreateProjectViewModel(model);
+                }
+
                 var project = new Project
                 {
                     Name = model.Name,
@@ -205,17 +217,21 @@ namespace DoableFinal.Controllers
                 return RedirectToAction(nameof(Projects));
             }
 
-            // Reload the select lists if we need to return to the view
+            return await PrepareCreateProjectViewModel(model);
+        }
+
+        private async Task<IActionResult> PrepareCreateProjectViewModel(CreateProjectViewModel model)
+        {
             var clients = await _userManager.GetUsersInRoleAsync("Client");
             var projectManagers = await _userManager.GetUsersInRoleAsync("Project Manager");
 
-            model.Clients = clients.Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            model.Clients = clients.Select(c => new SelectListItem
             {
                 Value = c.Id,
                 Text = $"{c.FirstName} {c.LastName}"
             }).ToList();
 
-            model.ProjectManagers = projectManagers.Select(pm => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            model.ProjectManagers = projectManagers.Select(pm => new SelectListItem
             {
                 Value = pm.Id,
                 Text = $"{pm.FirstName} {pm.LastName}"
@@ -285,11 +301,38 @@ namespace DoableFinal.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Get project dates
+                var project = await _context.Projects.FindAsync(model.ProjectId);
+                if (project == null)
+                {
+                    ModelState.AddModelError("ProjectId", "Invalid project selected");
+                    return await PrepareCreateTaskViewModel(model);
+                }
+
+                // Validate task dates against project dates
+                if (model.StartDate < project.StartDate)
+                {
+                    ModelState.AddModelError("StartDate", "Task cannot start before the project start date");
+                    return await PrepareCreateTaskViewModel(model);
+                }
+
+                if (project.EndDate.HasValue && model.DueDate > project.EndDate.Value)
+                {
+                    ModelState.AddModelError("DueDate", "Task cannot end after the project end date");
+                    return await PrepareCreateTaskViewModel(model);
+                }
+
+                if (model.StartDate > model.DueDate)
+                {
+                    ModelState.AddModelError("DueDate", "Due date must be after the start date");
+                    return await PrepareCreateTaskViewModel(model);
+                }
+
                 var currentUser = await _userManager.GetUserAsync(User);
                 if (currentUser?.Id == null)
                 {
                     ModelState.AddModelError(string.Empty, "Unable to identify the current user.");
-                    return View(model);
+                    return await PrepareCreateTaskViewModel(model);
                 }
 
                 var task = new ProjectTask
@@ -347,32 +390,65 @@ namespace DoableFinal.Controllers
                 return RedirectToAction(nameof(Tasks));
             }
 
-            // Reload the select lists if we need to return to the view
-            var projects = await _context.Projects.ToListAsync();
+            return await PrepareCreateTaskViewModel(model);
+        }
+
+        private async Task<IActionResult> PrepareCreateTaskViewModel(CreateTaskViewModel model)
+        {
+            // Get projects with their date constraints
+            var projects = await _context.Projects
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.StartDate,
+                    p.EndDate
+                })
+                .ToListAsync();
+
             var employees = await _userManager.GetUsersInRoleAsync("Employee");
 
-            model.Projects = projects.Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            model.Projects = projects.Select(p => new SelectListItem
             {
                 Value = p.Id.ToString(),
                 Text = p.Name
             }).ToList();
 
-            model.Employees = employees.Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            model.Employees = employees.Select(e => new SelectListItem
             {
                 Value = e.Id,
                 Text = $"{e.FirstName} {e.LastName}"
             }).ToList();
 
-            return View(model);
-        }
+            // Pass project data to view for JavaScript
+            ViewBag.Projects = projects.Select(p => new
+            {
+                id = p.Id,
+                name = p.Name,
+                startDate = p.StartDate.ToString("yyyy-MM-dd"),
+                endDate = p.EndDate.HasValue ? p.EndDate.Value.ToString("yyyy-MM-dd") : p.StartDate.AddMonths(1).ToString("yyyy-MM-dd")
+            });
 
-        // Users Management
-        public async Task<IActionResult> Users()
-        {
-            var users = await _context.Users
-                .OrderByDescending(u => u.CreatedAt)
+            // Store employee data for dynamic filtering
+            ViewBag.AllEmployees = await _context.Users
+                .Where(u => u.Role == "Employee")
+                .Select(u => new
+                {
+                    Id = u.Id,
+                    FullName = $"{u.FirstName} {u.LastName}",
+                    IncompleteTasks = _context.TaskAssignments
+                        .Where(ta => ta.EmployeeId == u.Id)
+                        .Join(_context.Tasks,
+                            ta => ta.ProjectTaskId,
+                            t => t.Id,
+                            (ta, t) => new { ProjectId = t.ProjectId, Status = t.Status })
+                        .Where(x => x.Status != "Completed")
+                        .Select(x => x.ProjectId)
+                        .ToList()
+                })
                 .ToListAsync();
-            return View(users);
+
+            return View(model);
         }
 
         // Profile Management

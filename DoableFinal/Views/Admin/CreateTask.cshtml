@@ -25,6 +25,7 @@
                                 <option value="">-- Select Project --</option>
                             </select>
                             <span asp-validation-for="ProjectId" class="text-danger"></span>
+                            <div id="projectDateInfo"></div>
                         </div>
 
                         <div class="mb-3">
@@ -39,16 +40,33 @@
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="StartDate" class="form-label"></label>
-                            <input asp-for="StartDate" class="form-control" />
-                            <span asp-validation-for="StartDate" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="DueDate" class="form-label"></label>
-                            <input asp-for="DueDate" class="form-control" />
-                            <span asp-validation-for="DueDate" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="StartDate" class="form-label"></label>
+                                    <div class="input-group">
+                                        <input asp-for="StartDate" class="form-control" type="date" />
+                                        <div class="input-group-text">
+                                            <i class="bi bi-calendar"></i>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                                    <small class="form-text text-muted">Must be within project timeline</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="DueDate" class="form-label"></label>
+                                    <div class="input-group">
+                                        <input asp-for="DueDate" class="form-control" type="date" />
+                                        <div class="input-group-text">
+                                            <i class="bi bi-calendar"></i>
+                                        </div>
+                                    </div>
+                                    <span asp-validation-for="DueDate" class="text-danger"></span>
+                                    <small class="form-text text-muted">Must be within project timeline</small>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row">
@@ -125,17 +143,45 @@
     <script>
         $(document).ready(function() {
             const allEmployees = @Html.Raw(Json.Serialize(ViewBag.AllEmployees));
+            const projects = @Html.Raw(Json.Serialize(ViewBag.Projects));
             
+            function updateDateConstraints() {
+                const selectedProjectId = parseInt($('#ProjectId').val());
+                if (!selectedProjectId) {
+                    $("#projectDateInfo").html("");
+                    return;
+                }
+
+                const project = projects.find(p => p.id === selectedProjectId);
+                if (!project) return;
+
+                // Set min and max constraints on date inputs
+                $("#StartDate").attr('min', project.startDate);
+                $("#StartDate").attr('max', project.endDate);
+                $("#DueDate").attr('min', project.startDate);
+                $("#DueDate").attr('max', project.endDate);
+
+                // Show project timeline info
+                $("#projectDateInfo").html(`
+                    <div class="alert alert-info mt-2">
+                        <i class="bi bi-info-circle"></i> 
+                        Project Timeline: ${project.startDate} to ${project.endDate}
+                    </div>
+                `);
+            }
+
+            // Handle project selection
             $('#ProjectId').change(function() {
                 const selectedProjectId = parseInt($(this).val());
                 const assignedToSelect = $('#AssignedToIds');
+                
+                updateDateConstraints();
                 
                 // Clear current options
                 assignedToSelect.empty();
                 
                 // Filter employees based on the selected project
                 const availableEmployees = allEmployees.filter(employee => {
-                    // Employee can be assigned if they don't have incomplete tasks in this project
                     return !employee.incompleteTasks.includes(selectedProjectId);
                 });
                 
@@ -144,6 +190,22 @@
                     assignedToSelect.append(new Option(employee.fullName, employee.id));
                 });
             });
+
+            // Handle start date changes
+            $("#StartDate").change(function() {
+                const startDate = $(this).val();
+                if (startDate) {
+                    $("#DueDate").attr('min', startDate);
+                    if ($("#DueDate").val() && $("#DueDate").val() < startDate) {
+                        $("#DueDate").val(startDate);
+                    }
+                }
+            });
+
+            // Initial setup if project is selected
+            if ($("#ProjectId").val()) {
+                updateDateConstraints();
+            }
         });
     </script>
 }
