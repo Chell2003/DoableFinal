@@ -299,6 +299,98 @@ namespace DoableFinal.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> SubmitTaskProof(int taskId, IFormFile proofFile)
+        {
+            if (proofFile == null || proofFile.Length == 0)
+            {
+                TempData["Error"] = "Please select a file to upload.";
+                return RedirectToAction(nameof(TaskDetails), new { id = taskId });
+            }
+
+            var task = await _context.Tasks
+                .Include(t => t.TaskAssignments)
+                .Include(t => t.Project)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null || task.TaskAssignments?.Any(ta => ta.EmployeeId == user.Id) != true)
+            {
+                return Forbid();
+            }
+
+            // Create the uploads directory if it doesn't exist
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "proofs");
+            Directory.CreateDirectory(uploadsFolder);
+
+            // Generate a unique filename
+            var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(proofFile.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            // Save the file
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await proofFile.CopyToAsync(stream);
+            }
+
+            // Update the task
+            task.ProofFilePath = $"/uploads/proofs/{uniqueFileName}";
+            task.Status = "Pending Approval";
+            task.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            // Create notification for project manager
+            var notification = new Notification
+            {
+                UserId = task.Project.ProjectManagerId,
+                Title = "Task Proof Submitted",
+                Message = $"New proof submitted for task: {task.Title}",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false,
+                Link = $"/ProjectManager/TaskDetails/{task.Id}"
+            };
+
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Proof has been submitted for approval.";
+            return RedirectToAction(nameof(TaskDetails), new { id = taskId });
+        }
+
+        public async Task<IActionResult> DownloadProof(int taskId)
+        {
+            var task = await _context.Tasks
+                .Include(t => t.TaskAssignments)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null || string.IsNullOrEmpty(task.ProofFilePath))
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null || task.TaskAssignments?.Any(ta => ta.EmployeeId == user.Id) != true)
+            {
+                return Forbid();
+            }
+
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", task.ProofFilePath.TrimStart('/'));
+            if (!System.IO.File.Exists(filePath))
+            {
+                return NotFound();
+            }
+
+            var fileName = Path.GetFileName(filePath);
+            var mimeType = "application/octet-stream";
+            return PhysicalFile(filePath, mimeType, fileName);
+        }
+
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddComment(int taskId, string commentText)
         {

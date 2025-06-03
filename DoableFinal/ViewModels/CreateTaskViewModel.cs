@@ -41,16 +41,18 @@ namespace DoableFinal.ViewModels
         public DateTime ProjectEndDate { get; set; }
 
         [Display(Name = "Assigned To")]
-        public List<string> AssignedToIds { get; set; }
+        public List<string> AssignedToIds { get; set; } = new List<string>();
 
-        public List<SelectListItem> Projects { get; set; }
-        public List<SelectListItem> Employees { get; set; }
+        public List<SelectListItem> Projects { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> Employees { get; set; } = new List<SelectListItem>();
+
+        // Dynamic data for Select2
+        public object AvailableEmployees { get; set; }
 
         public CreateTaskViewModel()
         {
-            Projects = new List<SelectListItem>();
-            Employees = new List<SelectListItem>();
-            AssignedToIds = new List<string>();
+            Status = "Not Started";
+            Priority = "Medium";
             StartDate = DateTime.Today;
             DueDate = DateTime.Today.AddDays(7);
         }

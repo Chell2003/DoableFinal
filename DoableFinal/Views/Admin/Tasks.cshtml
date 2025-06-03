@@ -4,6 +4,8 @@
     ViewData["Title"] = "Tasks";
 }
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
@@ -11,16 +13,47 @@
                 <div>
                     <h1 class="h3">Tasks</h1>
                     <p class="text-muted">Manage all tasks in the system</p>
-                </div>
-                <a asp-action="CreateTask" class="btn btn-primary">
-                    <i class="bi bi-plus-square"></i> Create Task
+                </div>                
+                <a asp-controller="Admin" asp-action="CreateTask" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Task
                 </a>
             </div>
         </div>
     </div>
 
-    <div class="card">
+    <div class="card mb-4">
         <div class="card-body">
+            <div class="btn-group mb-3">
+                <a asp-action="Tasks" asp-route-filter="" class="btn btn-@(ViewBag.CurrentFilter == null ? "primary" : "outline-primary")">
+                    All Tasks
+                </a>
+                <a asp-action="Tasks" asp-route-filter="pending" class="btn btn-@(ViewBag.CurrentFilter == "pending" ? "primary" : "outline-primary")">
+                    Pending Approval
+                </a>
+                <a asp-action="Tasks" asp-route-filter="in-progress" class="btn btn-@(ViewBag.CurrentFilter == "in-progress" ? "primary" : "outline-primary")">
+                    In Progress
+                </a>
+                <a asp-action="Tasks" asp-route-filter="completed" class="btn btn-@(ViewBag.CurrentFilter == "completed" ? "primary" : "outline-primary")">
+                    Completed
+                </a>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -40,7 +73,7 @@
                         {
                             <tr>
                                 <td>@task.Title</td>
-                                <td>@task.Project.Name</td>
+                                <td>@task.Project?.Name</td>
                                 <td>
                                     @if (task.TaskAssignments != null && task.TaskAssignments.Any())
                                     {
@@ -48,22 +81,16 @@
                                             @foreach (var assignment in task.TaskAssignments.Take(3))
                                             {
                                                 <span class="badge bg-light text-dark me-1">
-                                                    @($"{assignment.Employee.FirstName} {assignment.Employee.LastName}")
+                                                    <i class="fas fa-user-circle"></i> @assignment.Employee?.UserName
                                                 </span>
                                             }
                                             @if (task.TaskAssignments.Count() > 3)
                                             {
-                                                <span class="badge bg-secondary" 
-                                                      data-bs-toggle="tooltip" 
-                                                      title="@string.Join(", ", task.TaskAssignments.Skip(3).Select(a => $"{a.Employee.FirstName} {a.Employee.LastName}"))">
-                                                    +@(task.TaskAssignments.Count() - 3) more
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-users"></i> +@(task.TaskAssignments.Count() - 3)
                                                 </span>
                                             }
                                         </div>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">Unassigned</span>
                                     }
                                 </td>
                                 <td>@task.StartDate.ToString("MMM dd, yyyy")</td>
@@ -72,10 +99,25 @@
                                     <span class="badge bg-@(task.Status switch {
                                         "Not Started" => "secondary",
                                         "In Progress" => "primary",
+                                        "Pending Approval" => "info",
                                         "On Hold" => "warning",
                                         "Completed" => "success",
                                         _ => "secondary"
-                                    })">@task.Status</span>
+                                    })">
+                                        @if (task.Status == "Completed")
+                                        {
+                                            <i class="fas fa-check-circle me-1"></i>
+                                        }
+                                        else if (task.Status == "In Progress")
+                                        {
+                                            <i class="fas fa-spinner me-1"></i>
+                                        }
+                                        else if (task.Status == "Pending Approval")
+                                        {
+                                            <i class="fas fa-clock me-1"></i>
+                                        }
+                                        @task.Status
+                                    </span>
                                 </td>
                                 <td>
                                     <span class="badge bg-@(task.Priority switch {
@@ -83,19 +125,36 @@
                                         "Medium" => "warning",
                                         "High" => "danger",
                                         _ => "secondary"
-                                    })">@task.Priority</span>
+                                    })">
+                                        @if (task.Priority == "High")
+                                        {
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                        }
+                                        @task.Priority
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <a asp-controller="Admin" asp-action="EditTask" asp-route-id="@task.Id" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-pencil"></i>
+                                        <a asp-action="TaskDetails" asp-route-id="@task.Id" 
+                                           class="btn btn-sm btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
                                         </a>
-                                        <a asp-controller="Admin" asp-action="TaskDetails" asp-route-id="@task.Id" class="btn btn-sm btn-outline-info">
-                                            <i class="bi bi-info-circle"></i>
+                                        <a asp-action="EditTask" asp-route-id="@task.Id" 
+                                           class="btn btn-sm btn-outline-secondary" title="Edit Task">
+                                            <i class="fas fa-edit"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                onclick="showDeleteModal(@task.Id, '@task.Title')">
-                                            <i class="bi bi-trash"></i>
+                                        @if (!string.IsNullOrEmpty(task.ProofFilePath) && !task.IsConfirmed && task.Status != "Completed")
+                                        {
+                                            <form asp-action="ApproveTaskProof" method="post" class="d-inline">
+                                                <input type="hidden" name="taskId" value="@task.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Approve Task">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Task"
+                                                onclick="confirmDelete(@task.Id)">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -108,42 +167,21 @@
     </div>
 </div>
 
-<!-- Delete Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Delete Task</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to delete the task "<span id="taskTitle"></span>"?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="post" class="d-inline">
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
     <script>
-        function showDeleteModal(taskId, taskTitle) {
-            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            document.getElementById('taskTitle').textContent = taskTitle;
-            document.getElementById('deleteForm').action = `/Admin/DeleteTask/${taskId}`;
-            modal.show();
+        function confirmDelete(id) {
+            if (confirm('Are you sure you want to delete this task?')) {
+                var form = document.createElement('form');
+                form.method = 'post';
+                form.action = '@Url.Action("DeleteTask")/' + id;
+                var antiForgeryToken = document.createElement('input');
+                antiForgeryToken.type = 'hidden';
+                antiForgeryToken.name = '__RequestVerificationToken';
+                antiForgeryToken.value = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                form.appendChild(antiForgeryToken);
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
-        
-        // Initialize tooltips
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        });
     </script>
 }

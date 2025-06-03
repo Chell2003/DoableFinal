@@ -67,6 +67,38 @@
                             }
                         </div>
                     </div>
+
+                    @if (!string.IsNullOrEmpty(Model.ProofFilePath))
+                    {
+                        <div class="mt-4">
+                            <h6>Task Completion Proof</h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    <p>
+                                        <a href="@Url.Content(Model.ProofFilePath)" class="btn btn-sm btn-secondary" target="_blank">
+                                            <i class="fas fa-download"></i> View Proof File
+                                        </a>
+                                    </p>
+                                    
+                                    @if (!Model.IsConfirmed && Model.Status != "Completed")
+                                    {
+                                        <form asp-action="ApproveTaskProof" asp-controller="ProjectManager" method="post" class="mt-3">
+                                            <input type="hidden" name="taskId" value="@Model.Id" />
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-check"></i> Approve and Mark as Completed
+                                            </button>
+                                        </form>
+                                    }
+                                    else if (Model.IsConfirmed)
+                                    {
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle"></i> Proof approved and task marked as completed
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
 

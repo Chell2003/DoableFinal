@@ -48,11 +48,44 @@
                                 })">@Model.Priority</span>
                             </p>
                             <p><strong>Start Date:</strong> @Model.StartDate.ToString(dateFormat)</p>
-                            <p><strong>Due Date:</strong> 
-                                <span class="@(Model.DueDate < DateTime.Now && Model.Status != "Completed" ? "text-danger" : "")">
-                                    @Model.DueDate.ToString(dateFormat)
-                                </span>
-                            </p>
+                            
+                            @if (Model.Status != "Completed" || !Model.IsConfirmed)
+                            {
+                                <div class="mt-4">
+                                    <h6>Submit Proof of Completion</h6>
+                                    <form asp-action="SubmitTaskProof" asp-controller="Employee" method="post" enctype="multipart/form-data">
+                                        <input type="hidden" name="taskId" value="@Model.Id" />
+                                        <div class="mb-3">
+                                            <input type="file" class="form-control" name="proofFile" required />
+                                            <small class="text-muted">Upload file as proof of task completion</small>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Submit for Approval</button>
+                                    </form>
+                                </div>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(Model.ProofFilePath))
+                            {
+                                <div class="mt-3">
+                                    <h6>Submitted Proof</h6>
+                                    <p>
+                                        <a href="@Url.Action("DownloadProof", "Employee", new { taskId = Model.Id })" class="btn btn-sm btn-secondary">
+                                            <i class="fas fa-download"></i> Download Proof File
+                                        </a>
+                                    </p>
+                                    <p>
+                                        <strong>Status:</strong>
+                                        @if (Model.IsConfirmed)
+                                        {
+                                            <span class="badge bg-success">Approved</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">Pending Approval</span>
+                                        }
+                                    </p>
+                                </div>
+                            }
                         </div>
                         <div class="col-md-6">
                             <p><strong>Project:</strong> 

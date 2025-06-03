@@ -76,9 +76,6 @@
                                         <a asp-action="EditUser" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a asp-action="UserDetails" asp-route-id="@user.Id" class="btn btn-sm btn-outline-info">
-                                            <i class="bi bi-info-circle"></i>
-                                        </a>
                                         @if (user.Role != "Admin")
                                         {
                                             <button type="button" class="btn btn-sm btn-outline-danger" 

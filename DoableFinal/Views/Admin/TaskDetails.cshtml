@@ -58,6 +58,7 @@
                             <span class="badge bg-@(Model.Status switch {
                                 "Not Started" => "secondary",
                                 "In Progress" => "primary",
+                                "Pending Approval" => "info",
                                 "On Hold" => "warning",
                                 "Completed" => "success",
                                 _ => "secondary"
@@ -98,44 +99,43 @@
                             <div class="col-md-9">@Model.UpdatedAt.Value.ToString(dateTimeFormat)</div>
                         </div>
                     }
-                    @if (Model.CompletedAt.HasValue)
+                    
+
+                    @if (!string.IsNullOrEmpty(Model.ProofFilePath))
                     {
                         <div class="row mb-3">
-                            <div class="col-md-3 fw-bold">Completed:</div>
-                            <div class="col-md-9">@Model.CompletedAt.Value.ToString(dateTimeFormat)</div>
-                        </div>
-                    }
-                    <div class="row mb-3">
-                        <div class="col-md-3 fw-bold">Proof of Completion:</div>
-                        <div class="col-md-9">
-                            @if (!string.IsNullOrEmpty(Model.ProofFilePath))
-                            {
-                                <a href="@Url.Content(Model.ProofFilePath)" target="_blank" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-file-alt"></i> View Proof
-                                </a>
-                            }
-                            else
-                            {
-                                <span class="text-muted">No proof uploaded.</span>
-                            }
-                        </div>
-                    </div>
-                    @if (Model.Status == "For Review")
-                    {
-                        <div class="row mb-3">
-                            <div class="col-md-3 fw-bold">Proof of Completion:</div>
+                            <div class="col-md-3 fw-bold">Task Proof:</div>
                             <div class="col-md-9">
-                                @if (!string.IsNullOrEmpty(Model.ProofFilePath))
-                                {
-                                    <a href="@Url.Content(Model.ProofFilePath)" target="_blank" class="btn btn-outline-primary mb-2">
-                                        <i class="fas fa-file"></i> View Proof
-                                    </a>
-                                    <form asp-action="ConfirmTask" asp-route-id="@Model.Id" method="post">
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-check-circle"></i> Confirm Completion
-                                        </button>
-                                    </form>
-                                }
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <a href="@Url.Content(Model.ProofFilePath)" class="btn btn-secondary btn-sm" target="_blank">
+                                                <i class="fas fa-download"></i> View Submitted Proof
+                                            </a>
+                                        </div>
+
+                                        @if (!Model.IsConfirmed && Model.Status != "Completed")
+                                        {
+                                            <form asp-action="ApproveTaskProof" asp-controller="Admin" method="post">
+                                                <input type="hidden" name="taskId" value="@Model.Id" />
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="fas fa-check-circle"></i> Approve Proof and Complete Task
+                                                </button>
+                                            </form>
+                                        }
+                                        else if (Model.IsConfirmed)
+                                        {
+                                            <div class="alert alert-success mb-0">
+                                                <i class="fas fa-check-circle"></i> Proof verified and task completed
+                                                @if (Model.CompletedAt.HasValue)
+                                                {
+                                                    <br/>
+                                                    <small class="text-muted">Completed on @Model.CompletedAt.Value.ToString(dateTimeFormat)</small>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     }

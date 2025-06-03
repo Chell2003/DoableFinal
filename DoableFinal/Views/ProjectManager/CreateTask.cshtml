@@ -85,9 +85,14 @@
 
                         <div class="mb-3">
                             <label asp-for="AssignedToIds" class="form-label">Assigned To</label>
-                            <select asp-for="AssignedToIds" asp-items="Model.Employees" class="form-select" multiple>
+                            <select asp-for="AssignedToIds" class="form-select select2-employee" multiple style="width: 100%;">
                             </select>
-                            <small class="form-text text-muted">Select one or more employees to assign to this task.</small>
+                            <small class="form-text text-muted mt-2">
+                                <i class="fas fa-info-circle me-1"></i> Legend:
+                                <i class="fas fa-tasks text-warning me-1"></i> Has tasks in this project
+                                <i class="fas fa-exclamation-circle text-danger me-1"></i> Has incomplete tasks
+                                <i class="fas fa-check-circle text-success"></i> Selected
+                            </small>
                             <span asp-validation-for="AssignedToIds" class="text-danger"></span>
                         </div>
 
@@ -95,8 +100,8 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-plus-square"></i> Create Task
                             </button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Back to Dashboard
+                            <a asp-action="Tasks" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Tasks
                             </a>
                         </div>
                     </form>
@@ -108,113 +113,165 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .employee-option {
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .employee-option i {
+            font-size: 14px;
+        }
+        .select2-container .select2-selection--multiple {
+            min-height: 38px;
+        }
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ced4da;
+        }
+        .employee-has-tasks {
+            color: #ffc107;
+            margin-left: 5px;
+        }
+        .employee-has-incomplete-tasks {
+            color: #dc3545;
+            margin-left: 5px;
+        }
+        .employee-selected {
+            color: #28a745;
+            margin-left: 5px;
+        }
+        .employee-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
     <script>
         $(document).ready(function() {
-            const allEmployees = @Html.Raw(Json.Serialize(ViewBag.AllEmployees));
-            const projects = @Html.Raw(Json.Serialize(ViewBag.Projects));
+            // Initialize variables
+            const projectDates = @Html.Raw(ViewBag.ProjectDatesJson ?? "{}");
+            const employees = @Html.Raw(ViewBag.EmployeesJson ?? "[]");
+            
+            // Initialize Select2 for employee assignment
+            $('.select2-employee').select2({
+                data: employees,
+                templateResult: formatEmployee,
+                templateSelection: formatEmployee,
+                escapeMarkup: function(markup) { return markup; }
+            }).on('select2:selecting', function(e) {
+                // Prevent selection of employees with incomplete tasks
+                const projectId = parseInt($('#ProjectId').val());
+                const employee = e.params.args.data;
+                
+                if (employee.incompleteTaskProjects && employee.incompleteTaskProjects.includes(projectId)) {
+                    e.preventDefault();
+                    alert('This employee has incomplete tasks and cannot be assigned to new tasks.');
+                }
+            });
+            
+            function formatEmployee(employee) {
+                if (!employee.id) return employee.text;
+                
+                const projectId = parseInt($('#ProjectId').val());
+                const hasTasksInProject = projectId && employee.projectAssignments.includes(projectId);
+                const hasIncompleteTasks = projectId && employee.incompleteTaskProjects && 
+                                         employee.incompleteTaskProjects.includes(projectId);
+                const isSelected = $('.select2-employee').val()?.includes(employee.id);
+                
+                const employeeDiv = $(`<div class="employee-option${hasIncompleteTasks ? ' employee-disabled' : ''}">
+                    <span>${employee.text}</span>
+                    ${hasTasksInProject ? '<i class="fas fa-tasks employee-has-tasks" title="Has tasks in this project"></i>' : ''}
+                    ${hasIncompleteTasks ? '<i class="fas fa-exclamation-circle employee-has-incomplete-tasks" title="Has incomplete tasks"></i>' : ''}
+                    ${isSelected ? '<i class="fas fa-check-circle employee-selected" title="Selected"></i>' : ''}
+                </div>`);
+
+                if (hasIncompleteTasks) {
+                    employeeDiv.attr('title', 'Cannot be assigned - Has incomplete tasks');
+                }
+
+                return employeeDiv;
+            }
             
             function updateDateConstraints() {
-                const selectedProjectId = parseInt($('#ProjectId').val());
-                if (!selectedProjectId) {
+                const projectId = parseInt($('#ProjectId').val());
+                if (!projectId || !projectDates[projectId]) {
                     $("#projectDateInfo").text("");
                     return;
                 }
 
-                const project = projects.find(p => p.id === selectedProjectId);
-                if (!project) return;
+                const project = projectDates[projectId];
+                const startDate = project.start;
+                const endDate = project.end;
 
-                // Set date input constraints based on project dates
-                $("#StartDate").attr('min', project.startDate);
-                $("#StartDate").attr('max', project.endDate);
-                $("#DueDate").attr('min', project.startDate);
-                $("#DueDate").attr('max', project.endDate);
+                // Set date input constraints
+                $("#StartDate").attr('min', startDate);
+                $("#StartDate").attr('max', endDate);
+                $("#DueDate").attr('min', startDate);
+                $("#DueDate").attr('max', endDate);
 
                 // Show project date constraints
-                $("#projectDateInfo").html(`Project timeline: <strong>${project.startDate}</strong> to <strong>${project.endDate}</strong>`);
+                $("#projectDateInfo").html(`Project timeline: <strong>${startDate}</strong> to <strong>${endDate}</strong>`);
 
                 // Adjust dates if they're outside project bounds
-                const startDate = $("#StartDate").val();
-                const dueDate = $("#DueDate").val();
+                const currentStartDate = $("#StartDate").val();
+                const currentDueDate = $("#DueDate").val();
                 
-                if (startDate < project.startDate) {
-                    $("#StartDate").val(project.startDate);
+                if (currentStartDate < startDate) {
+                    $("#StartDate").val(startDate);
                 }
-                if (startDate > project.endDate) {
-                    $("#StartDate").val(project.endDate);
+                if (currentStartDate > endDate) {
+                    $("#StartDate").val(endDate);
                 }
-                if (dueDate < project.startDate) {
-                    $("#DueDate").val(project.startDate);
+                if (currentDueDate < startDate) {
+                    $("#DueDate").val(startDate);
                 }
-                if (dueDate > project.endDate) {
-                    $("#DueDate").val(project.endDate);
+                if (currentDueDate > endDate) {
+                    $("#DueDate").val(endDate);
                 }
             }
 
-            // Handle project selection
+            // Event Handlers
             $('#ProjectId').change(function() {
-                const selectedProjectId = parseInt($(this).val());
-                const assignedToSelect = $('#AssignedToIds');
-                
-                // Update date constraints
                 updateDateConstraints();
                 
-                // Clear current options
-                assignedToSelect.empty();
-                
-                // Filter employees based on the selected project
-                const availableEmployees = allEmployees.filter(employee => {
-                    // Employee can be assigned if they don't have incomplete tasks in this project
-                    return !employee.incompleteTasks.includes(selectedProjectId);
+                // Clear selection for employees with incomplete tasks in the new project
+                const projectId = parseInt($(this).val());
+                const currentSelection = $('.select2-employee').val() || [];
+                const validSelection = currentSelection.filter(employeeId => {
+                    const employee = employees.find(e => e.id === employeeId);
+                    return !(employee.incompleteTaskProjects && 
+                            employee.incompleteTaskProjects.includes(projectId));
                 });
                 
-                // Add filtered employees to select
-                availableEmployees.forEach(employee => {
-                    assignedToSelect.append(new Option(employee.fullName, employee.id));
-                });
-            });
-
-            // Handle start date changes
-            $("#StartDate").change(function() {
-                const selectedProjectId = parseInt($('#ProjectId').val());
-                if (!selectedProjectId) return;
-
-                const project = projects.find(p => p.id === selectedProjectId);
-                if (!project) return;
-
-                var startDate = $(this).val();
-                
-                // Ensure start date is within project bounds
-                if (startDate < project.startDate) {
-                    $(this).val(project.startDate);
-                    startDate = project.startDate;
-                }
-                if (startDate > project.endDate) {
-                    $(this).val(project.endDate);
-                    startDate = project.endDate;
-                }
-
-                // Update due date if it's before the new start date
-                if (startDate > $("#DueDate").val()) {
-                    $("#DueDate").val(startDate);
+                if (currentSelection.length !== validSelection.length) {
+                    $('.select2-employee').val(validSelection).trigger('change');
+                } else {
+                    $('.select2-employee').trigger('change');
                 }
             });
 
-            // Handle due date changes
-            $("#DueDate").change(function() {
-                const selectedProjectId = parseInt($('#ProjectId').val());
-                if (!selectedProjectId) return;
+            $("#StartDate, #DueDate").change(function() {
+                const projectId = parseInt($('#ProjectId').val());
+                if (!projectId || !projectDates[projectId]) return;
 
-                const project = projects.find(p => p.id === selectedProjectId);
-                if (!project) return;
-
-                var dueDate = $(this).val();
+                const project = projectDates[projectId];
+                const startDate = project.start;
+                const endDate = project.end;
                 
-                // Ensure due date is within project bounds
-                if (dueDate < project.startDate) {
-                    $(this).val(project.startDate);
+                // Ensure dates are within project bounds
+                if ($(this).val() < startDate) {
+                    $(this).val(startDate);
                 }
-                if (dueDate > project.endDate) {
-                    $(this).val(project.endDate);
+                if ($(this).val() > endDate) {
+                    $(this).val(endDate);
+                }
+
+                // If DueDate is before StartDate, adjust it
+                if ($(this).is('#StartDate') && $("#DueDate").val() < $(this).val()) {
+                    $("#DueDate").val($(this).val());
                 }
             });
 

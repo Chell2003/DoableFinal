@@ -137,56 +137,76 @@ namespace DoableFinal.Controllers
 
         [HttpGet]
         public async Task<IActionResult> CreateTask()
-        {
-            var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser?.Id == null)
+        {            
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
             {
-                return NotFound();
+                return RedirectToAction("Login", "Account");
             }
-
-            // Fetch projects managed by the current Project Manager
+            
+            // Get projects managed by this project manager
             var projects = await _context.Projects
-                .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == currentUser.Id)
+                .Where(p => p.ProjectManagerId == user.Id)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.StartDate,
+                    p.EndDate
+                })
                 .ToListAsync();
 
             // Get all employees
             var employees = await _userManager.GetUsersInRoleAsync("Employee");
+            
+            // Get task assignments including incomplete tasks for each employee
+            var projectTaskAssignments = await _context.TaskAssignments
+                .Include(ta => ta.ProjectTask)
+                .Where(ta => ta.ProjectTask.Project.ProjectManagerId == user.Id)
+                .Select(ta => new { 
+                    ta.EmployeeId, 
+                    ta.ProjectTask.ProjectId,
+                    IsCompleted = ta.ProjectTask.Status == "Completed"
+                })
+                .ToListAsync();
 
-            var viewModel = new CreateTaskViewModel
+            // Group task assignments by employee to find who has incomplete tasks
+            var employeesWithIncompleteTasks = projectTaskAssignments
+                .Where(ta => !ta.IsCompleted)
+                .GroupBy(ta => ta.EmployeeId)
+                .ToDictionary(g => g.Key, g => g.Select(ta => ta.ProjectId).Distinct().ToList());
+
+            var model = new CreateTaskViewModel
             {
-                Projects = projects.Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                Projects = projects.Select(p => new SelectListItem
                 {
                     Value = p.Id.ToString(),
                     Text = p.Name
                 }).ToList(),
-
-                Employees = employees.Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                AvailableEmployees = employees.Select(e => new
                 {
-                    Value = e.Id,
-                    Text = $"{e.FirstName} {e.LastName}"
+                    id = e.Id,
+                    text = e.UserName, // or e.Email or full name if available
+                    projectAssignments = projectTaskAssignments
+                        .Where(pta => pta.EmployeeId == e.Id)
+                        .Select(pta => pta.ProjectId)
+                        .Distinct()
+                        .ToList(),
+                    incompleteTaskProjects = employeesWithIncompleteTasks.ContainsKey(e.Id) 
+                        ? employeesWithIncompleteTasks[e.Id] 
+                        : new List<int>()
                 }).ToList()
             };
 
-            // Store full list of employees in ViewBag to filter dynamically via JavaScript
-            ViewBag.AllEmployees = await _context.Users
-                .Where(u => u.Role == "Employee")
-                .Select(u => new
-                {
-                    Id = u.Id,
-                    FullName = $"{u.FirstName} {u.LastName}",
-                    IncompleteTasks = _context.TaskAssignments
-                        .Where(ta => ta.EmployeeId == u.Id)
-                        .Join(_context.Tasks,
-                            ta => ta.ProjectTaskId,
-                            t => t.Id,
-                            (ta, t) => new { ProjectId = t.ProjectId, Status = t.Status })
-                        .Where(x => x.Status != "Completed")
-                        .Select(x => x.ProjectId)
-                        .ToList()
-                })
-                .ToListAsync();
+            // Pass project dates to the view for date validation
+            var projectDatesJson = projects.ToDictionary(
+                p => p.Id,
+                p => new { start = p.StartDate.ToString("yyyy-MM-dd"), end = p.EndDate?.ToString("yyyy-MM-dd") }
+            );
+            ViewBag.ProjectDatesJson = System.Text.Json.JsonSerializer.Serialize(projectDatesJson);
+            ViewBag.EmployeesJson = System.Text.Json.JsonSerializer.Serialize(model.AvailableEmployees);
 
-            return View(viewModel);
+            return View(model);
         }
 
         [HttpPost]
@@ -462,6 +482,47 @@ namespace DoableFinal.Controllers
 
             TempData["SuccessMessage"] = "Comment posted successfully.";
             return RedirectToAction("TaskDetails", new { id = taskId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApproveTaskProof(int taskId)
+        {
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null || task.Project.ProjectManagerId != user.Id)
+            {
+                return Forbid();
+            }
+
+            task.IsConfirmed = true;
+            task.Status = "Completed";
+            task.CompletedAt = DateTime.UtcNow;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            // Create notification for employee
+            var notification = new Notification
+            {
+                UserId = task.CreatedById,
+                Title = "Task Proof Approved",
+                Message = $"Your proof for task '{task.Title}' has been approved",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false,
+                Link = $"/Employee/TaskDetails/{task.Id}"
+            };
+
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Task proof has been approved and marked as completed.";
+            return RedirectToAction(nameof(TaskDetails), new { id = taskId });
         }
 
         public async Task<IActionResult> MyProjects()

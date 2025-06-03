@@ -241,156 +241,86 @@ namespace DoableFinal.Controllers
         }
 
         // Task Management
-        public async Task<IActionResult> Tasks()
+        public async Task<IActionResult> Tasks(string filter)
         {
-            var tasks = await _context.Tasks
+            var query = _context.Tasks
                 .Include(t => t.Project)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
-                .OrderByDescending(t => t.CreatedAt)
+                .AsQueryable();
+
+            // Apply filters
+            query = filter switch
+            {
+                "pending" => query.Where(t => !string.IsNullOrEmpty(t.ProofFilePath) && !t.IsConfirmed && t.Status != "Completed"),
+                "completed" => query.Where(t => t.Status == "Completed"),
+                "in-progress" => query.Where(t => t.Status == "In Progress"),
+                _ => query
+            };
+
+            var tasks = await query
+                .OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt)
                 .ToListAsync();
+
+            ViewBag.CurrentFilter = filter;
             return View(tasks);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> CreateTask()
-        {
-            var projects = await _context.Projects.ToListAsync();
-            var employees = await _userManager.GetUsersInRoleAsync("Employee");
-
-            var viewModel = new CreateTaskViewModel
-            {
-                Projects = projects.Select(p => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
-                {
-                    Value = p.Id.ToString(),
-                    Text = p.Name
-                }).ToList(),
-
-                Employees = employees.Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
-                {
-                    Value = e.Id,
-                    Text = $"{e.FirstName} {e.LastName}"
-                }).ToList()
-            };
-
-            // Store full list of employees in ViewBag to filter dynamically via JavaScript
-            ViewBag.AllEmployees = await _context.Users
-                .Where(u => u.Role == "Employee")
-                .Select(u => new
-                {
-                    Id = u.Id,
-                    FullName = $"{u.FirstName} {u.LastName}",
-                    IncompleteTasks = _context.TaskAssignments
-                        .Where(ta => ta.EmployeeId == u.Id)
-                        .Join(_context.Tasks,
-                            ta => ta.ProjectTaskId,
-                            t => t.Id,
-                            (ta, t) => new { ProjectId = t.ProjectId, Status = t.Status })
-                        .Where(x => x.Status != "Completed")
-                        .Select(x => x.ProjectId)
-                        .ToList()
-                })
-                .ToListAsync();
-
-            return View(viewModel);
-        }
-
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateTask(CreateTaskViewModel model)
+        public async Task<IActionResult> ApproveTaskProof(int taskId)
         {
-            if (ModelState.IsValid)
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null)
             {
-                // Get project dates
-                var project = await _context.Projects.FindAsync(model.ProjectId);
-                if (project == null)
-                {
-                    ModelState.AddModelError("ProjectId", "Invalid project selected");
-                    return await PrepareCreateTaskViewModel(model);
-                }
+                return NotFound();
+            }
 
-                // Validate task dates against project dates
-                if (model.StartDate < project.StartDate)
-                {
-                    ModelState.AddModelError("StartDate", "Task cannot start before the project start date");
-                    return await PrepareCreateTaskViewModel(model);
-                }
-
-                if (project.EndDate.HasValue && model.DueDate > project.EndDate.Value)
-                {
-                    ModelState.AddModelError("DueDate", "Task cannot end after the project end date");
-                    return await PrepareCreateTaskViewModel(model);
-                }
-
-                if (model.StartDate > model.DueDate)
-                {
-                    ModelState.AddModelError("DueDate", "Due date must be after the start date");
-                    return await PrepareCreateTaskViewModel(model);
-                }
-
-                var currentUser = await _userManager.GetUserAsync(User);
-                if (currentUser?.Id == null)
-                {
-                    ModelState.AddModelError(string.Empty, "Unable to identify the current user.");
-                    return await PrepareCreateTaskViewModel(model);
-                }
-
-                var task = new ProjectTask
-                {
-                    Title = model.Title,
-                    Description = model.Description,
-                    StartDate = model.StartDate,
-                    DueDate = model.DueDate,
-                    Status = model.Status,
-                    Priority = model.Priority,
-                    ProjectId = model.ProjectId,
-                    CreatedById = currentUser.Id,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _context.Tasks.Add(task);
-                await _context.SaveChangesAsync();
-
-                // Handle multiple task assignments
-                if (model.AssignedToIds != null && model.AssignedToIds.Any())
-                {
-                    foreach (var employeeId in model.AssignedToIds)
-                    {
-                        // Check if employee is already in project team
-                        var isInTeam = await _context.ProjectTeams
-                            .AnyAsync(pt => pt.ProjectId == model.ProjectId && pt.UserId == employeeId);
-
-                        // If not in team, add them
-                        if (!isInTeam)
-                        {
-                            var projectTeam = new ProjectTeam
-                            {
-                                ProjectId = model.ProjectId,
-                                UserId = employeeId,
-                                Role = "Team Member",
-                                JoinedAt = DateTime.UtcNow
-                            };
-                            _context.ProjectTeams.Add(projectTeam);
-                        }
-
-                        // Create task assignment
-                        var taskAssignment = new TaskAssignment
-                        {
-                            ProjectTaskId = task.Id,
-                            EmployeeId = employeeId,
-                            AssignedAt = DateTime.UtcNow
-                        };
-                        _context.TaskAssignments.Add(taskAssignment);
-                    }
-
-                    await _context.SaveChangesAsync();
-                }
-
-                TempData["SuccessMessage"] = "Task created successfully.";
+            if (string.IsNullOrEmpty(task.ProofFilePath))
+            {
+                TempData["Error"] = "No proof file has been submitted for this task.";
                 return RedirectToAction(nameof(Tasks));
             }
 
-            return await PrepareCreateTaskViewModel(model);
+            task.IsConfirmed = true;
+            task.Status = "Completed";
+            task.CompletedAt = DateTime.UtcNow;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            // Create notifications for both employee and project manager
+            var notifications = new List<Notification>
+            {
+                // Notify the employee
+                new Notification
+                {
+                    UserId = task.CreatedById,
+                    Title = "Task Proof Approved by Admin",
+                    Message = $"Your proof for task '{task.Title}' has been approved by admin",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    Link = $"/Employee/TaskDetails/{task.Id}"
+                },
+                // Notify the project manager
+                new Notification
+                {
+                    UserId = task.Project.ProjectManagerId,
+                    Title = "Task Proof Approved by Admin",
+                    Message = $"Task proof for '{task.Title}' has been approved by admin",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    Link = $"/ProjectManager/TaskDetails/{task.Id}"
+                }
+            };
+
+            _context.Notifications.AddRange(notifications);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Task proof has been approved and marked as completed.";
+            return RedirectToAction(nameof(Tasks));
         }
 
         private async Task<IActionResult> PrepareCreateTaskViewModel(CreateTaskViewModel model)
@@ -862,34 +792,19 @@ namespace DoableFinal.Controllers
 
             TempData["SuccessMessage"] = "Task deleted successfully.";
             return RedirectToAction(nameof(Tasks));
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> TaskDetails(int id)
+        }        public async Task<IActionResult> TaskDetails(int id)
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                    .ThenInclude(p => p.ProjectTeams)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
                 .Include(t => t.Comments)
-                    .ThenInclude(c => c.CreatedBy)
+                .Include(t => t.Attachments)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
             {
                 return NotFound();
-            }
-
-            // Initialize Comments collection if null
-            if (task.Comments == null)
-            {
-                task.Comments = new List<TaskComment>();
-            }
-            else
-            {
-                // Order comments by creation date
-                task.Comments = task.Comments.OrderByDescending(c => c.CreatedAt).ToList();
             }
 
             return View(task);
@@ -1005,6 +920,143 @@ namespace DoableFinal.Controllers
             await _context.SaveChangesAsync();
             TempData["SuccessMessage"] = "Task has been confirmed as completed.";
             return RedirectToAction(nameof(TaskDetails), new { id });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateTask()
+        {
+            // Get all projects
+            var projects = await _context.Projects
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.StartDate,
+                    p.EndDate
+                })
+                .ToListAsync();
+
+            // Get all employees
+            var employees = await _userManager.GetUsersInRoleAsync("Employee");
+            
+            // Get task assignments including incomplete tasks for each employee
+            var projectTaskAssignments = await _context.TaskAssignments
+                .Include(ta => ta.ProjectTask)
+                .Select(ta => new { 
+                    ta.EmployeeId, 
+                    ta.ProjectTask.ProjectId,
+                    IsCompleted = ta.ProjectTask.Status == "Completed"
+                })
+                .ToListAsync();
+
+            // Group task assignments by employee to find who has incomplete tasks
+            var employeesWithIncompleteTasks = projectTaskAssignments
+                .Where(ta => !ta.IsCompleted)
+                .GroupBy(ta => ta.EmployeeId)
+                .ToDictionary(g => g.Key, g => g.Select(ta => ta.ProjectId).Distinct().ToList());
+
+            var model = new CreateTaskViewModel
+            {
+                Projects = projects.Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name
+                }).ToList(),
+                AvailableEmployees = employees.Select(e => new
+                {
+                    id = e.Id,
+                    text = $"{e.FirstName} {e.LastName} ({e.Email})",
+                    projectAssignments = projectTaskAssignments
+                        .Where(pta => pta.EmployeeId == e.Id)
+                        .Select(pta => pta.ProjectId)
+                        .Distinct()
+                        .ToList(),
+                    incompleteTaskProjects = employeesWithIncompleteTasks.ContainsKey(e.Id) 
+                        ? employeesWithIncompleteTasks[e.Id] 
+                        : new List<int>()
+                }).ToList()
+            };
+
+            // Pass project dates and employee data to the view
+            var projectDatesJson = projects.ToDictionary(
+                p => p.Id,
+                p => new { start = p.StartDate.ToString("yyyy-MM-dd"), end = p.EndDate?.ToString("yyyy-MM-dd") }
+            );
+            ViewBag.ProjectDatesJson = System.Text.Json.JsonSerializer.Serialize(projectDatesJson);
+            ViewBag.EmployeesJson = System.Text.Json.JsonSerializer.Serialize(model.AvailableEmployees);
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateTask(CreateTaskViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var task = new ProjectTask
+                {
+                    Title = model.Title,
+                    Description = model.Description,
+                    ProjectId = model.ProjectId,
+                    StartDate = model.StartDate,
+                    DueDate = model.DueDate,
+                    Status = "Not Started",
+                    Priority = model.Priority,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedById = (await _userManager.GetUserAsync(User))?.Id ?? throw new InvalidOperationException("User not found")
+                };
+
+                _context.Tasks.Add(task);
+                await _context.SaveChangesAsync();
+
+                // Create task assignments
+                if (model.AssignedToIds != null && model.AssignedToIds.Any())
+                {
+                    foreach (var employeeId in model.AssignedToIds)
+                    {
+                        var taskAssignment = new TaskAssignment
+                        {
+                            ProjectTaskId = task.Id,
+                            EmployeeId = employeeId,
+                            AssignedAt = DateTime.UtcNow
+                        };
+                        _context.TaskAssignments.Add(taskAssignment);
+
+                        // Create notification for assigned employee
+                        var notification = new Notification
+                        {
+                            UserId = employeeId,
+                            Title = "New Task Assignment",
+                            Message = $"You have been assigned to task: {task.Title}",
+                            CreatedAt = DateTime.UtcNow,
+                            IsRead = false,
+                            Link = $"/Employee/TaskDetails/{task.Id}"
+                        };
+                        _context.Notifications.Add(notification);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Task created successfully.";
+                return RedirectToAction(nameof(Tasks));
+            }
+
+            // If we got this far, something failed, redisplay form
+            model.Projects = (await _context.Projects.ToListAsync()).Select(p => new SelectListItem
+            {
+                Value = p.Id.ToString(),
+                Text = p.Name
+            }).ToList();
+
+            model.Employees = (await _userManager.GetUsersInRoleAsync("Employee")).Select(e => new SelectListItem
+            {
+                Value = e.Id,
+                Text = $"{e.FirstName} {e.LastName}"
+            }).ToList();
+
+            return View(model);
         }
     }
 }
