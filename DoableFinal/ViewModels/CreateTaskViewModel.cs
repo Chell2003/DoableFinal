@@ -44,10 +44,8 @@ namespace DoableFinal.ViewModels
         public List<string> AssignedToIds { get; set; } = new List<string>();
 
         public List<SelectListItem> Projects { get; set; } = new List<SelectListItem>();
-        public List<SelectListItem> Employees { get; set; } = new List<SelectListItem>();
-
-        // Dynamic data for Select2
-        public object AvailableEmployees { get; set; }
+        public List<SelectListItem> Employees { get; set; } = new List<SelectListItem>();        // Dynamic data for Select2 - only used for view rendering, not for model binding
+        public object? AvailableEmployees { get; set; }
 
         public CreateTaskViewModel()
         {

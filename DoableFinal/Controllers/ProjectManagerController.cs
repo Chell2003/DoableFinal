@@ -213,43 +213,60 @@ namespace DoableFinal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateTask(CreateTaskViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                // Get project dates
-                var project = await _context.Projects.FindAsync(model.ProjectId);
-                if (project == null)
+                foreach (var modelStateKey in ModelState.Keys)
                 {
-                    ModelState.AddModelError("ProjectId", "Invalid project selected");
-                    return await PrepareCreateTaskViewModel(model);
+                    var modelStateVal = ModelState[modelStateKey];
+                    if (modelStateVal?.Errors != null)
+                    {
+                        foreach (var error in modelStateVal.Errors)
+                        {
+                            _logger.LogError($"Validation error for {modelStateKey}: {error.ErrorMessage}");
+                        }
+                    }
                 }
+                TempData["ErrorMessage"] = "There were validation errors. Please check the form and try again.";
+                return await PrepareCreateTaskViewModel(model);
+            }
 
-                // Validate that the current user is the project manager
-                var currentUser = await _userManager.GetUserAsync(User);
-                if (currentUser?.Id == null || project.ProjectManagerId != currentUser.Id)
-                {
-                    ModelState.AddModelError(string.Empty, "You are not authorized to create tasks for this project");
-                    return await PrepareCreateTaskViewModel(model);
-                }
+            // Get project dates
+            var project = await _context.Projects.FindAsync(model.ProjectId);
+            if (project == null)
+            {
+                ModelState.AddModelError("ProjectId", "Invalid project selected");
+                return await PrepareCreateTaskViewModel(model);
+            }
 
-                // Validate task dates against project dates
-                if (model.StartDate < project.StartDate)
-                {
-                    ModelState.AddModelError("StartDate", "Task cannot start before the project start date");
-                    return await PrepareCreateTaskViewModel(model);
-                }
+            // Validate that the current user is the project manager
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null || project.ProjectManagerId != currentUser.Id)
+            {
+                ModelState.AddModelError(string.Empty, "You are not authorized to create tasks for this project");
+                return await PrepareCreateTaskViewModel(model);
+            }
 
-                if (project.EndDate.HasValue && model.DueDate > project.EndDate.Value)
-                {
-                    ModelState.AddModelError("DueDate", "Task cannot end after the project end date");
-                    return await PrepareCreateTaskViewModel(model);
-                }
+            // Validate task dates against project dates
+            if (model.StartDate < project.StartDate)
+            {
+                ModelState.AddModelError("StartDate", "Task cannot start before the project start date");
+                return await PrepareCreateTaskViewModel(model);
+            }
 
-                if (model.StartDate > model.DueDate)
-                {
-                    ModelState.AddModelError("DueDate", "Due date must be after the start date");
-                    return await PrepareCreateTaskViewModel(model);
-                }
+            if (project.EndDate.HasValue && model.DueDate > project.EndDate.Value)
+            {
+                ModelState.AddModelError("DueDate", "Task cannot end after the project end date");
+                return await PrepareCreateTaskViewModel(model);
+            }
 
+            if (model.StartDate > model.DueDate)
+            {
+                ModelState.AddModelError("DueDate", "Due date must be after the start date");
+                return await PrepareCreateTaskViewModel(model);
+            }
+
+            try
+            {
                 var task = new ProjectTask
                 {
                     Title = model.Title,
@@ -305,8 +322,12 @@ namespace DoableFinal.Controllers
                 TempData["SuccessMessage"] = "Task created successfully.";
                 return RedirectToAction(nameof(Tasks));
             }
-
-            return await PrepareCreateTaskViewModel(model);
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error creating task: {ex.Message}");
+                ModelState.AddModelError("", "An error occurred while creating the task. Please try again.");
+                return await PrepareCreateTaskViewModel(model);
+            }
         }
 
         private async Task<IActionResult> PrepareCreateTaskViewModel(CreateTaskViewModel model)

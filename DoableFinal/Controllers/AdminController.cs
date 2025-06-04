@@ -21,13 +21,15 @@ namespace DoableFinal.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly TimelineAdjustmentService _timelineAdjustmentService;
         private readonly NotificationService _notificationService;
+        private readonly ILogger<AdminController> _logger;
 
-        public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, TimelineAdjustmentService timelineAdjustmentService, NotificationService notificationService)
+        public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, TimelineAdjustmentService timelineAdjustmentService, NotificationService notificationService, ILogger<AdminController> logger)
         {
             _context = context;
             _userManager = userManager;
             _timelineAdjustmentService = timelineAdjustmentService;
             _notificationService = notificationService;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index()
@@ -992,29 +994,95 @@ namespace DoableFinal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateTask(CreateTaskViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+            {
+                foreach (var modelStateKey in ModelState.Keys)
+                {
+                    var modelStateVal = ModelState[modelStateKey];                    if (modelStateVal?.Errors != null)
+                    {
+                        foreach (var error in modelStateVal.Errors)
+                        {
+                            _logger.LogError($"Validation error for {modelStateKey}: {error.ErrorMessage}");
+                        }
+                    }
+                }
+                TempData["ErrorMessage"] = "There were validation errors. Please check the form and try again.";
+                return await PrepareCreateTaskViewModel(model);
+            }
+
+            // Get project dates
+            var project = await _context.Projects.FindAsync(model.ProjectId);
+            if (project == null)
+            {
+                ModelState.AddModelError("ProjectId", "Invalid project selected");
+                return await PrepareCreateTaskViewModel(model);
+            }
+
+            // Validate task dates against project dates
+            if (model.StartDate < project.StartDate)
+            {
+                ModelState.AddModelError("StartDate", "Task cannot start before the project start date");
+                return await PrepareCreateTaskViewModel(model);
+            }
+
+            if (project.EndDate.HasValue && model.DueDate > project.EndDate.Value)
+            {
+                ModelState.AddModelError("DueDate", "Task cannot end after the project end date");
+                return await PrepareCreateTaskViewModel(model);
+            }
+
+            if (model.StartDate > model.DueDate)
+            {
+                ModelState.AddModelError("DueDate", "Due date must be after the start date");
+                return await PrepareCreateTaskViewModel(model);
+            }
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
             {
                 var task = new ProjectTask
                 {
                     Title = model.Title,
                     Description = model.Description,
-                    ProjectId = model.ProjectId,
                     StartDate = model.StartDate,
                     DueDate = model.DueDate,
-                    Status = "Not Started",
+                    Status = model.Status,
                     Priority = model.Priority,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedById = (await _userManager.GetUserAsync(User))?.Id ?? throw new InvalidOperationException("User not found")
+                    ProjectId = model.ProjectId,
+                    CreatedById = currentUser.Id,
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 _context.Tasks.Add(task);
                 await _context.SaveChangesAsync();
 
-                // Create task assignments
+                // Add assignments if specified
                 if (model.AssignedToIds != null && model.AssignedToIds.Any())
                 {
                     foreach (var employeeId in model.AssignedToIds)
                     {
+                        // Check if employee is already in project team
+                        var isInTeam = await _context.ProjectTeams
+                            .AnyAsync(pt => pt.ProjectId == model.ProjectId && pt.UserId == employeeId);
+
+                        // If not in team, add them
+                        if (!isInTeam)
+                        {
+                            var projectTeam = new ProjectTeam
+                            {
+                                ProjectId = model.ProjectId,
+                                UserId = employeeId,
+                                Role = "Team Member",
+                                JoinedAt = DateTime.UtcNow
+                            };
+                            _context.ProjectTeams.Add(projectTeam);
+                        }
+
                         var taskAssignment = new TaskAssignment
                         {
                             ProjectTaskId = task.Id,
@@ -1022,41 +1090,22 @@ namespace DoableFinal.Controllers
                             AssignedAt = DateTime.UtcNow
                         };
                         _context.TaskAssignments.Add(taskAssignment);
-
-                        // Create notification for assigned employee
-                        var notification = new Notification
-                        {
-                            UserId = employeeId,
-                            Title = "New Task Assignment",
-                            Message = $"You have been assigned to task: {task.Title}",
-                            CreatedAt = DateTime.UtcNow,
-                            IsRead = false,
-                            Link = $"/Employee/TaskDetails/{task.Id}"
-                        };
-                        _context.Notifications.Add(notification);
                     }
+
+                    await _context.SaveChangesAsync();
                 }
 
-                await _context.SaveChangesAsync();
+                await _notificationService.NotifyTaskUpdateAsync(task, $"New task '{task.Title}' has been created");
 
-                TempData["Success"] = "Task created successfully.";
+                TempData["SuccessMessage"] = "Task created successfully.";
                 return RedirectToAction(nameof(Tasks));
             }
-
-            // If we got this far, something failed, redisplay form
-            model.Projects = (await _context.Projects.ToListAsync()).Select(p => new SelectListItem
+            catch (Exception ex)
             {
-                Value = p.Id.ToString(),
-                Text = p.Name
-            }).ToList();
-
-            model.Employees = (await _userManager.GetUsersInRoleAsync("Employee")).Select(e => new SelectListItem
-            {
-                Value = e.Id,
-                Text = $"{e.FirstName} {e.LastName}"
-            }).ToList();
-
-            return View(model);
+                _logger.LogError($"Error creating task: {ex.Message}");
+                ModelState.AddModelError("", "An error occurred while creating the task. Please try again.");
+                return await PrepareCreateTaskViewModel(model);
+            }
         }
     }
 }
