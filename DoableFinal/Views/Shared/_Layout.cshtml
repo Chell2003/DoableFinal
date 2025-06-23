@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -26,7 +28,18 @@
                 <div class="sidebar-user">
                     <div class="user-info">
                         <i class="bi bi-person-circle"></i>
-                        <span>@User.Identity.Name</span>
+                        @{
+                            string? fullName = null;
+                            if (User.Identity?.IsAuthenticated == true)
+                            {
+                                var user = await UserManager.GetUserAsync(User);
+                                if (user != null)
+                                {
+                                    fullName = $"{user.FirstName} {user.LastName}";
+                                }
+                            }
+                        }
+                        <span>@(fullName ?? User.Identity?.Name)</span>
                     </div>
                 </div>
 
@@ -46,11 +59,6 @@
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Admin" asp-action="Tasks">
-                                <i class="bi bi-list-task"></i>
-                                <span>Tasks</span>
-                            </a>
-                        </li>                        <li>
                             <a asp-controller="Admin" asp-action="Users">
                                 <i class="bi bi-people"></i>
                                 <span>User Management</span>
@@ -99,9 +107,9 @@
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Employee" asp-action="Tasks">
-                                <i class="bi bi-list-task"></i>
-                                <span>Tasks</span>
+                            <a asp-controller="Employee" asp-action="Projects">
+                                <i class="bi bi-folder"></i>
+                                <span>Projects</span>
                             </a>
                         </li>
                         <li>
@@ -117,11 +125,7 @@
                             <a class="nav-link" asp-controller="ProjectManager" asp-action="Index">
                                 <i class="bi bi-speedometer2"></i> Dashboard</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="ProjectManager" asp-action="Tasks">
-                                <i class="bi bi-list-task"></i> Tasks
-                            </a>
-                        </li>
+                        <!-- Tasks removed from sidebar -->
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="ProjectManager" asp-action="MyProjects">
                                 <i class="bi bi-folder"></i> Projects
@@ -134,11 +138,7 @@
                         </li>
                     }
                     <li>
-                        <a asp-controller="Message" asp-action="Index">
-                            <i class="bi bi-envelope"></i>
-                            <span>Messages</span>
-                            <span id="unreadMessageCount" class="badge bg-danger rounded-pill ms-2" style="display: none;"></span>
-                        </a>
+                        <!-- Messages removed from sidebar -->
                     </li>
                     <li>
                         <a asp-controller="Ticket" asp-action="Index">

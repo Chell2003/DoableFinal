@@ -25,12 +25,16 @@ namespace DoableFinal.ViewModels
         [Required]
         public string Status { get; set; }
 
+
         [Required]
         [Display(Name = "Client")]
-        public string ClientId { get; set; }
+        public string? ClientId { get; set; }
+
+        // The name of the client for display purposes
+        public string? ClientName { get; set; }
 
         [Required]
         [Display(Name = "Project Manager")]
-        public string ProjectManagerId { get; set; }
+        public string? ProjectManagerId { get; set; }
     }
 } 

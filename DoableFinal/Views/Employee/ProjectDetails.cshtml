@@ -110,7 +110,12 @@
                                 @foreach (var member in Model.ProjectTeams)
                                 {
                                     <tr>
-                                        <td>@($"{member.User.FirstName} {member.User.LastName}")</td>
+                                        <td>
+                                            @($"{member.User.FirstName} {member.User.LastName}")
+                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        </td>
                                         <td>@member.Role</td>
                                         <td>@member.JoinedAt.ToString(dateFormat)</td>
                                     </tr>

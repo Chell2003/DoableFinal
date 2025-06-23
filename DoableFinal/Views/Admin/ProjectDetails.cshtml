@@ -123,7 +123,12 @@
                                 @foreach (var member in Model.ProjectTeams)
                                 {
                                     <tr>
-                                        <td>@($"{member.User.FirstName} {member.User.LastName}")</td>
+                                        <td>
+                                            @($"{member.User.FirstName} {member.User.LastName}")
+                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        </td>
                                         <td>@member.Role</td>
                                         <td>@member.JoinedAt.ToString(dateFormat)</td>
                                     </tr>
@@ -136,9 +141,14 @@
 
             <!-- Project Tasks -->
             <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-tasks me-1"></i>
-                    Project Tasks
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-tasks me-1"></i>
+                        Project Tasks
+                    </div>
+                    <a asp-action="CreateTask" asp-route-projectId="@Model.Id" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-lg"></i> Create Task
+                    </a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">

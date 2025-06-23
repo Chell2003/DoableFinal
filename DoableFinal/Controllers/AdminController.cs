@@ -260,8 +260,11 @@ namespace DoableFinal.Controllers
                 _ => query
             };
 
+
+            // Order: High priority first, then Medium/others, then Low last, then by UpdatedAt/CreatedAt
             var tasks = await query
-                .OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt)
+                .OrderBy(t => t.Priority == "Low" ? 2 : t.Priority == "High" ? 0 : 1)
+                .ThenByDescending(t => t.UpdatedAt ?? t.CreatedAt)
                 .ToListAsync();
 
             ViewBag.CurrentFilter = filter;
@@ -585,6 +588,7 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
+
             var model = new EditProjectViewModel
             {
                 Id = project.Id,
@@ -594,7 +598,8 @@ namespace DoableFinal.Controllers
                 EndDate = project.EndDate,
                 Status = project.Status,
                 ClientId = project.ClientId,
-                ProjectManagerId = project.ProjectManagerId
+                ProjectManagerId = project.ProjectManagerId,
+                ClientName = project.Client != null ? ($"{project.Client.FirstName} {project.Client.LastName}") : string.Empty
             };
 
             ViewBag.Clients = await _context.Users.Where(u => u.Role == "Client").ToListAsync();

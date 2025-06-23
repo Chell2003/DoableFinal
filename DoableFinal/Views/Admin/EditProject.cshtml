@@ -62,15 +62,13 @@
 
                         <div class="mb-3">
                             <label asp-for="ClientId" class="form-label"></label>
-                            <select asp-for="ClientId" class="form-select" asp-items="@(new SelectList(ViewBag.Clients, "Id", "Email"))">
-                                <option value="">-- Select Client --</option>
-                            </select>
-                            <span asp-validation-for="ClientId" class="text-danger"></span>
+                            <input type="text" class="form-control" value="@Model.ClientName" readonly />
+                            <input type="hidden" asp-for="ClientId" />
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="ProjectManagerId" class="form-label"></label>
-                            <select asp-for="ProjectManagerId" class="form-select" asp-items="@(new SelectList(ViewBag.ProjectManagers, "Id", "Email"))">
+                            <select asp-for="ProjectManagerId" class="form-select" asp-items="@(new SelectList(ViewBag.ProjectManagers, "Id", "LastName"))">
                                 <option value="">-- Select Project Manager --</option>
                             </select>
                             <span asp-validation-for="ProjectManagerId" class="text-danger"></span>
