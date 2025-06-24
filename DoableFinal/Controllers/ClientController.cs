@@ -268,8 +268,11 @@ namespace DoableFinal.Controllers
                 ViewBag.ProjectId = project.Id;
             }
 
+
+            // Order: High priority first, then Medium/others, then Low last, then by CreatedAt
             var tasks = await query
-                .OrderByDescending(t => t.CreatedAt)
+                .OrderBy(t => t.Priority == "Low" ? 2 : t.Priority == "High" ? 0 : 1)
+                .ThenByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
             return View(tasks);
