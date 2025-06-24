@@ -36,5 +36,7 @@ namespace DoableFinal.ViewModels
         [Required]
         [Display(Name = "Project Manager")]
         public string? ProjectManagerId { get; set; }
+
+        public string? ProjectManagerName { get; set; }
     }
 } 

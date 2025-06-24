@@ -589,6 +589,7 @@ namespace DoableFinal.Controllers
             }
 
 
+
             var model = new EditProjectViewModel
             {
                 Id = project.Id,
@@ -599,7 +600,8 @@ namespace DoableFinal.Controllers
                 Status = project.Status,
                 ClientId = project.ClientId,
                 ProjectManagerId = project.ProjectManagerId,
-                ClientName = project.Client != null ? ($"{project.Client.FirstName} {project.Client.LastName}") : string.Empty
+                ClientName = project.Client != null ? ($"{project.Client.FirstName} {project.Client.LastName}") : string.Empty,
+                ProjectManagerName = project.ProjectManager != null ? ($"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}") : string.Empty
             };
 
             ViewBag.Clients = await _context.Users.Where(u => u.Role == "Client").ToListAsync();

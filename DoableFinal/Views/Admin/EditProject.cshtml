@@ -68,10 +68,8 @@
 
                         <div class="mb-3">
                             <label asp-for="ProjectManagerId" class="form-label"></label>
-                            <select asp-for="ProjectManagerId" class="form-select" asp-items="@(new SelectList(ViewBag.ProjectManagers, "Id", "LastName"))">
-                                <option value="">-- Select Project Manager --</option>
-                            </select>
-                            <span asp-validation-for="ProjectManagerId" class="text-danger"></span>
+                            <input type="text" class="form-control" value="@Model.ProjectManagerName" readonly />
+                            <input type="hidden" asp-for="ProjectManagerId" />
                         </div>
 
                         <div class="mb-3">
