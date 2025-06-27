@@ -10,7 +10,7 @@
     <h1 class="mt-4">Project Details</h1>
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Index">Dashboard</a></li>
-        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Projects">Projects</a></li>
+        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="MyProjects">Projects</a></li>
         <li class="breadcrumb-item active">Project Details</li>
     </ol>
 
@@ -18,9 +18,27 @@
         <!-- Project Information -->
         <div class="col-xl-8">
             <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-project-diagram me-1"></i>
-                    Project Information
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-project-diagram me-1"></i>
+                        Project Information
+                    </div>
+                    <div>
+                        @{
+                            var totalTasks = Model.Tasks?.Count ?? 0;
+                            var completedTasks = Model.Tasks?.Count(t => t.Status == "Completed") ?? 0;
+                            var projectProgress = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
+                        }
+                        @if (projectProgress == 100 && Model.Status != "Completed")
+                        {
+                            <form asp-action="CompleteProject" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success btn-sm me-2">
+                                    <i class="fas fa-check-circle"></i> Complete Project
+                                </button>
+                            </form>
+                        }
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row mb-3">
@@ -45,6 +63,12 @@
                                 "Completed" => "success",
                                 _ => "secondary"
                             })">@Model.Status</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Progress:</div>
+                        <div class="col-md-9">
+                            @completedTasks out of @totalTasks tasks completed
                         </div>
                     </div>
                     <div class="row mb-3">

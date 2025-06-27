@@ -47,6 +47,16 @@
                         </div>
                     </div>
                     <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Progress:</div>
+                        <div class="col-md-9">
+                            @{
+                                var totalTasks = Model.Tasks?.Count ?? 0;
+                                var completedTasks = Model.Tasks?.Count(t => t.Status == "Completed") ?? 0;
+                            }
+                            @completedTasks out of @totalTasks tasks completed
+                        </div>
+                    </div>
+                    <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Start Date:</div>
                         <div class="col-md-9">@Model.StartDate.ToString(dateFormat)</div>
                     </div>

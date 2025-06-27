@@ -56,10 +56,10 @@
                                     <form asp-action="SubmitTaskProof" asp-controller="Employee" method="post" enctype="multipart/form-data">
                                         <input type="hidden" name="taskId" value="@Model.Id" />
                                         <div class="mb-3">
-                                            <input type="file" class="form-control" name="proofFile" required />
+                                            <input type="file" class="form-control" name="proofFile" required @(Model.Status == "Pending Approval" || Model.Status == "Completed" ? "disabled" : "") />
                                             <small class="text-muted">Upload file as proof of task completion</small>
                                         </div>
-                                        <button type="submit" class="btn btn-primary">Submit for Approval</button>
+                                        <button type="submit" class="btn btn-primary" @(Model.Status == "Pending Approval" || Model.Status == "Completed" ? "disabled" : "")>Submit for Approval</button>
                                     </form>
                                 </div>
                             }

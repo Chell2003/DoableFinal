@@ -667,6 +667,45 @@ namespace DoableFinal.Controllers
             return RedirectToAction(nameof(Projects));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CompleteProject(int id)
+        {
+            var project = await _context.Projects
+                .Include(p => p.Tasks)
+                .Include(p => p.Client)
+                .Include(p => p.ProjectManager)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+            // Verify all tasks are completed
+            var totalTasks = project.Tasks?.Count ?? 0;
+            var completedTasks = project.Tasks?.Count(t => t.Status == "Completed") ?? 0;
+            
+            if (totalTasks == 0 || completedTasks != totalTasks)
+            {
+                TempData["ErrorMessage"] = "Cannot complete project: Not all tasks are completed.";
+                return RedirectToAction(nameof(ProjectDetails), new { id });
+            }
+
+            // Update project status
+            var oldStatus = project.Status;
+            project.Status = "Completed";
+            project.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            // Notify relevant parties
+            await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been marked as completed");
+
+            TempData["SuccessMessage"] = "Project has been marked as completed.";
+            return RedirectToAction(nameof(ProjectDetails), new { id });
+        }
+
         // Task Management
         [HttpGet]
         public async Task<IActionResult> EditTask(int id)

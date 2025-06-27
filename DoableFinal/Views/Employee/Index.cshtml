@@ -83,8 +83,9 @@
                                             _ => "secondary"
                                         })">@task.Priority</span>
                                     </div>
-                                    <a href="@Url.Action("UpdateTaskStatus", "Employee", new { id = task.Id })" 
-                                       class="btn btn-sm btn-outline-primary">
+                                    <a href="@Url.Action("TaskDetails", "Employee", new { id = task.Id })" 
+                                       class="btn btn-sm btn-outline-primary @(task.Status == "Completed" || task.Status == "Pending Approval" ? "disabled" : "")" 
+                                       @(task.Status == "Completed" || task.Status == "Pending Approval" ? "tabindex='-1' aria-disabled='true'" : "")>
                                         Update Status
                                     </a>
                                 </div>

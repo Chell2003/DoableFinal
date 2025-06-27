@@ -77,12 +77,19 @@
 
                         <div class="mb-3">
                             <label for="newPassword" class="form-label">New Password</label>
-                            <input type="password" id="newPassword" name="newPassword" class="form-control" required />
+                            <div class="input-group">
+                                <input type="password" id="newPassword" name="newPassword" class="form-control" required pattern="^(?=.*[A-Z])(?=.*[a-zA-Z0-9]).{6,}$" title="Password must be alphanumeric and contain at least one capital letter." />
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('newPassword', this)"><i class="bi bi-eye"></i></button>
+                            </div>
+                            <small class="text-muted">Password must be alphanumeric and contain at least one capital letter.</small>
                         </div>
 
                         <div class="mb-3">
                             <label for="confirmPassword" class="form-label">Confirm New Password</label>
-                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required />
+                            <div class="input-group">
+                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required />
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('confirmPassword', this)"><i class="bi bi-eye"></i></button>
+                            </div>
                         </div>
 
                         <div class="d-grid">
@@ -122,3 +129,15 @@
         </div>
     </div>
 </div>
+<script>
+function togglePasswordVisibility(fieldId, btn) {
+    var input = document.getElementById(fieldId);
+    if (input.type === "password") {
+        input.type = "text";
+        btn.innerHTML = '<i class="bi bi-eye-slash"></i>';
+    } else {
+        input.type = "password";
+        btn.innerHTML = '<i class="bi bi-eye"></i>';
+    }
+}
+</script>

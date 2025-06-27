@@ -207,7 +207,7 @@
                         <div class="conversation-header p-3 border-bottom">
                             <h5 class="mb-0">Conversation</h5>
                         </div>
-                        <div class="conversation-messages p-3 flex-grow-1" style="overflow-y: auto;">
+                        <div class="conversation-messages p-3 flex-grow-1 d-flex flex-column" style="overflow-y: auto; width: 100%;">
                             ${messagesHtml}
                         </div>
                         <div class="conversation-input p-3 border-top">
@@ -310,18 +310,22 @@
             padding: 10px 15px;
             border-radius: 15px;
             margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
         }
 
         .message-sent {
             background-color: #0d6efd;
             color: white;
-            margin-left: auto;
-            border-bottom-right-radius: 5px;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            align-self: flex-start;
         }
 
         .message-received {
             background-color: #f8f9fa;
-            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+            align-self: flex-end;
         }
     </style>
 }

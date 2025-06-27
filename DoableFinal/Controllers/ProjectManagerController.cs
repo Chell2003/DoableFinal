@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -96,6 +97,52 @@ namespace DoableFinal.Controllers
                 .ToListAsync();
 
             return View(tasks);
+        }
+
+                [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CompleteProject(int id)
+        {
+            var project = await _context.Projects
+                .Include(p => p.Tasks)
+                .Include(p => p.Client)
+                .Include(p => p.ProjectManager)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+            // Only allow the assigned project manager
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (project.ProjectManagerId != currentUser?.Id)
+            {
+                return Forbid();
+            }
+
+            // Verify all tasks are completed
+            var totalTasks = project.Tasks?.Count ?? 0;
+            var completedTasks = project.Tasks?.Count(t => t.Status == "Completed") ?? 0;
+            if (totalTasks == 0 || completedTasks != totalTasks)
+            {
+                TempData["ErrorMessage"] = "Cannot complete project: Not all tasks are completed.";
+                return RedirectToAction(nameof(ProjectDetails), new { id });
+            }
+
+            // Update project status
+            project.Status = "Completed";
+            project.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            // Notify relevant parties (if you have a notification service)
+            if (_notificationService != null)
+            {
+                await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been marked as completed");
+            }
+
+            TempData["SuccessMessage"] = "Project has been marked as completed.";
+            return RedirectToAction(nameof(ProjectDetails), new { id });
         }
 
         [HttpGet]
