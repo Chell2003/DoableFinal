@@ -38,8 +38,9 @@
 
                         <div class="mb-3">
                             <label asp-for="StartDate" class="form-label"></label>
-                            <input asp-for="StartDate" class="form-control" type="date" />
+                            <input asp-for="StartDate" class="form-control" type="date" id="startDate" />
                             <span asp-validation-for="StartDate" class="text-danger"></span>
+                            <div id="startDateError" class="text-danger"></div>
                         </div>
 
                         <div class="mb-3">
@@ -85,4 +86,44 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Set min date to today for start date
+            var today = new Date().toISOString().split('T')[0];
+            $('#startDate').attr('min', today);
+
+            // Validate start date on change
+            $('#startDate').change(function() {
+                var selectedDate = new Date($(this).val());
+                var currentDate = new Date();
+                
+                // Reset the time part for accurate date comparison
+                selectedDate.setHours(0, 0, 0, 0);
+                currentDate.setHours(0, 0, 0, 0);
+
+                if (selectedDate < currentDate) {
+                    $('#startDateError').text('Start date cannot be in the past');
+                    $(this).val(''); // Clear the invalid date
+                } else {
+                    $('#startDateError').text('');
+                }
+            });
+
+            // Form submission validation
+            $('form').submit(function(e) {
+                var startDate = new Date($('#startDate').val());
+                var currentDate = new Date();
+                
+                startDate.setHours(0, 0, 0, 0);
+                currentDate.setHours(0, 0, 0, 0);
+
+                if (startDate < currentDate) {
+                    e.preventDefault();
+                    $('#startDateError').text('Start date cannot be in the past');
+                    return false;
+                }
+                return true;
+            });
+        });
+    </script>
 } 

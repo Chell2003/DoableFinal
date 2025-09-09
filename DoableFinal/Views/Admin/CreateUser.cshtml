@@ -5,14 +5,19 @@
 }
 
 <div class="container-fluid px-4">
-    <h1 class="mt-4">Create @ViewBag.Role</h1>
+    <h1 class="mt-4">Create Account</h1>
     <div class="card mb-4">
         <div class="card-header">
             <i class="bi bi-person-plus me-1"></i>
             New User Registration
         </div>
         <div class="card-body">
-            <form asp-action="CreateUser" method="post">
+            <form asp-action="CreateUser" method="post" autocomplete="off" spellcheck="false">
+                <!-- Hidden fields to prevent autofill -->
+                <input type="text" name="username" style="display:none" />
+                <input type="password" name="password" style="display:none" />
+                <input type="text" name="hidden" style="display:none" autocomplete="false" />
+                <input type="password" name="hidden" style="display:none" autocomplete="false" />
                 <div class="mb-3">
                     <label asp-for="Role" class="form-label">Role</label>
                     <select asp-for="Role" class="form-select">
@@ -29,33 +34,41 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label asp-for="FirstName" class="form-label"></label>
-                        <input asp-for="FirstName" class="form-control" />
+                        <input asp-for="FirstName" class="form-control" name="fname_@(Guid.NewGuid())" autocomplete="new-password" autocorrect="off" autocapitalize="off" readonly onfocus="this.removeAttribute('readonly');" />
                         <span asp-validation-for="FirstName" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label asp-for="LastName" class="form-label"></label>
-                        <input asp-for="LastName" class="form-control" />
+                        <input asp-for="LastName" class="form-control" name="lname_@(Guid.NewGuid())" autocomplete="new-password" autocorrect="off" autocapitalize="off" readonly onfocus="this.removeAttribute('readonly');" />
                         <span asp-validation-for="LastName" class="text-danger"></span>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="Email" class="form-label"></label>
-                    <input asp-for="Email" class="form-control" />
+                    <input asp-for="Email" class="form-control" name="email_@(Guid.NewGuid())" autocomplete="new-password" autocorrect="off" autocapitalize="off" readonly onfocus="this.removeAttribute('readonly');" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" />
+                        <div class="position-relative">
+                            <input type="password" asp-for="Password" class="form-control" name="pwd_@(DateTime.Now.Ticks)" autocomplete="off" data-lpignore="true" data-form-type="other" readonly 
+                                   onfocus="this.removeAttribute('readonly');this.type='password'" 
+                                   onblur="this.type='password'" />
+                        </div>
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label asp-for="ConfirmPassword" class="form-label"></label>
-                        <input asp-for="ConfirmPassword" class="form-control" />
+                        <div class="position-relative">
+                            <input type="password" asp-for="ConfirmPassword" class="form-control" name="cpwd_@(DateTime.Now.Ticks)" autocomplete="off" data-lpignore="true" data-form-type="other" readonly 
+                                   onfocus="this.removeAttribute('readonly');this.type='password'" 
+                                   onblur="this.type='password'" />
+                        </div>
                         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                     </div>
                 </div>

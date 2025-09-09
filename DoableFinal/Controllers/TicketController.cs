@@ -34,7 +34,9 @@ namespace DoableFinal.Controllers
             if (currentUser == null)
             {
                 return Challenge();
-            }            var tickets = await _context.Tickets
+            }
+            
+            var tickets = await _context.Tickets
                 .Include(t => t.AssignedTo)
                 .Include(t => t.CreatedBy)
                 .Include(t => t.Project)
@@ -46,7 +48,13 @@ namespace DoableFinal.Controllers
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
-            return View(tickets);
+            var viewModel = new TicketListViewModel
+            {
+                Tickets = tickets,
+                NotificationType = NotificationType.General
+            };
+
+            return View(viewModel);
         }        [HttpGet]
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> Create()
@@ -125,7 +133,7 @@ namespace DoableFinal.Controllers
                     );
                 }
 
-                TempData["SuccessMessage"] = "Ticket created successfully.";
+                TempData["TicketMessage"] = "Ticket created successfully.";
                 return RedirectToAction(nameof(Index));
             }
 

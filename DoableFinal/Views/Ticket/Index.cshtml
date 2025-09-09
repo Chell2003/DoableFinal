@@ -1,4 +1,4 @@
-@model IEnumerable<DoableFinal.Models.Ticket>
+@model DoableFinal.ViewModels.TicketListViewModel
 
 @{
     ViewData["Title"] = "Tickets";
@@ -10,14 +10,17 @@
             <h2>Tickets</h2>
         </div>
         <div class="col text-end">
-            <a asp-action="Create" class="btn btn-primary">Create New Ticket</a>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create New Ticket
+            </a>
         </div>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
+    @if (TempData["TicketMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["TicketMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
@@ -41,7 +44,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var ticket in Model)
+                        @foreach (var ticket in Model.Tickets)
                         {
                             <tr>
                                 <td>@ticket.Id</td>

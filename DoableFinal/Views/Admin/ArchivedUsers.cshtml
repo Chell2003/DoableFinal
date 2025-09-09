@@ -1,0 +1,95 @@
+@model IEnumerable<DoableFinal.Models.ApplicationUser>
+
+@{
+    ViewData["Title"] = "Archived Users";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3">Archived Users</h1>
+                    <p class="text-muted">View and manage archived users in the system</p>
+                </div>
+                <div class="btn-group">
+                    <a asp-action="Users" class="btn btn-secondary">
+                        <i class="fas fa-users"></i> Active Users
+                    </a>
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="btn-group" role="group">
+                    <a asp-action="ArchivedUsers" class="btn btn-outline-secondary @(ViewBag.RoleFilter == null ? "active" : "")">All</a>
+                    <a asp-action="ArchivedUsers" asp-route-roleFilter="Employee" class="btn btn-outline-secondary @(ViewBag.RoleFilter == "Employee" ? "active" : "")">Employees</a>
+                    <a asp-action="ArchivedUsers" asp-route-roleFilter="Project Manager" class="btn btn-outline-secondary @(ViewBag.RoleFilter == "Project Manager" ? "active" : "")">Project Managers</a>
+                    <a asp-action="ArchivedUsers" asp-route-roleFilter="Client" class="btn btn-outline-secondary @(ViewBag.RoleFilter == "Client" ? "active" : "")">Clients</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="archivedUsersTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Archived At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@($"{user.FirstName} {user.LastName}")</td>
+                                <td>@user.Email</td>
+                                <td>
+                                    <span class="badge bg-@(user.Role switch {
+                                        "Admin" => "danger",
+                                        "Project Manager" => "success",
+                                        "Employee" => "primary",
+                                        "Client" => "info",
+                                        _ => "secondary"
+                                    })">@user.Role</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@(user.IsActive ? "success" : "danger")">
+                                        @(user.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </td>
+                                <td>@user.ArchivedAt?.ToString("MMM dd, yyyy HH:mm")</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <form asp-action="UnarchiveUser" asp-route-userId="@user.Id" method="post" style="display: inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-primary" 
+                                                    onclick="return confirm('Are you sure you want to unarchive this user?')">
+                                                <i class="bi bi-archive-fill"></i> Unarchive
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#archivedUsersTable').DataTable({
+                order: [[4, 'desc']] // Sort by Archived At column by default
+            });
+        });
+    </script>
+}

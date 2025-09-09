@@ -1,0 +1,49 @@
+@model IEnumerable<DoableFinal.Models.ProjectTask>
+
+@{
+    ViewData["Title"] = "Archived Tasks";
+}
+
+<h2>Archived Tasks</h2>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Task Title</th>
+                <th>Project</th>
+                <th>Assigned To</th>
+                <th>Status</th>
+                <th>Archived At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var task in Model)
+            {
+                <tr>
+                    <td>@task.Title</td>
+                    <td>@task.Project.Name</td>
+                    <td>
+                        @string.Join(", ", task.TaskAssignments.Select(ta => $"{ta.Employee?.FirstName} {ta.Employee?.LastName}"))
+                    </td>
+                    <td>@task.Status</td>
+                    <td>@task.ArchivedAt?.ToString("MMM dd, yyyy HH:mm")</td>
+                    <td>
+                        <a asp-action="TaskDetails" asp-route-id="@task.Id" class="btn btn-info btn-sm">View Details</a>
+                        <form asp-action="UnarchiveTask" asp-route-id="@task.Id" method="post" style="display: inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Are you sure you want to unarchive this task?')">
+                                <i class="fas fa-box-open"></i> Unarchive
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <a asp-action="Tasks" class="btn btn-secondary">Back to Tasks</a>
+</div>

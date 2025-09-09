@@ -26,6 +26,8 @@ namespace DoableFinal.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
+        public bool IsArchived { get; set; }
+        public DateTime? ArchivedAt { get; set; }
 
         public virtual ICollection<ProjectTask> Tasks { get; set; }
         public virtual ICollection<ProjectTeam> ProjectTeams { get; set; }

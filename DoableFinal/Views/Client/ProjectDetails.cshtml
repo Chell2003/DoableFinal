@@ -233,16 +233,11 @@
                 series: [{
                     data: tasks.map(function(task) {
                         return {
-                            x: task.name,
-                            y: [
-                                new Date(task.start).getTime(),
-                                new Date(task.end).getTime()
-                            ],
+                            x: 'Project Timeline',
+                            y: [new Date(task.start).getTime(), new Date(task.end).getTime()],
                             fillColor: task.status === 'Completed' ? '#198754' :
-                                       task.status === 'In Progress' ? '#0d6efd' :
-                                       task.status === 'On Hold' ? '#ffc107' : '#6c757d',
-                            assignee: task.assignee,
-                            status: task.status
+                                     task.status === 'In Progress' ? '#0d6efd' :
+                                     task.status === 'On Hold' ? '#ffc107' : '#6c757d'
                         };
                     })
                 }],

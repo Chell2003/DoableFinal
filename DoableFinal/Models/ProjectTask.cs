@@ -28,6 +28,8 @@ namespace DoableFinal.Models
 
         public string? ProofFilePath { get; set; } // Path to the uploaded file
         public bool IsConfirmed { get; set; } = false; // Whether the task is confirmed by the Project Manager
+        public bool IsArchived { get; set; }
+        public DateTime? ArchivedAt { get; set; }
 
         public virtual ICollection<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
 

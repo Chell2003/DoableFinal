@@ -62,7 +62,7 @@
                     <div class="list-group list-group-flush">
                         @foreach (var project in ViewBag.RecentProjects ?? new List<Project>())
                         {
-                            <a href="@Url.Action("Details", "Projects", new { id = project.Id })" 
+                            <a href="@Url.Action("ProjectDetails", new { id = project.Id })" 
                                class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h6 class="mb-1">@project.Name</h6>

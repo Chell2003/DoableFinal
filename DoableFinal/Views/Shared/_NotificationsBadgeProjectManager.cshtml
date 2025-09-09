@@ -1,0 +1,29 @@
+@using Microsoft.AspNetCore.Identity
+@using DoableFinal.Models
+@using Microsoft.EntityFrameworkCore
+
+@inject UserManager<ApplicationUser> UserManager
+@inject DoableFinal.Data.ApplicationDbContext Context
+
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var unreadCount = 0;
+    if (user != null)
+    {
+        unreadCount = await Context.Notifications
+            .CountAsync(n => n.UserId == user.Id && !n.IsRead);
+    }
+}
+
+<li class="nav-item">
+    <a class="nav-link position-relative" asp-controller="ProjectManager" asp-action="Notifications">
+        <i class="bi bi-bell-fill fs-5"></i>
+        @if (unreadCount > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                @unreadCount
+                <span class="visually-hidden">unread notifications</span>
+            </span>
+        }
+    </a>
+</li>

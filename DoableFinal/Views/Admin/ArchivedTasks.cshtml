@@ -1,0 +1,94 @@
+@model IEnumerable<DoableFinal.Models.ProjectTask>
+
+@{
+    ViewData["Title"] = "Archived Tasks";
+    var dateFormat = "MMM dd, yyyy";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Archived Tasks</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Tasks">Tasks</a></li>
+        <li class="breadcrumb-item active">Archived Tasks</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-archive me-1"></i>
+            Archived Tasks List
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped" id="tasksTable">
+                    <thead>
+                        <tr>
+                            <th>Task Title</th>
+                            <th>Project</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Archived At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var task in Model)
+                        {
+                            <tr>
+                                <td>@task.Title</td>
+                                <td>
+                                    <a asp-action="ProjectDetails" asp-route-id="@task.ProjectId">
+                                        @task.Project.Name
+                                    </a>
+                                </td>
+                                <td>
+                                    @string.Join(", ", task.TaskAssignments.Select(ta => $"{ta.Employee.FirstName} {ta.Employee.LastName}"))
+                                </td>
+                                <td>
+                                    <span class="badge bg-@(task.Status switch {
+                                        "Not Started" => "secondary",
+                                        "In Progress" => "primary",
+                                        "On Hold" => "warning",
+                                        "Completed" => "success",
+                                        _ => "secondary"
+                                    })">@task.Status</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@(task.Priority switch {
+                                        "Low" => "info",
+                                        "Medium" => "warning",
+                                        "High" => "danger",
+                                        _ => "secondary"
+                                    })">@task.Priority</span>
+                                </td>
+                                <td>@task.ArchivedAt?.ToString(dateFormat)</td>
+                                <td>
+                                    <a asp-action="TaskDetails" asp-route-id="@task.Id" class="btn btn-info btn-sm">
+                                        <i class="bi bi-info-circle"></i> Details
+                                    </a>
+                                    <form asp-action="UnarchiveTask" asp-route-id="@task.Id" method="post" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Are you sure you want to unarchive this task?')">
+                                            <i class="fas fa-box-open"></i> Unarchive
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#tasksTable').DataTable({
+                order: [[5, 'desc']] // Sort by Archived At column by default
+            });
+        });
+    </script>
+}

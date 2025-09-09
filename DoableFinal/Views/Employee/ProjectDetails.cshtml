@@ -207,49 +207,35 @@
                 end = t.DueDate.ToString("yyyy-MM-dd"),
                 status = t.Status ?? "Not Set",
                 assignee = t.TaskAssignments != null && t.TaskAssignments.Any()
-                ? string.Join(", ", t.TaskAssignments.Select(a => a.Employee.FirstName))
-                : "Unassigned"
+                    ? string.Join(", ", t.TaskAssignments.Select(a => a.Employee.FirstName))
+                    : "Unassigned"
             }) ?? Enumerable.Empty<object>()));
 
             var options = {
                 series: [{
                     data: tasks.map(function(task) {
                         return {
-                            x: task.name,
-                            y: [
-                                new Date(task.start).getTime(),
-                                new Date(task.end).getTime()
-                            ],
+                            x: "Tasks",
+                            y: [new Date(task.start).getTime(), new Date(task.end).getTime()],
                             fillColor: task.status === 'Completed' ? '#198754' :
                                      task.status === 'In Progress' ? '#0d6efd' :
-                                     task.status === 'On Hold' ? '#ffc107' : '#6c757d',
-                            assignee: task.assignee,
-                            status: task.status
-                        }
+                                     task.status === 'On Hold' ? '#ffc107' : '#6c757d'
+                        };
                     })
                 }],
                 chart: {
-                    height: Math.max(350, tasks.length * 50),
+                    height: 100,
                     type: 'rangeBar',
                     toolbar: {
-                        show: true,
-                        tools: {
-                            download: true,
-                            selection: true,
-                            zoom: true,
-                            zoomin: true,
-                            zoomout: true,
-                            pan: true,
-                        }
+                        show: false
                     }
                 },
                 plotOptions: {
                     bar: {
                         horizontal: true,
-                        distributed: true,
-                        dataLabels: {
-                            hideOverflowingLabels: false
-                        }
+                        barHeight: '100%',
+                        rangeBarOverlap: true,
+                        rangeBarGroupRows: true
                     }
                 },
                 dataLabels: {

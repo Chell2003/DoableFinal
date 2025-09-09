@@ -35,6 +35,46 @@ namespace DoableFinal.Controllers
             _notificationService = notificationService;
         }
 
+        public async Task<IActionResult> Notifications()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == currentUser.Id)
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync();
+
+            return View(notifications);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var notification = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.Id == id && n.UserId == currentUser.Id);
+
+            if (notification == null)
+            {
+                return NotFound();
+            }
+
+            notification.IsRead = true;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Notifications));
+        }
+
         public async Task<IActionResult> Index()
         {
             var currentUser = await _userManager.GetUserAsync(User);
@@ -47,7 +87,9 @@ namespace DoableFinal.Controllers
 
             // Get statistics
             ViewBag.MyProjects = await _context.Projects
-                .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == userId)
+                .Where(p => p.ProjectManagerId != null && 
+                           p.ProjectManagerId == userId && 
+                           !p.IsArchived)
                 .CountAsync();
 
             ViewBag.MyTasks = await _context.Tasks
@@ -92,7 +134,10 @@ namespace DoableFinal.Controllers
                 .Include(t => t.Project)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
-                .Where(t => t.Project != null && t.Project.ProjectManagerId != null && t.Project.ProjectManagerId == currentUser.Id)
+                .Where(t => t.Project != null && 
+                           t.Project.ProjectManagerId != null && 
+                           t.Project.ProjectManagerId == currentUser.Id && 
+                           !t.IsArchived)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
@@ -203,8 +248,10 @@ namespace DoableFinal.Controllers
                 })
                 .ToListAsync();
 
-            // Get all employees
-            var employees = await _userManager.GetUsersInRoleAsync("Employee");
+            // Get all active employees
+            var employees = await _userManager.Users
+                .Where(u => u.Role == "Employee" && !u.IsArchived)
+                .ToListAsync();
             
             // Get task assignments including incomplete tasks for each employee
             var projectTaskAssignments = await _context.TaskAssignments
@@ -397,8 +444,10 @@ namespace DoableFinal.Controllers
                 })
                 .ToListAsync();
 
-            // Get all employees
-            var employees = await _userManager.GetUsersInRoleAsync("Employee");
+            // Get all active employees
+            var employees = await _userManager.Users
+                .Where(u => u.Role == "Employee" && !u.IsArchived)
+                .ToListAsync();
 
             model.Projects = projects.Select(p => new SelectListItem
             {
@@ -605,8 +654,8 @@ namespace DoableFinal.Controllers
             var projects = await _context.Projects
                 .Include(p => p.Client)
                 .Include(p => p.ProjectManager)
-                .Include(p => p.Tasks)
-                .Where(p => p.ProjectManagerId == currentUser.Id)
+                .Include(p => p.Tasks.Where(t => !t.IsArchived))
+                .Where(p => p.ProjectManagerId == currentUser.Id && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -674,8 +723,8 @@ namespace DoableFinal.Controllers
 
             var model = new ProfileViewModel
             {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
+                FirstName = user.FirstName ?? string.Empty,
+                LastName = user.LastName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
                 Role = "Project Manager",
                 CreatedAt = user.CreatedAt,
@@ -684,6 +733,214 @@ namespace DoableFinal.Controllers
             };
 
             return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchiveProject(int id)
+        {
+            var project = await _context.Projects
+                .Include(p => p.Tasks)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+            // Only allow the assigned project manager
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (project.ProjectManagerId != currentUser?.Id)
+            {
+                return Forbid();
+            }
+
+            // Check if project can be archived
+            if (project.Status == "In Progress")
+            {
+                TempData["ErrorMessage"] = "Cannot archive an ongoing project. Project must be completed or not started.";
+                return RedirectToAction(nameof(ProjectDetails), new { id });
+            }
+
+            // Archive the project
+            project.IsArchived = true;
+            project.ArchivedAt = DateTime.UtcNow;
+            project.UpdatedAt = DateTime.UtcNow;
+
+            // Archive all tasks in the project
+            foreach (var task in project.Tasks)
+            {
+                task.IsArchived = true;
+                task.ArchivedAt = DateTime.UtcNow;
+                task.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Notify relevant parties
+            await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been archived");
+
+            TempData["SuccessMessage"] = "Project has been archived successfully.";
+            return RedirectToAction(nameof(MyProjects));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ArchiveTask(int id)
+        {
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            // Only allow the project manager
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (task.Project.ProjectManagerId != currentUser?.Id)
+            {
+                return Forbid();
+            }
+
+            // Check if task can be archived
+            if (task.Status == "In Progress")
+            {
+                TempData["ErrorMessage"] = "Cannot archive an ongoing task. Task must be completed or not started.";
+                return RedirectToAction(nameof(TaskDetails), new { id });
+            }
+
+            // Archive the task
+            task.IsArchived = true;
+            task.ArchivedAt = DateTime.UtcNow;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            // Notify relevant parties
+            await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been archived");
+
+            TempData["SuccessMessage"] = "Task has been archived successfully.";
+            return RedirectToAction(nameof(Tasks));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ArchivedProjects()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null)
+            {
+                return NotFound();
+            }
+
+            // Fetch archived projects managed by the current Project Manager
+            var projects = await _context.Projects
+                .Include(p => p.Client)
+                .Include(p => p.ProjectManager)
+                .Include(p => p.Tasks)
+                .Where(p => p.ProjectManagerId == currentUser.Id && p.IsArchived)
+                .OrderByDescending(p => p.ArchivedAt)
+                .ToListAsync();
+
+            return View(projects);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnarchiveProject(int id)
+        {
+            var project = await _context.Projects
+                .Include(p => p.Tasks)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (project == null)
+            {
+                return NotFound();
+            }
+
+            // Only allow the assigned project manager
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (project.ProjectManagerId != currentUser?.Id)
+            {
+                return Forbid();
+            }
+
+            // Unarchive the project
+            project.IsArchived = false;
+            project.ArchivedAt = null;
+            project.UpdatedAt = DateTime.UtcNow;
+
+            // Unarchive all tasks in the project
+            foreach (var task in project.Tasks)
+            {
+                task.IsArchived = false;
+                task.ArchivedAt = null;
+                task.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Notify relevant parties
+            await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been unarchived");
+
+            TempData["SuccessMessage"] = "Project has been unarchived successfully.";
+            return RedirectToAction(nameof(ArchivedProjects));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ArchivedTasks()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null)
+            {
+                return NotFound();
+            }
+
+            // Fetch archived tasks for projects managed by the current Project Manager
+            var tasks = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
+                .Where(t => t.Project.ProjectManagerId == currentUser.Id && t.IsArchived)
+                .OrderByDescending(t => t.ArchivedAt)
+                .ToListAsync();
+
+            return View(tasks);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UnarchiveTask(int id)
+        {
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            // Only allow the project manager
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (task.Project.ProjectManagerId != currentUser?.Id)
+            {
+                return Forbid();
+            }
+
+            // Unarchive the task
+            task.IsArchived = false;
+            task.ArchivedAt = null;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            // Notify relevant parties
+            await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been unarchived");
+
+            TempData["SuccessMessage"] = "Task has been unarchived successfully.";
+            return RedirectToAction(nameof(ArchivedTasks));
         }
 
         [HttpPost]

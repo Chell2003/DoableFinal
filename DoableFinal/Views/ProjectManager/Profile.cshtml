@@ -69,7 +69,21 @@
                     <h5 class="card-title mb-0">Change Password</h5>
                 </div>
                 <div class="card-body">
-                    <form asp-action="ChangePassword" method="post">
+                    @if (TempData["PasswordSuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["PasswordSuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    @if (TempData["PasswordErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["PasswordErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    <form asp-action="ChangePassword" method="post" id="changePasswordForm">
                         <div class="mb-3">
                             <label for="currentPassword" class="form-label">Current Password</label>
                             <input type="password" id="currentPassword" name="currentPassword" class="form-control" required />
@@ -81,7 +95,8 @@
                                 <input type="password" id="newPassword" name="newPassword" class="form-control" required pattern="^(?=.*[A-Z])(?=.*[a-zA-Z0-9]).{6,}$" title="Password must be alphanumeric and contain at least one capital letter." />
                                 <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('newPassword', this)"><i class="bi bi-eye"></i></button>
                             </div>
-                            <small class="text-muted">Password must be alphanumeric and contain at least one capital letter.</small>
+                            <small class="text-muted">Password must be at least 6 characters long and contain at least one capital letter.</small>
+                            <div id="passwordStrength" class="mt-1"></div>
                         </div>
 
                         <div class="mb-3">

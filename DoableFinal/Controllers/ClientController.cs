@@ -32,30 +32,34 @@ namespace DoableFinal.Controllers
 
             // Get statistics
             ViewBag.ProjectCount = await _context.Projects
-                .Where(p => p.ClientId == currentUser.Id)
+                .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
                 .CountAsync();
 
             ViewBag.TotalTasks = await _context.Tasks
                 .Include(t => t.Project)
-                .Where(t => t.Project.ClientId == currentUser.Id)
+                .Where(t => t.Project.ClientId == currentUser.Id && 
+                       !t.IsArchived && !t.Project.IsArchived)
                 .CountAsync();
 
             ViewBag.CompletedTasks = await _context.Tasks
                 .Include(t => t.Project)
-                .Where(t => t.Project.ClientId == currentUser.Id && t.Status == "Completed")
+                .Where(t => t.Project.ClientId == currentUser.Id && 
+                       t.Status == "Completed" && 
+                       !t.IsArchived && !t.Project.IsArchived)
                 .CountAsync();
 
             ViewBag.OverdueTasks = await _context.Tasks
                 .Include(t => t.Project)
                 .Where(t => t.Project.ClientId == currentUser.Id &&
                            t.DueDate < DateTime.UtcNow &&
-                           t.Status != "Completed")
+                           t.Status != "Completed" &&
+                           !t.IsArchived && !t.Project.IsArchived)
                 .CountAsync();
 
             // Get recent projects
             ViewBag.MyProjects = await _context.Projects
                 .Include(p => p.ProjectManager)
-                .Where(p => p.ClientId == currentUser.Id)
+                .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(5)
                 .ToListAsync();
@@ -67,7 +71,7 @@ namespace DoableFinal.Controllers
             ViewBag.ProjectTeam = await _context.ProjectTeams
                 .Include(pt => pt.User)
                 .Include(pt => pt.Project)
-                .Where(pt => pt.Project.ClientId == currentUser.Id)
+                .Where(pt => pt.Project.ClientId == currentUser.Id && !pt.Project.IsArchived)
                 .Select(pt => pt.User)
                 .Distinct()
                 .Take(5)
@@ -81,7 +85,8 @@ namespace DoableFinal.Controllers
                 .Include(t => t.Project)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
-                .Where(t => t.Project.ClientId == currentUser.Id)
+                .Where(t => t.Project.ClientId == currentUser.Id && 
+                       !t.IsArchived && !t.Project.IsArchived)
                 .OrderByDescending(t => t.CreatedAt)
                 .Take(5)
                 .ToListAsync();
@@ -99,7 +104,7 @@ namespace DoableFinal.Controllers
 
             var projects = await _context.Projects
                 .Include(p => p.ProjectManager)
-                .Where(p => p.ClientId == currentUser.Id)
+                .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -160,8 +165,8 @@ namespace DoableFinal.Controllers
 
             var model = new ProfileViewModel
             {
-                FirstName = user.FirstName,
-                LastName = user.LastName,
+                FirstName = user.FirstName ?? string.Empty,
+                LastName = user.LastName ?? string.Empty,
                 Email = user.Email ?? string.Empty,
                 Role = user.Role,
                 CreatedAt = user.CreatedAt,
@@ -248,7 +253,8 @@ namespace DoableFinal.Controllers
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
                 .Include(t => t.CreatedBy)
-                .Where(t => t.Project.ClientId == userId);
+                .Where(t => t.Project.ClientId == userId && 
+                       !t.IsArchived && !t.Project.IsArchived);
 
             if (projectId.HasValue)
             {
