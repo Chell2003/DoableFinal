@@ -7,16 +7,52 @@ using DoableFinal.Data;
 using DoableFinal.Models;
 using DoableFinal.ViewModels;
 using DoableFinal.Services;
+using System;
+using System.IO;
 
 namespace DoableFinal.Controllers
 {
-    [Authorize(Roles = "Client,Admin,Project Manager")]
+    [Authorize]
     public class TicketController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly NotificationService _notificationService;
+
+        private async Task ReloadFormData(CreateTicketViewModel model)
+        {
+            var projects = await _context.Projects.ToListAsync();
+            var employees = await _userManager.GetUsersInRoleAsync("Employee");
+            
+            model.Projects = projects.Select(p => new SelectListItem
+            {
+                Value = p.Id.ToString(),
+                Text = p.Name
+            }).ToList();
+            
+            model.Assignees = employees.Select(e => new SelectListItem
+            {
+                Value = e.Id,
+                Text = $"{e.FirstName} {e.LastName}"
+            }).ToList();
+
+            model.PriorityLevels = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Low", Text = "Low" },
+                new SelectListItem { Value = "Medium", Text = "Medium" },
+                new SelectListItem { Value = "High", Text = "High" },
+                new SelectListItem { Value = "Critical", Text = "Critical" }
+            };
+
+            model.TicketTypes = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "Bug", Text = "Bug" },
+                new SelectListItem { Value = "Feature Request", Text = "Feature Request" },
+                new SelectListItem { Value = "Support", Text = "Support" },
+                new SelectListItem { Value = "Other", Text = "Other" }
+            };
+        }
 
         public TicketController(
             ApplicationDbContext context,
@@ -28,7 +64,8 @@ namespace DoableFinal.Controllers
             _userManager = userManager;
             _webHostEnvironment = webHostEnvironment;
             _notificationService = notificationService;
-        }        public async Task<IActionResult> Index()
+        }        [Authorize(Roles = "Client,Admin,Project Manager")]
+        public async Task<IActionResult> Index()
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
@@ -99,30 +136,83 @@ namespace DoableFinal.Controllers
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> Create(CreateTicketViewModel model)
         {
-            if (ModelState.IsValid)
+            var debugInfo = new System.Text.StringBuilder();
+            debugInfo.AppendLine($"ModelState.IsValid: {ModelState.IsValid}");
+            debugInfo.AppendLine($"Form Data: Title={model.Title}, Description={model.Description}, ProjectId={model.ProjectId}");
+            
+            if (!ModelState.IsValid)
             {
-                var currentUser = await _userManager.GetUserAsync(User);
-                if (currentUser == null)
+                debugInfo.AppendLine("\nValidation Errors:");
+                foreach (var modelState in ModelState)
                 {
-                    return Challenge();
+                    foreach (var error in modelState.Value.Errors)
+                    {
+                        debugInfo.AppendLine($"- {modelState.Key}: {error.ErrorMessage}");
+                    }
+                }
+                TempData["Debug"] = debugInfo.ToString();
+                await ReloadFormData(model);
+                return View(model);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null || !User.IsInRole("Client"))
+            {
+                TempData["Error"] = "You must be logged in as a client to create tickets.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                debugInfo.AppendLine("Starting ticket creation process...");
+                Ticket? ticket = null;
+                
+                using (var transaction = await _context.Database.BeginTransactionAsync())
+                {
+                    try
+                    {
+                        ticket = new Ticket
+                        {
+                            Title = model.Title,
+                            Description = model.Description,
+                            Priority = model.Priority,
+                            Status = "Open",
+                            Type = model.Type,
+                            ProjectId = model.ProjectId,
+                            AssignedToId = model.AssignedToId,
+                            CreatedById = user.Id,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        debugInfo.AppendLine($"Created ticket object with Title: {ticket.Title}");
+                        
+                        await _context.Tickets.AddAsync(ticket);
+                        debugInfo.AppendLine("Added ticket to context");
+                        
+                        var saveResult = await _context.SaveChangesAsync();
+                        debugInfo.AppendLine($"SaveChangesAsync result: {saveResult}");
+
+                        if (saveResult <= 0)
+                        {
+                            throw new Exception("Failed to save ticket to database - no rows affected");
+                        }
+
+                        await transaction.CommitAsync();
+                        debugInfo.AppendLine($"Transaction committed successfully. New ticket ID: {ticket.Id}");
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        throw new Exception($"Failed to save ticket: {ex.Message}");
+                    }
                 }
 
-                var ticket = new Ticket
+                debugInfo.AppendLine("Beginning notification process...");
+                
+                if (ticket == null)
                 {
-                    Title = model.Title,
-                    Description = model.Description,
-                    Priority = model.Priority,
-                    Status = "Open",
-                    Type = model.Type,
-                    ProjectId = model.ProjectId,
-                    AssignedToId = model.AssignedToId,
-                    CreatedById = currentUser.Id,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _context.Tickets.Add(ticket);
-                await _context.SaveChangesAsync();
-
+                    throw new Exception("Ticket was not properly created");
+                }
                 if (ticket.AssignedToId != null)
                 {
                     await _notificationService.CreateNotification(
@@ -133,29 +223,93 @@ namespace DoableFinal.Controllers
                     );
                 }
 
+                // Get Project Manager if project is selected
+                if (ticket.ProjectId.HasValue)
+                {
+                    var project = await _context.Projects
+                        .FirstOrDefaultAsync(p => p.Id == ticket.ProjectId);
+                    if (project?.ProjectManagerId != null)
+                    {
+                        await _notificationService.CreateNotification(
+                            project.ProjectManagerId,
+                            "New Ticket Created",
+                            $"A new ticket has been created for project {project.Name}: {ticket.Title}",
+                            $"/Ticket/Details/{ticket.Id}"
+                        );
+                    }
+                }
+
+                // Notify all admins
+                var admins = await _userManager.GetUsersInRoleAsync("Admin");
+                foreach (var admin in admins)
+                {
+                    await _notificationService.CreateNotification(
+                        admin.Id,
+                        "New Ticket Created",
+                        $"A new ticket has been created: {ticket.Title}",
+                        $"/Ticket/Details/{ticket.Id}"
+                    );
+                }
+
                 TempData["TicketMessage"] = "Ticket created successfully.";
+                // Persist debug info to temp file for diagnostics
+                try
+                {
+                    System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "doable_ticket_debug.log"), debugInfo.ToString() + System.Environment.NewLine);
+                }
+                catch { }
+
                 return RedirectToAction(nameof(Index));
             }
-
-            // Reload the select lists if we need to return to the view
-            var projects = await _context.Projects.ToListAsync();
-            var employees = await _userManager.GetUsersInRoleAsync("Employee");
-            
-            model.Projects = projects.Select(p => new SelectListItem
+            catch (Exception ex)
             {
-                Value = p.Id.ToString(),
-                Text = p.Name
-            }).ToList();
-            
-            model.Assignees = employees.Select(e => new SelectListItem
-            {
-                Value = e.Id,
-                Text = $"{e.FirstName} {e.LastName}"
-            }).ToList();
+                debugInfo.AppendLine($"Error: {ex.Message}");                
+                TempData["Error"] = "An error occurred while creating the ticket: " + ex.Message;
+                TempData["Debug"] = debugInfo.ToString();
+                // Persist debug info to temp file for diagnostics
+                try
+                {
+                    System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "doable_ticket_debug.log"), debugInfo.ToString() + System.Environment.NewLine);
+                }
+                catch { }
+                
+                // Reload select lists before returning to view
+                var projects = await _context.Projects.ToListAsync();
+                var employees = await _userManager.GetUsersInRoleAsync("Employee");
+                
+                model.Projects = projects.Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name
+                }).ToList();
+                
+                model.Assignees = employees.Select(e => new SelectListItem
+                {
+                    Value = e.Id,
+                    Text = $"{e.FirstName} {e.LastName}"
+                }).ToList();
 
-            return View(model);
+                model.PriorityLevels = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "Low", Text = "Low" },
+                    new SelectListItem { Value = "Medium", Text = "Medium" },
+                    new SelectListItem { Value = "High", Text = "High" },
+                    new SelectListItem { Value = "Critical", Text = "Critical" }
+                };
+
+                model.TicketTypes = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "Bug", Text = "Bug" },
+                    new SelectListItem { Value = "Feature Request", Text = "Feature Request" },
+                    new SelectListItem { Value = "Support", Text = "Support" },
+                    new SelectListItem { Value = "Other", Text = "Other" }
+                };
+                
+                return View(model);
+            }
         }
 
+        [Authorize(Roles = "Client,Admin,Project Manager")]
         public async Task<IActionResult> Details(int id)
         {
             var ticket = await _context.Tickets
@@ -210,7 +364,7 @@ namespace DoableFinal.Controllers
             var comment = new TicketComment
             {
                 TicketId = ticketId,
-                Content = content,
+                CommentText = content,
                 CreatedById = currentUser.Id,
                 CreatedAt = DateTime.UtcNow
             };
@@ -331,6 +485,22 @@ namespace DoableFinal.Controllers
             );
 
             return RedirectToAction(nameof(Details), new { id });
+        }
+
+        public IActionResult TestSql()
+        {
+            var sql = @"
+                SELECT t.Id, t.Title, t.Description, t.Priority, t.Status, t.Type,
+                       t.CreatedAt, u.UserName as CreatedBy
+                FROM Tickets t
+                JOIN AspNetUsers u ON t.CreatedById = u.Id
+                ORDER BY t.CreatedAt DESC;
+            ";
+
+            // Execute the raw SQL query
+            var tickets = _context.Tickets.FromSqlRaw(sql).ToList();
+
+            return View(tickets);
         }
     }
 }

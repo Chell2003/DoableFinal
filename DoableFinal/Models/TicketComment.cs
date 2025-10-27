@@ -7,7 +7,8 @@ namespace DoableFinal.Models
         public int Id { get; set; }
 
         [Required]
-        public string Content { get; set; }
+        [System.ComponentModel.DataAnnotations.Schema.Column("Content")]
+        public string CommentText { get; set; }
 
         public int TicketId { get; set; }
         public Ticket Ticket { get; set; }

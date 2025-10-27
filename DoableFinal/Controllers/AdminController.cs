@@ -50,6 +50,30 @@ namespace DoableFinal.Controllers
             return View(notifications);
         }
 
+        // List inquiries submitted via the contact form
+        public async Task<IActionResult> Inquiries()
+        {
+            var inquiries = await _context.Inquiries
+                .OrderByDescending(i => i.CreatedAt)
+                .ToListAsync();
+
+            return View(inquiries);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkInquiryHandled(int id)
+        {
+            var inquiry = await _context.Inquiries.FindAsync(id);
+            if (inquiry == null) return NotFound();
+
+            inquiry.IsHandled = true;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Inquiry marked as handled.";
+            return RedirectToAction(nameof(Inquiries));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkNotificationAsRead(int id)
@@ -219,9 +243,37 @@ namespace DoableFinal.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(CreateUserViewModel model)
         {
-            if (ModelState.IsValid)
+            // Log the received values for debugging
+            _logger.LogInformation($"Received form data - Email: {model.Email}, Role: {model.Role}, Password present: {!string.IsNullOrEmpty(model.Password)}");
+
+            if (!ModelState.IsValid)
+            {
+                foreach (var modelStateVal in ModelState.Values)
+                {
+                    if (modelStateVal.Errors.Count > 0)
+                    {
+                        foreach (var error in modelStateVal.Errors)
+                        {
+                            _logger.LogError($"Validation error: {error.ErrorMessage}");
+                        }
+                    }
+                }
+                ViewBag.Role = model.Role;
+                return View(model);
+            }
+
+            // Additional validation for password
+            if (string.IsNullOrEmpty(model.Password))
+            {
+                ModelState.AddModelError("Password", "Password is required");
+                ViewBag.Role = model.Role;
+                return View(model);
+            }
+
+            try
             {
                 var user = new ApplicationUser
                 {
@@ -235,19 +287,64 @@ namespace DoableFinal.Controllers
                     EmailConfirmed = true
                 };
 
+                // Set role-specific fields
+                if (model.Role == "Employee" || model.Role == "Project Manager")
+                {
+                    user.ResidentialAddress = model.ResidentialAddress;
+                    user.MobileNumber = model.MobileNumber;
+                    user.Birthday = model.Birthday;
+                    user.TinNumber = model.TinNumber;
+                    user.PagIbigAccount = model.PagIbigAccount;
+                    user.Position = model.Position;
+                }
+                else if (model.Role == "Client")
+                {
+                    user.CompanyName = model.CompanyName;
+                    user.CompanyAddress = model.CompanyAddress;
+                    user.CompanyType = model.CompanyType;
+                    user.Designation = model.Designation;
+                    user.MobileNumber = model.MobileNumber;
+                    user.TinNumber = model.TinNumber;
+                }
+
+                // Check for existing email
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("Email", "This email is already registered.");
+                    ViewBag.Role = model.Role;
+                    return View(model);
+                }
+
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await _userManager.AddToRoleAsync(user, model.Role);
-                    TempData["SuccessMessage"] = $"{model.Role} account created successfully.";
-                    return RedirectToAction(nameof(Users));
+                    try
+                    {
+                        await _userManager.AddToRoleAsync(user, model.Role);
+                        TempData["SuccessMessage"] = $"{model.Role} account created successfully.";
+                        return RedirectToAction(nameof(Users));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Error adding role to user: {ex.Message}");
+                        await _userManager.DeleteAsync(user); // Rollback user creation
+                        ModelState.AddModelError("", "Error creating user account. Please try again.");
+                    }
                 }
 
                 foreach (var error in result.Errors)
                 {
+                    _logger.LogError($"User creation error: {error.Description}");
                     ModelState.AddModelError("", error.Description);
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unexpected error creating user: {ex.Message}");
+                ModelState.AddModelError("", "An unexpected error occurred. Please try again.");
+            }
+
             ViewBag.Role = model.Role;
             return View(model);
         }
@@ -1355,6 +1452,8 @@ namespace DoableFinal.Controllers
                 return await PrepareCreateTaskViewModel(model);
             }
 
+        
+
             // Get project dates
             var project = await _context.Projects.FindAsync(model.ProjectId);
             if (project == null)
@@ -1451,6 +1550,121 @@ namespace DoableFinal.Controllers
                 ModelState.AddModelError("", "An error occurred while creating the task. Please try again.");
                 return await PrepareCreateTaskViewModel(model);
             }
+        }
+
+        // --- Ticket management for Admins ---
+        public async Task<IActionResult> Tickets(string statusFilter = "")
+        {
+            var query = _context.Tickets
+                .Include(t => t.Project)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.CreatedBy)
+                .Where(t => !t.Project.IsArchived)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                query = query.Where(t => t.Status == statusFilter);
+            }
+
+            var tickets = await query
+                .OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.AvailableStatuses = new List<string> { "Open", "In Progress", "Resolved", "Closed" };
+            return View(tickets);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditTicket(int id)
+        {
+            var ticket = await _context.Tickets
+                .Include(t => t.Project)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.CreatedBy)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var model = new ViewModels.TicketStatusEditViewModel
+            {
+                Id = ticket.Id,
+                Title = ticket.Title,
+                CurrentStatus = ticket.Status,
+                AvailableStatuses = new List<SelectListItem>
+                {
+                    new SelectListItem("Open", "Open"),
+                    new SelectListItem("In Progress", "In Progress"),
+                    new SelectListItem("Resolved", "Resolved"),
+                    new SelectListItem("Closed", "Closed")
+                }
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditTicket(ViewModels.TicketStatusEditViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                model.AvailableStatuses = new List<SelectListItem>
+                {
+                    new SelectListItem("Open", "Open"),
+                    new SelectListItem("In Progress", "In Progress"),
+                    new SelectListItem("Resolved", "Resolved"),
+                    new SelectListItem("Closed", "Closed")
+                };
+                return View(model);
+            }
+
+            var ticket = await _context.Tickets.FindAsync(model.Id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var oldStatus = ticket.Status;
+            ticket.Status = model.CurrentStatus;
+            ticket.UpdatedAt = DateTime.UtcNow;
+            if (ticket.Status == "Resolved")
+            {
+                ticket.ResolvedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            if (oldStatus != ticket.Status)
+            {
+                // Notify ticket owner and assignee if status changed
+                var recipients = new List<string>();
+                if (!string.IsNullOrEmpty(ticket.CreatedById)) recipients.Add(ticket.CreatedById);
+                if (!string.IsNullOrEmpty(ticket.AssignedToId)) recipients.Add(ticket.AssignedToId);
+
+                foreach (var userId in recipients.Distinct())
+                {
+                    var notification = new Notification
+                    {
+                        UserId = userId,
+                        Title = "Ticket Status Updated",
+                        Message = $"Ticket '{ticket.Title}' status changed from {oldStatus} to {ticket.Status}.",
+                        Link = $"/Admin/EditTicket/{ticket.Id}",
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false,
+                        Type = NotificationType.General
+                    };
+                    _context.Notifications.Add(notification);
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["SuccessMessage"] = "Ticket status updated successfully.";
+            return RedirectToAction(nameof(Tickets));
         }
     }
 }

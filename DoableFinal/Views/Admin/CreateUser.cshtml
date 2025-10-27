@@ -12,12 +12,8 @@
             New User Registration
         </div>
         <div class="card-body">
-            <form asp-action="CreateUser" method="post" autocomplete="off" spellcheck="false">
-                <!-- Hidden fields to prevent autofill -->
-                <input type="text" name="username" style="display:none" />
-                <input type="password" name="password" style="display:none" />
-                <input type="text" name="hidden" style="display:none" autocomplete="false" />
-                <input type="password" name="hidden" style="display:none" autocomplete="false" />
+            <form asp-action="CreateUser" method="post">
+                @Html.AntiForgeryToken()
                 <div class="mb-3">
                     <label asp-for="Role" class="form-label">Role</label>
                     <select asp-for="Role" class="form-select">
@@ -34,42 +30,129 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label asp-for="FirstName" class="form-label"></label>
-                        <input asp-for="FirstName" class="form-control" name="fname_@(Guid.NewGuid())" autocomplete="new-password" autocorrect="off" autocapitalize="off" readonly onfocus="this.removeAttribute('readonly');" />
+                        <input asp-for="FirstName" class="form-control" autocomplete="off" />
                         <span asp-validation-for="FirstName" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label asp-for="LastName" class="form-label"></label>
-                        <input asp-for="LastName" class="form-control" name="lname_@(Guid.NewGuid())" autocomplete="new-password" autocorrect="off" autocapitalize="off" readonly onfocus="this.removeAttribute('readonly');" />
+                        <input asp-for="LastName" class="form-control" autocomplete="off" />
                         <span asp-validation-for="LastName" class="text-danger"></span>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="Email" class="form-label"></label>
-                    <input asp-for="Email" class="form-control" name="email_@(Guid.NewGuid())" autocomplete="new-password" autocorrect="off" autocapitalize="off" readonly onfocus="this.removeAttribute('readonly');" />
+                    <input asp-for="Email" class="form-control" autocomplete="off" />
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label asp-for="Password" class="form-label"></label>
-                        <div class="position-relative">
-                            <input type="password" asp-for="Password" class="form-control" name="pwd_@(DateTime.Now.Ticks)" autocomplete="off" data-lpignore="true" data-form-type="other" readonly 
-                                   onfocus="this.removeAttribute('readonly');this.type='password'" 
-                                   onblur="this.type='password'" />
-                        </div>
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <input type="password" asp-for="Password" class="form-control" />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label asp-for="ConfirmPassword" class="form-label"></label>
-                        <div class="position-relative">
-                            <input type="password" asp-for="ConfirmPassword" class="form-control" name="cpwd_@(DateTime.Now.Ticks)" autocomplete="off" data-lpignore="true" data-form-type="other" readonly 
-                                   onfocus="this.removeAttribute('readonly');this.type='password'" 
-                                   onblur="this.type='password'" />
-                        </div>
+                        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" asp-for="ConfirmPassword" class="form-control" />
                         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Employee and Project Manager Fields -->
+                <div id="employeeFields" style="display: none;">
+                    <h4 class="mt-4 mb-3">Additional Information</h4>
+                    
+                    <div class="mb-3">
+                        <label asp-for="ResidentialAddress" class="form-label"></label>
+                        <textarea asp-for="ResidentialAddress" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="ResidentialAddress" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="MobileNumber" class="form-label"></label>
+                            <input asp-for="MobileNumber" class="form-control" />
+                            <span asp-validation-for="MobileNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Birthday" class="form-label"></label>
+                            <input asp-for="Birthday" class="form-control" type="date" />
+                            <span asp-validation-for="Birthday" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="TinNumber" class="form-label"></label>
+                            <input asp-for="TinNumber" class="form-control" />
+                            <span asp-validation-for="TinNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PagIbigAccount" class="form-label"></label>
+                            <input asp-for="PagIbigAccount" class="form-control" />
+                            <span asp-validation-for="PagIbigAccount" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Position" class="form-label"></label>
+                        <input asp-for="Position" class="form-control" />
+                        <span asp-validation-for="Position" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Client Fields -->
+                <div id="clientFields" style="display: none;">
+                    <h4 class="mt-4 mb-3">Company Information</h4>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CompanyName" class="form-label">Registered Company Name</label>
+                            <input asp-for="CompanyName" class="form-control" />
+                            <span asp-validation-for="CompanyName" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CompanyType" class="form-label">Company Type</label>
+                            <select asp-for="CompanyType" class="form-select">
+                                <option value="">Select Type</option>
+                                <option value="Sole Proprietorship">Sole Proprietorship</option>
+                                <option value="Partnership">Partnership</option>
+                                <option value="Corporation">Corporation</option>
+                            </select>
+                            <span asp-validation-for="CompanyType" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CompanyAddress" class="form-label">Registered Company Address</label>
+                        <textarea asp-for="CompanyAddress" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="CompanyAddress" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Designation" class="form-label">Designation</label>
+                            <input asp-for="Designation" class="form-control" />
+                            <span asp-validation-for="Designation" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="MobileNumber" class="form-label">Mobile Number</label>
+                            <input asp-for="MobileNumber" class="form-control" />
+                            <span asp-validation-for="MobileNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="TinNumber" class="form-label">TIN Number</label>
+                        <input asp-for="TinNumber" class="form-control" />
+                        <span asp-validation-for="TinNumber" class="text-danger"></span>
                     </div>
                 </div>
 
@@ -84,4 +167,34 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            function toggleFields() {
+                var role = $("#Role").val();
+                if (role === "Employee" || role === "Project Manager") {
+                    $("#employeeFields").slideDown();
+                    $("#clientFields").slideUp();
+                } else if (role === "Client") {
+                    $("#clientFields").slideDown();
+                    $("#employeeFields").slideUp();
+                } else {
+                    $("#employeeFields").slideUp();
+                    $("#clientFields").slideUp();
+                }
+            }
+
+            $("#Role").change(toggleFields);
+            toggleFields(); // Run on page load
+
+            // Force role selection to trigger fields visibility
+            var preselectedRole = '@ViewBag.Role';
+            if (preselectedRole) {
+                $("#Role").val(preselectedRole);
+                toggleFields();
+            }
+
+            // Enable client-side validation
+            $.validator.unobtrusive.parse(document);
+        });
+    </script>
 }

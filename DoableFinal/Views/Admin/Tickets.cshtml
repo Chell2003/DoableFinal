@@ -1,0 +1,102 @@
+@model List<DoableFinal.Models.Ticket>
+
+@{
+    ViewBag.Title = "Tickets";
+    var query = Context.Request.Query["q"].ToString();
+    var statusFilter = Context.Request.Query["statusFilter"].ToString();
+}
+
+<h2 class="mb-3">Tickets <small class="text-muted">(@(Model?.Count ?? 0))</small></h2>
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <form method="get" class="form-inline" role="search" aria-label="Ticket search and filter">
+            <div class="input-group">
+                <input type="search" name="q" class="form-control" placeholder="Search by title or creator..." value="@query" aria-label="Search tickets" />
+                <select id="statusFilter" name="statusFilter" class="form-select ms-2">
+                    <option value="">All statuses</option>
+                    @foreach (var s in (List<string>)ViewBag.AvailableStatuses)
+                    {
+                        if (statusFilter == s || ViewBag.StatusFilter == s)
+                        {
+                            <option value="@s" selected>@s</option>
+                        }
+                        else
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    }
+                </select>
+                <button class="btn btn-primary ms-2" type="submit">Filter</button>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4 text-end">
+        <a class="btn btn-outline-secondary" href="@Url.Action("Tickets", "Admin")">Reset</a>
+    </div>
+</div>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">No tickets found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Title</th>
+                    <th scope="col">Project</th>
+                    <th scope="col">Priority</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Created By</th>
+                    <th scope="col">Created At</th>
+                    <th scope="col" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @functions {
+                    string GetStatusBadge(string status)
+                    {
+                        return status switch
+                        {
+                            "Open" => "badge bg-primary",
+                            "In Progress" => "badge bg-info",
+                            "Resolved" => "badge bg-success",
+                            "Closed" => "badge bg-secondary",
+                            _ => "badge bg-light text-dark",
+                        };
+                    }
+
+                    string GetPriorityBadge(string priority)
+                    {
+                        return priority switch
+                        {
+                            "High" => "badge bg-danger",
+                            "Medium" => "badge bg-warning text-dark",
+                            "Low" => "badge bg-secondary",
+                            _ => "badge bg-light text-dark",
+                        };
+                    }
+                }
+
+                @foreach (var t in Model)
+                {
+                    <tr>
+                        <td>@t.Title</td>
+                        <td>@(t.Project != null ? t.Project.Name : "-")</td>
+                        <td><span class="@GetPriorityBadge(t.Priority)">@t.Priority</span></td>
+                        <td><span class="@GetStatusBadge(t.Status)">@t.Status</span></td>
+                        <td>@(t.CreatedBy != null ? $"{t.CreatedBy.FirstName} {t.CreatedBy.LastName}" : "-")</td>
+                        <td>@t.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary me-1" href="@Url.Action("EditTicket", "Admin", new { id = t.Id })">Edit</a>
+                            <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Details", "Ticket", new { id = t.Id })">Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

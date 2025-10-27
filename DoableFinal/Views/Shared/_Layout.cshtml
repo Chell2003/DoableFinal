@@ -6,10 +6,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Project Management System</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/custom-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/sidebar.css" asp-append-version="true" />
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- Charts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
     <script src="~/js/scripts.js"></script>
 </head>
@@ -19,8 +27,10 @@
         <div class="wrapper">
             <!-- Sidebar -->
             <nav id="sidebar" class="sidebar">
-                <div class="sidebar-header">
-                    <h3>Qonnec</h3>
+                <div class="sidebar-header bg-white border-bottom">
+                    <a class="navbar-brand">
+                        <img src="~/images/logo-combined1.png" alt="Qonnec" height="40">
+                    </a>
                     <button id="sidebarCollapse" class="btn btn-link d-md-none">
                         <i class="bi bi-x"></i>
                     </button>
@@ -60,21 +70,9 @@
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Admin" asp-action="ArchivedProjects">
-                                <i class="bi bi-archive"></i>
-                                <span>Archived Projects</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a asp-controller="Admin" asp-action="ArchivedTasks">
-                                <i class="bi bi-archive-fill"></i>
-                                <span>Archived Tasks</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a asp-controller="Admin" asp-action="Notifications">
-                                <i class="bi bi-bell"></i>
-                                <span>Notifications</span>
+                            <a asp-controller="Admin" asp-action="Inquiries">
+                                <i class="bi bi-envelope"></i>
+                                <span>Inquiries</span>
                             </a>
                         </li>
                         <li>
@@ -84,16 +82,36 @@
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Admin" asp-action="ArchivedUsers">
-                                <i class="bi bi-archive"></i>
-                                <span>Archived Users</span>
-                            </a>
-                        </li>
-                        <li>
                             <a asp-controller="Admin" asp-action="Profile">
                                 <i class="bi bi-person"></i>
                                 <span>Profile</span>
                             </a>
+                        </li>
+                        <li>
+                            <a href="#archiveSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                                <i class="bi bi-archive"></i>
+                                <span>Archives</span>
+                            </a>
+                            <ul class="collapse list-unstyled" id="archiveSubmenu">
+                                <li>
+                                    <a asp-controller="Admin" asp-action="ArchivedProjects">
+                                        <i class="bi bi-folder-x"></i>
+                                        <span>Archived Projects</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a asp-controller="Admin" asp-action="ArchivedTasks">
+                                        <i class="bi bi-list-task"></i>
+                                        <span>Archived Tasks</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a asp-controller="Admin" asp-action="ArchivedUsers">
+                                        <i class="bi bi-person-x"></i>
+                                        <span>Archived Users</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     }
                     else if (User.IsInRole("Client"))
@@ -108,12 +126,6 @@
                             <a asp-controller="Client" asp-action="Projects">
                                 <i class="bi bi-folder"></i>
                                 <span>Projects</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a asp-controller="Client" asp-action="Notifications">
-                                <i class="bi bi-bell"></i>
-                                <span>Notifications</span>
                             </a>
                         </li>
                         <li>
@@ -165,36 +177,50 @@
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="ProjectManager" asp-action="ArchivedProjects">
-                                <i class="bi bi-archive"></i>
-                                <span>Archived Projects</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a asp-controller="ProjectManager" asp-action="ArchivedTasks">
-                                <i class="bi bi-archive-fill"></i>
-                                <span>Archived Tasks</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a asp-controller="ProjectManager" asp-action="Notifications">
-                                <i class="bi bi-bell"></i>
-                                <span>Notifications</span>
-                            </a>
-                        </li>
-                        <li>
                             <a asp-controller="ProjectManager" asp-action="Profile">
                                 <i class="bi bi-person"></i>
                                 <span>Profile</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="#archiveSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                                <i class="bi bi-archive"></i>
+                                <span>Archives</span>
+                            </a>
+                            <ul class="collapse list-unstyled" id="archiveSubmenu">
+                                <li>
+                                    <a asp-controller="ProjectManager" asp-action="ArchivedProjects">
+                                        <i class="bi bi-folder-x"></i>
+                                        <span>Archived Projects</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a asp-controller="ProjectManager" asp-action="ArchivedTasks">
+                                        <i class="bi bi-list-task"></i>
+                                        <span>Archived Tasks</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
                     }
-                    <li>
-                        <a asp-controller="Ticket" asp-action="Index">
-                            <i class="bi bi-ticket-detailed"></i>
-                            <span>Tickets</span>
-                        </a>
-                    </li>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li>
+                            <a asp-controller="Admin" asp-action="Tickets">
+                                <i class="bi bi-ticket-detailed"></i>
+                                <span>Tickets</span>
+                            </a>
+                        </li>
+                    }
+                    else if (User.IsInRole("Client"))
+                    {
+                        <li>
+                            <a asp-controller="Ticket" asp-action="Index">
+                                <i class="bi bi-ticket-detailed"></i>
+                                <span>Tickets</span>
+                            </a>
+                        </li>
+                    }
                     <li>
                         <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
                             <a href="javascript:void(0)" onclick="document.getElementById('logoutForm').submit()">
@@ -209,7 +235,7 @@
             <!-- Page Content -->
             <div id="content">
                 <!-- Top Navigation -->
-                <nav class="navbar navbar-expand-lg navbar-light bg-white">
+                <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
                     <div class="container-fluid">
                         <button type="button" id="sidebarCollapseShow" class="btn btn-link d-md-none">
                             <i class="bi bi-list"></i>
@@ -236,33 +262,35 @@
     else
     {
         <header>
-            <nav class="navbar navbar-expand-sm navbar-dark bg-primary border-bottom box-shadow mb-3">
+            <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
                 <div class="container">
-                    <a class="navbar-brand" asp-controller="Home" asp-action="Index">Qonnec</a>
+                    <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                        <img src="~/images/logo-combined1.png" alt="Qonnec" height="40">
+                    </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                         <ul class="navbar-nav flex-grow-1">
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                                <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="About">About</a>
+                                <a class="nav-link text-dark" asp-controller="Home" asp-action="About">About</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="Services">Services</a>
+                                <a class="nav-link text-dark" asp-controller="Home" asp-action="Services">Services</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="Contact">Contact</a>
+                                <a class="nav-link text-dark" asp-controller="Home" asp-action="Contact">Contact</a>
                             </li>
                         </ul>
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Account" asp-action="Register">Register</a>
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Account" asp-action="Login">Login</a>
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
                             </li>
                         </ul>
                     </div>
@@ -285,6 +313,8 @@
 
     <!-- Scripts at the bottom for better page load performance -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @if (User.Identity?.IsAuthenticated == true)
@@ -298,12 +328,27 @@
                 });
 
                 // Sidebar toggle functionality
+                // Handle sidebar toggle
                 $('#sidebarCollapse').on('click', function () {
                     $('#sidebar').removeClass('active');
+                    $('#content').removeClass('active');
                 });
 
                 $('#sidebarCollapseShow').on('click', function () {
                     $('#sidebar').addClass('active');
+                    $('#content').addClass('active');
+                });
+
+                // Handle active menu items and submenu
+                $('.sidebar ul li a').each(function() {
+                    if ($(this).attr('href') === window.location.pathname) {
+                        $(this).addClass('active');
+                        // If it's a submenu item, expand the parent
+                        if ($(this).closest('.collapse').length) {
+                            $(this).closest('.collapse').addClass('show');
+                            $(this).closest('.collapse').prev('.dropdown-toggle').attr('aria-expanded', 'true');
+                        }
+                    }
                 });
             });
         </script>

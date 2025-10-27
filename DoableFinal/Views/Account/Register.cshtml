@@ -3,52 +3,163 @@
     ViewData["Title"] = "Register";
 }
 
+<style>
+    .custom-card {
+        border-top: 4px solid #FF5733;
+        transition: all 0.3s ease;
+    }
+    .custom-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(255, 87, 51, 0.15) !important;
+    }
+    .section-header {
+        color: #FF5733;
+        font-weight: 600;
+        position: relative;
+        padding-bottom: 8px;
+    }
+    .section-header::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 40px;
+        height: 2px;
+        background-color: #FF5733;
+    }
+</style>
+
+<style>
+    .btn-custom {
+        background-color: #FF5733;
+        border-color: #FF5733;
+        color: white;
+    }
+    .btn-custom:hover {
+        background-color: #E64A2E;
+        border-color: #E64A2E;
+        color: white;
+    }
+    .text-custom {
+        color: #FF5733;
+    }
+    .card {
+        border-top: 4px solid #FF5733;
+    }
+    .form-control:focus {
+        border-color: #FF5733;
+        box-shadow: 0 0 0 0.25rem rgba(255, 87, 51, 0.25);
+    }
+    .form-select:focus {
+        border-color: #FF5733;
+        box-shadow: 0 0 0 0.25rem rgba(255, 87, 51, 0.25);
+    }
+</style>
+
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
+        <div class="col-md-10">
+            <div class="card custom-card shadow-lg border-0 rounded-lg mt-3">
                 <div class="card-body p-5">
-                    <h2 class="text-center mb-4">Create Account</h2>
+                    <h2 class="text-center mb-4" style="color: #FF5733; font-weight: 700;">Create Account</h2>
                     <form asp-action="Register" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                         
-                        <div class="form-group mb-3">
-                            <label asp-for="FirstName" class="form-label"></label>
-                            <input asp-for="FirstName" class="form-control" />
-                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        <div class="row">
+                            <!-- Personal Information -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3 text-custom">Personal Information</h5>
+                                <div class="form-group mb-3">
+                                    <label asp-for="FirstName" class="form-label"></label>
+                                    <input asp-for="FirstName" class="form-control" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="LastName" class="form-label"></label>
+                                    <input asp-for="LastName" class="form-control" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="Email" class="form-label"></label>
+                                    <input asp-for="Email" class="form-control" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="MobileNumber" class="form-label"></label>
+                                    <input asp-for="MobileNumber" class="form-control" />
+                                    <span asp-validation-for="MobileNumber" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <!-- Company Information -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3 text-custom">Company Information</h5>
+                                <div class="form-group mb-3">
+                                    <label asp-for="CompanyName" class="form-label"></label>
+                                    <input asp-for="CompanyName" class="form-control" />
+                                    <span asp-validation-for="CompanyName" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="CompanyAddress" class="form-label"></label>
+                                    <input asp-for="CompanyAddress" class="form-control" />
+                                    <span asp-validation-for="CompanyAddress" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="TinNumber" class="form-label"></label>
+                                    <input asp-for="TinNumber" class="form-control" />
+                                    <span asp-validation-for="TinNumber" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="CompanyType" class="form-label"></label>
+                                    <select asp-for="CompanyType" class="form-select">
+                                        <option value="">Select Company Type</option>
+                                        <option value="Sole Proprietorship">Sole Proprietorship</option>
+                                        <option value="Partnership">Partnership</option>
+                                        <option value="Corporation">Corporation</option>
+                                    </select>
+                                    <span asp-validation-for="CompanyType" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label asp-for="LastName" class="form-label"></label>
-                            <input asp-for="LastName" class="form-control" />
-                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h5 class="mb-3 text-custom">Account Security</h5>
+                                <div class="form-group mb-3">
+                                    <label asp-for="Password" class="form-label"></label>
+                                    <input asp-for="Password" class="form-control" />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                                    <input asp-for="ConfirmPassword" class="form-control" />
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="mb-3 text-custom">Position</h5>
+                                <div class="form-group mb-3">
+                                    <label asp-for="Designation" class="form-label"></label>
+                                    <input asp-for="Designation" class="form-control" />
+                                    <span asp-validation-for="Designation" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label asp-for="Email" class="form-label"></label>
-                            <input asp-for="Email" class="form-control" />
-                            <span asp-validation-for="Email" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label asp-for="Password" class="form-label"></label>
-                            <input asp-for="Password" class="form-control" />
-                            <span asp-validation-for="Password" class="text-danger"></span>
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label asp-for="ConfirmPassword" class="form-label"></label>
-                            <input asp-for="ConfirmPassword" class="form-control" />
-                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Register</button>
+                        <div class="d-grid gap-2 col-6 mx-auto mt-4">
+                            <button type="submit" class="btn btn-custom btn-lg">Register</button>
                         </div>
                     </form>
 
                     <div class="text-center mt-4">
-                        <p>Already have an account? <a asp-action="Login" class="text-primary">Login here</a></p>
+                        <p class="text-muted">Already have an account? <a asp-action="Login" class="text-custom text-decoration-none fw-bold">Login here</a></p>
                     </div>
                 </div>
             </div>

@@ -10,7 +10,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a asp-action="Index">Tickets</a></li>
-                    <li class="breadcrumb-item active">Ticket #@Model.Ticket.Id</li>
+                    <li class="breadcrumb-item active">Ticket @Model.Ticket.Title</li>
                 </ol>
             </nav>
         </div>
@@ -72,10 +72,6 @@
                                     <th class="ps-0">Type:</th>
                                     <td><span class="badge bg-secondary">@Model.Ticket.Type</span></td>
                                 </tr>
-                                <tr>
-                                    <th class="ps-0">Project:</th>
-                                    <td>@(Model.Ticket.Project?.Name ?? "N/A")</td>
-                                </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
@@ -84,10 +80,6 @@
                                 <tr>
                                     <th class="ps-0">Created By:</th>
                                     <td>@($"{Model.Ticket.CreatedBy.FirstName} {Model.Ticket.CreatedBy.LastName}")</td>
-                                </tr>
-                                <tr>
-                                    <th class="ps-0">Assigned To:</th>
-                                    <td>@(Model.Ticket.AssignedTo != null ? $"{Model.Ticket.AssignedTo.FirstName} {Model.Ticket.AssignedTo.LastName}" : "Unassigned")</td>
                                 </tr>
                                 <tr>
                                     <th class="ps-0">Created:</th>
@@ -140,7 +132,11 @@
                                                 <small class="text-muted ms-2">@comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
                                             </div>
                                         </div>
-                                        <p class="mb-0">@comment.Content</p>
+                                        <p class="mb-0">@comment.CommentText</p>
+                                        @if (Model.Ticket.Project != null)
+                                        {
+                                            <small class="text-muted">Project: @Model.Ticket.Project.Name</small>
+                                        }
                                     </div>
                                 </div>
                             }

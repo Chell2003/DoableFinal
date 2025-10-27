@@ -1,0 +1,74 @@
+@model IEnumerable<DoableFinal.Models.Inquiry>
+
+@{
+    ViewData["Title"] = "Inquiries";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h1 class="h3">Inquiries</h1>
+            <p class="text-muted">Messages submitted via the Contact form</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Subject</th>
+                                <th>Message</th>
+                                <th>Received</th>
+                                <th>Handled</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var i in Model)
+                            {
+                                <tr>
+                                    <td>@i.Name</td>
+                                    <td>@i.Email</td>
+                                    <td>@i.Subject</td>
+                                    <td>@(i.Message?.Length > 120 ? i.Message.Substring(0, 117) + "..." : i.Message)</td>
+                                    <td>@i.CreatedAt.ToLocalTime().ToString("g")</td>
+                                    <td>
+                                        @if (i.IsHandled)
+                                        {
+                                            <span class="badge bg-success">Handled</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">New</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!i.IsHandled)
+                                        {
+                                            <form asp-controller="Admin" asp-action="MarkInquiryHandled" method="post" class="d-inline">
+                                                <input type="hidden" name="id" value="@i.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-success">Mark handled</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <p class="text-muted">No inquiries have been submitted yet.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

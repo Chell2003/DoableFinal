@@ -11,14 +11,43 @@
         </div>
     </div>
 
+    @if (TempData["Debug"] != null)
+    {
+        <div class="alert alert-info">
+            <pre>@TempData["Debug"]</pre>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            <pre>@TempData["Error"]</pre>
+        </div>
+    }
+
+    <div class="alert alert-info">
+        <strong>Debug Info:</strong><br/>
+        Is User Authenticated: @User.Identity?.IsAuthenticated<br/>
+        User Name: @User.Identity?.Name<br/>
+        Is Client Role: @User.IsInRole("Client")<br/>
+        Current Time: @DateTime.Now
+    </div>
+
     <div class="card">
         <div class="card-body">
-            <form asp-action="Create" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @if (TempData["ValidationError"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["ValidationError"]
+                </div>
+            }
+            <form asp-action="Create" asp-controller="Ticket" method="post" id="ticketForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="All" class="text-danger"></div>
                 
                 <div class="mb-3">
                     <label asp-for="Title" class="form-label">Title</label>
-                    <input asp-for="Title" class="form-control" />
+                    <input asp-for="Title" class="form-control" required />
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
 
@@ -71,7 +100,7 @@
                 </div>
 
                 <div class="mt-4">
-                    <button type="submit" class="btn btn-primary">Create Ticket</button>
+                    <button type="submit" class="btn btn-primary" id="submitTicket" onclick="console.log('Submit button clicked')">Create Ticket</button>
                     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
                 </div>
             </form>
@@ -81,4 +110,43 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function () {
+            console.log('Document ready');
+            
+            $('#ticketForm').on('submit', function (e) {
+                console.log('Form submit triggered');
+                
+                var formData = {
+                    Title: $('#Title').val(),
+                    Description: $('#Description').val(),
+                    Priority: $('#Priority').val(),
+                    Type: $('#Type').val(),
+                    ProjectId: $('#ProjectId').val(),
+                    AssignedToId: $('#AssignedToId').val()
+                };
+                
+                console.log('Form data:', formData);
+                
+                // Check if form is valid
+                if (!$(this).valid()) {
+                    console.log('Form validation failed');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                console.log('Form validation passed, proceeding with submission');
+            });
+
+            // Add click handler to submit button
+            $('#submitTicket').on('click', function(e) {
+                console.log('Submit button clicked');
+            });
+
+            // Monitor validation errors
+            $('#ticketForm').on('invalid-form', function(e, validator) {
+                console.log('Validation errors:', validator.errorList);
+            });
+        });
+    </script>
 }

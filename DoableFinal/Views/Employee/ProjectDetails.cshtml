@@ -196,10 +196,15 @@
     </div>
 </div> 
 
-                                            @section Scripts {
+@section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Get project start and end dates
+            var projectStart = new Date("@Model.StartDate.ToString("yyyy-MM-dd")").getTime();
+            var projectEnd = new Date("@Model.EndDate?.ToString("yyyy-MM-dd")").getTime();
+
+            // Prepare task data
             var tasks = @Html.Raw(Json.Serialize(Model.Tasks?.Select(t => new {
                 id = t.Id,
                 name = t.Title ?? "Untitled Task",
@@ -211,45 +216,83 @@
                     : "Unassigned"
             }) ?? Enumerable.Empty<object>()));
 
+            // Define a set of distinct colors for tasks
+            const taskColors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+                '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB',
+                '#F1C40F', '#E67E22', '#1ABC9C', '#34495E',
+                '#7F8C8D', '#00B894', '#FF7675', '#6C5CE7'
+            ];
+
+            // Define colors array
+            const colors = ['#FF5733', '#4834d4', '#6ab04c', '#be2edd', '#22a6b3', '#eb4d4b', '#f0932b', '#686de0', '#badc58', '#130f40'];
+
+            // Create series data
+            const seriesData = tasks.map((task, index) => ({
+                name: task.name,
+                data: [{
+                    x: ' ',
+                    y: [new Date(task.start).getTime(), new Date(task.end).getTime()],
+                    status: task.status,
+                    assignee: task.assignee
+                }]
+            }));
+
+            // Configure the Gantt chart
             var options = {
-                series: [{
-                    data: tasks.map(function(task) {
-                        return {
-                            x: "Tasks",
-                            y: [new Date(task.start).getTime(), new Date(task.end).getTime()],
-                            fillColor: task.status === 'Completed' ? '#198754' :
-                                     task.status === 'In Progress' ? '#0d6efd' :
-                                     task.status === 'On Hold' ? '#ffc107' : '#6c757d'
-                        };
-                    })
-                }],
+                series: seriesData,
                 chart: {
-                    height: 100,
+                    height: 150,
                     type: 'rangeBar',
                     toolbar: {
-                        show: false
-                    }
+                        show: true,
+                        tools: {
+                            download: true,
+                            selection: false,
+                            zoom: false,
+                            zoomin: false,
+                            zoomout: false,
+                            pan: false,
+                            reset: false
+                        }
+                    },
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800
+                    },
+                    fontFamily: 'inherit'
                 },
                 plotOptions: {
                     bar: {
                         horizontal: true,
-                        barHeight: '100%',
-                        rangeBarOverlap: true,
-                        rangeBarGroupRows: true
+                        barHeight: '50%',
+                        rangeBarGroupRows: true,
+                        borderRadius: 4
                     }
                 },
                 dataLabels: {
-                    enabled: true,
-                    formatter: function(val, opts) {
-                        var task = tasks[opts.dataPointIndex];
-                        return task.assignee + ' - ' + task.status;
+                    enabled: false
+                },
+                colors: colors,
+                xaxis: {
+                    type: 'datetime',
+                    min: projectStart,
+                    max: Math.max(projectEnd, new Date().getTime()), // Use latest between project end and current date
+                    labels: {
+                        datetimeFormatter: {
+                            year: 'yyyy',
+                            month: 'MMM yyyy',
+                            day: 'dd MMM',
+                            hour: 'HH:mm'
+                        }
                     }
                 },
-                xaxis: {
-                    type: 'datetime'
-                },
                 yaxis: {
-                    show: true
+                    show: false,
+                    labels: {
+                        show: false
+                    }
                 },
                 grid: {
                     row: {
@@ -259,20 +302,49 @@
                 },
                 tooltip: {
                     custom: function({series, seriesIndex, dataPointIndex, w}) {
-                        var task = tasks[dataPointIndex];
-                        return '<div class="p-2">' +
-                               '<div><strong>' + task.name + '</strong></div>' +
-                               '<div>Start: ' + task.start + '</div>' +
-                               '<div>End: ' + task.end + '</div>' +
-                               '<div>Status: ' + task.status + '</div>' +
-                               '<div>Assignee: ' + task.assignee + '</div>' +
+                        var task = w.config.series[seriesIndex].data[0];
+                        var startDate = new Date(task.y[0]).toLocaleDateString();
+                        var endDate = new Date(task.y[1]).toLocaleDateString();
+                        return '<div class="px-3 py-2">' +
+                               '<div class="mb-2"><strong>' + w.config.series[seriesIndex].name + '</strong></div>' +
+                               '<div class="text-muted small">Duration: ' + startDate + ' - ' + endDate + '</div>' +
+                               '<div class="mt-2"><span class="badge bg-' + 
+                               (task.status === 'Completed' ? 'success' : 
+                                task.status === 'In Progress' ? 'primary' : 
+                                task.status === 'On Hold' ? 'warning' : 'secondary') + 
+                               ' me-1">' + task.status + '</span>' +
+                               (task.assignee !== 'Unassigned' ? '<span class="badge bg-info ms-1"><i class="bi bi-person me-1"></i>' + task.assignee + '</span>' : '') +
+                               '</div>' +
                                '</div>';
+                    }
+                },
+                legend: {
+                    show: true,
+                    position: 'top',
+                    horizontalAlign: 'left',
+                    fontSize: '13px',
+                    markers: {
+                        width: 12,
+                        height: 12,
+                        radius: 2,
+                        fillColors: colors
+                    },
+                    labels: {
+                        colors: '#333'
+                    },
+                    itemMargin: {
+                        horizontal: 15
+                    },
+                    containerMargin: {
+                        top: 0,
+                        bottom: 15
                     }
                 }
             };
 
+            // Render the chart
             var chart = new ApexCharts(document.querySelector("#ganttChart"), options);
             chart.render();
         });
     </script>
-} 
+}

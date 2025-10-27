@@ -26,5 +26,30 @@ namespace DoableFinal.ViewModels
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
+
+        [Required]
+        [Display(Name = "Company Name")]
+        public string CompanyName { get; set; }
+
+        [Required]
+        [Display(Name = "Company Address")]
+        public string CompanyAddress { get; set; }
+
+        [Required]
+        [Display(Name = "Designation")]
+        public string Designation { get; set; }
+
+        [Required]
+        [Phone]
+        [Display(Name = "Mobile Number")]
+        public string MobileNumber { get; set; }
+
+        [Required]
+        [Display(Name = "TIN Number")]
+        public string TinNumber { get; set; }
+
+        [Required]
+        [Display(Name = "Company Type")]
+        public string CompanyType { get; set; }
     }
 } 

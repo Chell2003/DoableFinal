@@ -531,8 +531,13 @@ namespace DoableFinal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Send notification
-            await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been marked as completed");
+            // Send notification to all assigned employees
+            var user = await _userManager.GetUserAsync(User);
+            var authorName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Project Manager";
+
+            await _notificationService.NotifyTaskUpdateAsync(
+                task,
+                $"Task '{task.Title}' has been marked as completed by {authorName}");
 
             TempData["SuccessMessage"] = "Task has been confirmed as completed.";
             return RedirectToAction(nameof(TaskDetails), new { id });
@@ -602,10 +607,71 @@ namespace DoableFinal.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> DisapproveTaskProof(int taskId)
+        {
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null || task.Project.ProjectManagerId != user.Id)
+            {
+                return Forbid();
+            }
+
+            task.IsConfirmed = false;
+            task.Status = "Pending Review";
+            task.CompletedAt = null;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            // Create notifications for all assigned employees
+            foreach (var assignment in task.TaskAssignments)
+            {
+                var notification = new Notification
+                {
+                    UserId = assignment.EmployeeId,
+                    Title = "Task Proof Disapproved",
+                    Message = $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}. The task needs revision.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    Link = $"/Employee/TaskDetails/{task.Id}"
+                };
+
+                _context.Notifications.Add(notification);
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Send email notifications if enabled
+            foreach (var assignment in task.TaskAssignments)
+            {
+                if (assignment.Employee.EmailNotificationsEnabled && assignment.Employee.Email != null)
+                {
+                    await _notificationService.SendEmailNotificationAsync(
+                        assignment.Employee.Email,
+                        "Task Proof Disapproved",
+                        $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}. Please review and submit a new proof. View details at: /Employee/TaskDetails/{task.Id}"
+                    );
+                }
+            }
+
+            TempData["TaskMessage"] = "Task proof has been disapproved. The task needs revision.";
+            return RedirectToAction(nameof(TaskDetails), new { id = taskId });
+        }
+
         public async Task<IActionResult> ApproveTaskProof(int taskId)
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
                 .FirstOrDefaultAsync(t => t.Id == taskId);
 
             if (task == null)
@@ -624,21 +690,38 @@ namespace DoableFinal.Controllers
             task.CompletedAt = DateTime.UtcNow;
             task.UpdatedAt = DateTime.UtcNow;
 
-            // Create notification for employee
-            var notification = new Notification
+            // Create notifications for all assigned employees
+            foreach (var assignment in task.TaskAssignments)
             {
-                UserId = task.CreatedById,
-                Title = "Task Proof Approved",
-                Message = $"Your proof for task '{task.Title}' has been approved",
-                CreatedAt = DateTime.UtcNow,
-                IsRead = false,
-                Link = $"/Employee/TaskDetails/{task.Id}"
-            };
+                var notification = new Notification
+                {
+                    UserId = assignment.EmployeeId,
+                    Title = "Task Proof Approved",
+                    Message = $"Your proof for task '{task.Title}' has been approved by {user.FirstName} {user.LastName}",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false,
+                    Link = $"/Employee/TaskDetails/{task.Id}"
+                };
 
-            _context.Notifications.Add(notification);
+                _context.Notifications.Add(notification);
+            }
+
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Task proof has been approved and marked as completed.";
+            // Send email notifications if enabled
+            foreach (var assignment in task.TaskAssignments)
+            {
+                if (assignment.Employee.EmailNotificationsEnabled)
+                {
+                    await _notificationService.SendEmailNotificationAsync(
+                        assignment.Employee.Email,
+                        "Task Proof Approved",
+                        $"Your proof for task '{task.Title}' has been approved by {user.FirstName} {user.LastName}. View details at: /Employee/TaskDetails/{task.Id}"
+                    );
+                }
+            }
+
+            TempData["TaskMessage"] = "Task proof has been approved and marked as completed.";
             return RedirectToAction(nameof(TaskDetails), new { id = taskId });
         }
 
@@ -733,6 +816,41 @@ namespace DoableFinal.Controllers
             };
 
             return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var changePasswordResult = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (!changePasswordResult.Succeeded)
+            {
+                foreach (var error in changePasswordResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "Your password has been changed successfully.";
+            return RedirectToAction(nameof(Profile));
         }
 
         [HttpPost]

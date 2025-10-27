@@ -1,0 +1,130 @@
+@model DoableFinal.ViewModels.CreateTicketViewModel
+
+@{
+    ViewData["Title"] = "Create Ticket";
+    Layout = "_ClientLayout";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Create Support Ticket</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-action="Tickets">Tickets</a></li>
+        <li class="breadcrumb-item active">Create Ticket</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-lg-8">
+            @if (TempData["Debug"] != null)
+            {
+                <div class="alert alert-info">
+                    <pre>@TempData["Debug"]</pre>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">
+                    <pre>@TempData["Error"]</pre>
+                </div>
+            }
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-ticket-alt me-1"></i>
+                    Ticket Details
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateTicket" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Title</label>
+                            <input asp-for="Title" class="form-control" required />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ProjectId" class="form-label">Project</label>
+                            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select" required>
+                                <option value="">Select a project...</option>
+                            </select>
+                            <span asp-validation-for="ProjectId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="5" required></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Type" class="form-label">Type</label>
+                            <select asp-for="Type" class="form-select" required>
+                                <option value="">Select a type...</option>
+                                <option value="Bug">Bug</option>
+                                <option value="Feature Request">Feature Request</option>
+                                <option value="Support">Support</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="Type" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Priority" class="form-label">Priority</label>
+                            <select asp-for="Priority" class="form-select">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                            <span asp-validation-for="Priority" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Ticket
+                            </button>
+                            <a asp-action="Tickets" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Tips for Creating a Ticket
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Be specific with your ticket title
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Provide detailed description of the issue
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Set appropriate priority level
+                        </li>
+                        <li>
+                            <i class="fas fa-check text-success me-2"></i>
+                            Include steps to reproduce if applicable
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

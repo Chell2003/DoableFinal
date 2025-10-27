@@ -108,30 +108,16 @@
                             <div class="col-md-9">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="mb-3">
+                                        <div>
                                             <a href="@Url.Content(Model.ProofFilePath)" class="btn btn-secondary btn-sm" target="_blank">
                                                 <i class="fas fa-download"></i> View Submitted Proof
                                             </a>
                                         </div>
-
-                                        @if (!Model.IsConfirmed && Model.Status != "Completed")
+                                        @if (Model.IsConfirmed && Model.CompletedAt.HasValue)
                                         {
-                                            <form asp-action="ApproveTaskProof" asp-controller="Admin" method="post">
-                                                <input type="hidden" name="taskId" value="@Model.Id" />
-                                                <button type="submit" class="btn btn-success">
-                                                    <i class="fas fa-check-circle"></i> Approve Proof and Complete Task
-                                                </button>
-                                            </form>
-                                        }
-                                        else if (Model.IsConfirmed)
-                                        {
-                                            <div class="alert alert-success mb-0">
-                                                <i class="fas fa-check-circle"></i> Proof verified and task completed
-                                                @if (Model.CompletedAt.HasValue)
-                                                {
-                                                    <br/>
-                                                    <small class="text-muted">Completed on @Model.CompletedAt.Value.ToString(dateTimeFormat)</small>
-                                                }
+                                            <div class="mt-3 text-muted small">
+                                                <i class="fas fa-check-circle text-success"></i>
+                                                Completed on @Model.CompletedAt.Value.ToString(dateTimeFormat)
                                             </div>
                                         }
                                     </div>

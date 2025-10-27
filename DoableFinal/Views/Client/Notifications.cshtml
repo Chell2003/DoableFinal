@@ -26,6 +26,23 @@
                 <div class="list-group">
                     @foreach (var notification in Model)
                     {
+                            // Pre-resolve the link so the markup below can simply reference `resolvedLink`.
+                            string resolvedLink = null;
+                            if (!string.IsNullOrEmpty(notification.Link))
+                            {
+                                var rawLink = notification.Link.Trim();
+                                resolvedLink = rawLink;
+                                if (rawLink.Contains("/Ticket/Details", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    var parts = rawLink.TrimEnd('/').Split('/');
+                                    var last = parts.LastOrDefault();
+                                    if (int.TryParse(last, out var ticketId))
+                                    {
+                                        resolvedLink = Url.Action("TicketDetails", "Client", new { id = ticketId }) ?? rawLink;
+                                    }
+                                }
+                            }
+
                         <div class="list-group-item @(!notification.IsRead ? "bg-light" : "")">
                             <div class="d-flex w-100 justify-content-between align-items-center">
                                 <div>
@@ -36,9 +53,9 @@
                                     </small>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    @if (!string.IsNullOrEmpty(notification.Link))
+                                    @if (!string.IsNullOrEmpty(resolvedLink))
                                     {
-                                        <a href="@notification.Link" class="btn btn-sm btn-primary">
+                                        <a href="@resolvedLink" class="btn btn-sm btn-primary">
                                             View Details
                                         </a>
                                     }

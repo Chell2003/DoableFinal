@@ -83,27 +83,29 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     }
-                    <form asp-action="ChangePassword" method="post" id="changePasswordForm">
+                    <form asp-controller="ProjectManager" asp-action="ChangePassword" method="post">
                         <div class="mb-3">
-                            <label for="currentPassword" class="form-label">Current Password</label>
-                            <input type="password" id="currentPassword" name="currentPassword" class="form-control" required />
+                            <label for="CurrentPassword" class="form-label">Current Password</label>
+                            <div class="input-group">
+                                <input type="password" id="CurrentPassword" name="CurrentPassword" class="form-control" required />
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('CurrentPassword', this)"><i class="bi bi-eye"></i></button>
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="newPassword" class="form-label">New Password</label>
+                            <label for="NewPassword" class="form-label">New Password</label>
                             <div class="input-group">
-                                <input type="password" id="newPassword" name="newPassword" class="form-control" required pattern="^(?=.*[A-Z])(?=.*[a-zA-Z0-9]).{6,}$" title="Password must be alphanumeric and contain at least one capital letter." />
-                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('newPassword', this)"><i class="bi bi-eye"></i></button>
+                                <input type="password" id="NewPassword" name="NewPassword" class="form-control" required pattern="^(?=.*[A-Z])(?=.*[a-zA-Z0-9]).{6,}$" title="Password must be at least 6 characters long and contain at least one capital letter" />
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('NewPassword', this)"><i class="bi bi-eye"></i></button>
                             </div>
                             <small class="text-muted">Password must be at least 6 characters long and contain at least one capital letter.</small>
-                            <div id="passwordStrength" class="mt-1"></div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <label for="ConfirmPassword" class="form-label">Confirm New Password</label>
                             <div class="input-group">
-                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required />
-                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('confirmPassword', this)"><i class="bi bi-eye"></i></button>
+                                <input type="password" id="ConfirmPassword" name="ConfirmPassword" class="form-control" required />
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('ConfirmPassword', this)"><i class="bi bi-eye"></i></button>
                             </div>
                         </div>
 
@@ -155,4 +157,22 @@ function togglePasswordVisibility(fieldId, btn) {
         btn.innerHTML = '<i class="bi bi-eye"></i>';
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('form[asp-action="ChangePassword"]');
+    var newPassword = document.getElementById('NewPassword');
+    var confirmPassword = document.getElementById('ConfirmPassword');
+
+    form.addEventListener('submit', function(event) {
+        if (newPassword.value !== confirmPassword.value) {
+            event.preventDefault();
+            alert('New password and confirmation password do not match.');
+            return false;
+        }
+    });
+
+    newPassword.addEventListener('input', function() {
+        confirmPassword.pattern = this.value;
+    });
+});
 </script>

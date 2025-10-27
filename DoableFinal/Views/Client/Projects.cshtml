@@ -8,29 +8,117 @@
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
-            <h1 class="h3">My Projects</h1>
-            <p class="text-muted">View and manage your projects</p>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h1 class="h3 mb-0">My Projects</h1>
+                @if (Model != null && Model.Any())
+                {
+                    <span class="badge bg-secondary">@Model.Count()</span>
+                }
+            </div>
+            <p class="text-muted">View and manage your project portfolio</p>
         </div>
+    </div>
+
+        <style>
+            .avatar-circle {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.875rem;
+                font-weight: 500;
+            }
+
+            .sortable { cursor: pointer; }
+            .sortable:hover { background-color: rgba(0, 0, 0, 0.03); }
+
+            /* make rows clearly clickable */
+            .table-row-clickable { cursor: pointer; }
+            .table-row-clickable:hover { background-color: rgba(0,0,0,0.02); }
+
+            /* progress contrast */
+            .progress { height: 20px; }
+            .progress-bar { font-weight: 600; color: #fff; }
+            .progress-bar.bg-info { color: #fff; }
+            .progress-bar.bg-warning { color: #212529; }
+
+            .controls-row { gap: 8px; }
+        </style>
+
+
+    <div class="row g-3 mb-3 controls-row align-items-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="search" id="projectSearch" class="form-control border-start-0" 
+                           placeholder="Search projects..." value="@Context.Request.Query["q"].ToString()"
+                           aria-label="Search projects"
+                           data-bs-toggle="tooltip" data-bs-title="Search by name, description or manager">
+                    <button id="clearSearch" class="btn btn-outline-secondary" title="Clear search" aria-label="Clear search">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <select id="projectSort" class="form-select" aria-label="Sort projects" data-bs-toggle="tooltip" data-bs-title="Sort projects by different criteria">
+                    <option value="name">Sort by Name</option>
+                    <option value="startDate">Sort by Start Date</option>
+                    <option value="endDate">Sort by End Date</option>
+                    <option value="progress">Sort by Progress</option>
+                </select>
+            </div>
+            <div class="col-md-8 col-lg-3">
+                <div class="input-group">
+                    <label class="input-group-text" for="statusFilterSelect">Status</label>
+                    <select id="statusFilterSelect" class="form-select" aria-label="Filter by status">
+                        <option value="">All</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="On Hold">On Hold</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                    <button id="resetFilters" class="btn btn-outline-secondary" title="Reset filters">Reset</button>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2 text-lg-end">
+                <div class="input-group justify-content-end">
+                    <label class="input-group-text" for="pageSize">Rows</label>
+                    <select id="pageSize" class="form-select" style="width:90px;" aria-label="Rows per page">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                    </select>
+                </div>
+            </div>
     </div>
 
     <div class="row">
         <div class="col">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-body">
+                        <div id="loading-indicator" class="text-center py-5 d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading projects...</p>
+                        </div>
                     @if (Model != null && Model.Any())
                     {
                         <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Description</th>
-                                        <th>Project Manager</th>
-                                        <th>Start Date</th>
-                                        <th>End Date</th>
-                                        <th>Status</th>
-                                        <th>Progress</th>
-                                        <th>Actions</th>
+                                <table class="table table-hover align-middle" id="projectsTable">
+                                <thead class="table-light">
+                                    <tr class="text-nowrap">
+                                            <th class="sortable" data-sort="name">Name <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th>Description <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" data-bs-title="Truncated to 50 characters"></i></th>
+                                            <th>Project Manager <i class="bi bi-person ms-1"></i></th>
+                                            <th class="sortable" data-sort="startDate">Start Date <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th class="sortable" data-sort="endDate">End Date <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th>Status <i class="bi bi-flag ms-1"></i></th>
+                                            <th class="sortable" data-sort="progress">Progress <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                            <th>Actions <i class="bi bi-gear ms-1"></i></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -38,9 +126,15 @@
                                     {
                                         <tr>
                                             <td>
-                                                <a asp-action="ProjectDetails" asp-route-id="@project.Id">
-                                                    @project.Name
-                                                </a>
+                                                <div>
+                                                    <a asp-action="ProjectDetails" asp-route-id="@project.Id" class="text-decoration-none fw-medium">
+                                                        @project.Name
+                                                    </a>
+                                                    @if (project.EndDate.HasValue && project.EndDate.Value < DateTime.Now && project.Status != "Completed")
+                                                    {
+                                                           <span class="badge bg-danger-subtle text-danger ms-2" data-bs-toggle="tooltip" data-bs-title="Project is past its due date">Overdue</span>
+                                                    }
+                                                </div>
                                             </td>
                                             <td>@(project.Description?.Length > 50 ? project.Description.Substring(0, 47) + "..." : project.Description)</td>
                                             <td>@($"{project.ProjectManager?.FirstName} {project.ProjectManager?.LastName}")</td>
@@ -60,23 +154,33 @@
                                                     var progress = ViewBag.ProjectProgress != null && ViewBag.ProjectProgress.ContainsKey(project.Id)
                                                         ? ViewBag.ProjectProgress[project.Id]
                                                         : 0;
+                                                       var progressClass = progress switch {
+                                                           >= 100 => "bg-success",
+                                                           >= 75 => "bg-info",
+                                                           >= 50 => "bg-primary",
+                                                           >= 25 => "bg-warning",
+                                                           _ => "bg-danger"
+                                                       };
                                                 }
-                                                <div class="progress">
-                                                    <div class="progress-bar" role="progressbar" style="width: @progress%"
-                                                         aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">
-                                                        @progress%
-                                                    </div>
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar @progressClass" role="progressbar" 
+                                                             style="width: @progress%"
+                                                             aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"
+                                                             data-bs-toggle="tooltip" data-bs-title="@progress% complete">
+                                                             @progress%
+                                                        </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <small class="text-muted">Started: @project.StartDate.ToString("MMM dd, yyyy")</small>
-                                                    <div>
-                                                        <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@project.Id" 
-                                                           class="btn btn-sm btn-outline-primary me-2">View Details</a>
-                                                        <a asp-controller="Client" asp-action="Tasks" asp-route-projectId="@project.Id" 
-                                                           class="btn btn-sm btn-outline-info">View Tasks</a>
-                                                    </div>
+                                                <div class="d-flex gap-2">
+                                                    <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@project.Id" 
+                                                           class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="View project details">
+                                                       <i class="bi bi-info-circle me-1"></i> Details
+                                                    </a>
+                                                    <a asp-controller="Client" asp-action="Tasks" asp-route-projectId="@project.Id" 
+                                                           class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" data-bs-title="View project tasks">
+                                                        <i class="bi bi-list-task me-1"></i> Tasks
+                                                    </a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -87,9 +191,12 @@
                     }
                     else
                     {
-                        <div class="text-center py-4">
-                            <i class="bi bi-folder-x display-4 text-muted"></i>
-                            <p class="text-muted mt-3">No projects found.</p>
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="bi bi-briefcase-fill display-1 text-muted opacity-50"></i>
+                            </div>
+                            <h5 class="fw-light">No Projects Found</h5>
+                            <p class="text-muted mb-4">There are currently no projects assigned to you.<br>Projects will appear here once they are created and assigned.</p>
                         </div>
                     }
                 </div>
@@ -97,3 +204,224 @@
         </div>
     </div>
 </div> 
+
+                <!-- Modal for project timeline -->
+                <div class="modal fade" id="projectTimelineModal" tabindex="-1" aria-labelledby="projectTimelineModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="projectTimelineModalLabel">Project Timeline</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="modalGanttChart" style="min-height:300px;"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <span id="modalTimelineInfo" class="me-auto text-muted"></span>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+            // central helper: show/hide no-results
+            function updateEmptyState() {
+                const visibleRows = $("#projectsTable tbody tr:visible").length;
+                if (visibleRows === 0) {
+                    if ($("#no-results-message").length === 0) {
+                        const message = `
+                            <tr id="no-results-message">
+                                <td colspan="8" class="text-center py-4">
+                                    <div class="mb-3">
+                                        <i class="bi bi-search display-4 text-muted opacity-50"></i>
+                                    </div>
+                                    <h5 class="fw-light">No matching projects found</h5>
+                                    <p class="text-muted">Try adjusting your search or filter criteria</p>
+                                </td>
+                            </tr>
+                        `;
+                        $("#projectsTable tbody").append(message);
+                    }
+                } else {
+                    $("#no-results-message").remove();
+                }
+            }
+
+            // Search functionality (client-side filter)
+            $("#projectSearch").on("input", function() {
+                const value = $(this).val().toLowerCase();
+                $("#projectsTable tbody tr").each(function() {
+                    const text = $(this).text().toLowerCase();
+                    $(this).toggle(text.indexOf(value) > -1);
+                });
+                paginate();
+                updateEmptyState();
+            });
+
+            // Clear search button
+            $("#clearSearch").on("click", function(e) {
+                e.preventDefault();
+                $("#projectSearch").val('');
+                $("#projectSearch").trigger('input');
+            });
+
+            // Filter dropdown
+            $("#statusFilterSelect").on('change', function() {
+                const value = $(this).val();
+                $("#projectsTable tbody tr").each(function() {
+                    const status = $(this).find("td:nth-child(6) .badge").text().trim();
+                    $(this).toggle(!value || status === value);
+                });
+                paginate();
+                updateEmptyState();
+            });
+
+            // Reset filters (search + filter + sort + page)
+            $("#resetFilters").on('click', function(e) {
+                e.preventDefault();
+                $("#projectSearch").val('');
+                $("#projectSort").val('name');
+                $("#statusFilterSelect").val('');
+                $("#pageSize").val('10');
+                $("#projectsTable tbody tr").show();
+                $("#projectSort").trigger('change');
+                paginate();
+                updateEmptyState();
+            });
+
+            // Sort functionality
+            $("#projectSort").on("change", function() {
+                const value = $(this).val();
+                const rows = $("#projectsTable tbody tr").get();
+
+                rows.sort(function(a, b) {
+                    let aValue, bValue;
+                    switch(value) {
+                        case "name":
+                            aValue = $(a).find("td:first-child a").text().toLowerCase();
+                            bValue = $(b).find("td:first-child a").text().toLowerCase();
+                            return aValue.localeCompare(bValue);
+                        case "startDate":
+                            aValue = new Date($(a).find("td:nth-child(4)").text());
+                            bValue = new Date($(b).find("td:nth-child(4)").text());
+                            break;
+                        case "endDate":
+                            aValue = $(a).find("td:nth-child(5)").text();
+                            bValue = $(b).find("td:nth-child(5)").text();
+                            if (aValue === "Not set") aValue = new Date(9999, 11, 31);
+                            if (bValue === "Not set") bValue = new Date(9999, 11, 31);
+                            aValue = new Date(aValue);
+                            bValue = new Date(bValue);
+                            break;
+                        case "progress":
+                            aValue = parseInt($(a).find(".progress-bar").attr("aria-valuenow")) || 0;
+                            bValue = parseInt($(b).find(".progress-bar").attr("aria-valuenow")) || 0;
+                            break;
+                    }
+                    if (aValue < bValue) return -1;
+                    if (aValue > bValue) return 1;
+                    return 0;
+                });
+
+                $("#projectsTable tbody").append(rows);
+                paginate();
+            });
+
+            // Make rows clickable: navigate to details when clicking row (except on buttons/links)
+            $(document).on('click', '#projectsTable tbody tr', function(e) {
+                if ($(e.target).is('a, button, i, .btn')) return; // ignore clicks on actionable controls
+                const link = $(this).find('a[asp-action="ProjectDetails"]').first();
+                if (link.length) {
+                    window.location = link.attr('href');
+                }
+            });
+
+            // Simple client-side pagination
+            function paginate() {
+                const pageSize = parseInt($('#pageSize').val()) || 10;
+                const rows = $('#projectsTable tbody tr:visible').not('#no-results-message');
+                const total = rows.length;
+                const totalPages = Math.max(1, Math.ceil(total / pageSize));
+                let current = parseInt($('#currentPage').val()) || 1;
+                if (current > totalPages) current = 1;
+
+                rows.hide();
+                rows.slice((current-1)*pageSize, current*pageSize).show();
+
+                $('#paginationInfo').text('Page ' + current + ' of ' + totalPages);
+                // render simple prev/next
+                $('#prevPage').prop('disabled', current <= 1);
+                $('#nextPage').prop('disabled', current >= totalPages);
+                $('#currentPage').val(current);
+            }
+
+            $('#prevPage').on('click', function(e){ e.preventDefault(); let p = parseInt($('#currentPage').val())||1; if (p>1) { $('#currentPage').val(p-1); paginate(); }});
+            $('#nextPage').on('click', function(e){ e.preventDefault(); let p = parseInt($('#currentPage').val())||1; $('#currentPage').val(p+1); paginate(); });
+            $('#pageSize').on('change', function(){ $('#currentPage').val(1); paginate(); });
+
+            // initialize defaults
+            if (!$('#currentPage').length) {
+                $('body').append('<input type="hidden" id="currentPage" value="1" />');
+            }
+            paginate();
+            updateEmptyState();
+
+            // Timeline modal functionality
+            $(document).on('click', '.timeline-btn', function(e){
+                e.preventDefault();
+                const href = $(this).data('href');
+                const modalEl = document.getElementById('projectTimelineModal');
+                const modal = new bootstrap.Modal(modalEl);
+                // fetch project details page HTML
+                $.get(href).done(function(html){
+                    const $resp = $(html);
+                    let tasksJson = $resp.find('#project-tasks-data').html();
+                    if (!tasksJson) tasksJson = $resp.filter('#project-tasks-data').html();
+                    let projectStart = $resp.find('#project-start').text() || $resp.filter('#project-start').text();
+                    let projectEnd = $resp.find('#project-end').text() || $resp.filter('#project-end').text();
+
+                    let tasks = [];
+                    try { tasks = tasksJson ? JSON.parse(tasksJson) : []; } catch (ex) { tasks = []; }
+
+                    const seriesData = tasks.map(function(task){
+                        return {
+                            name: task.name,
+                            data: [{ x: ' ', y: [new Date(task.start).getTime(), new Date(task.end).getTime()], status: task.status, assignee: task.assignee }]
+                        };
+                    });
+
+                    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB'];
+
+                    const options = {
+                        series: seriesData,
+                        chart: { height: Math.max(300, seriesData.length * 50), type: 'rangeBar', toolbar: { show: false } },
+                        plotOptions: { bar: { horizontal: true, barHeight: '50%', rangeBarGroupRows: true, borderRadius: 4 } },
+                        dataLabels: { enabled: false },
+                        colors: colors,
+                        xaxis: { type: 'datetime', min: projectStart ? new Date(projectStart).getTime() : undefined, max: projectEnd ? new Date(projectEnd).getTime() : undefined },
+                        yaxis: { show: false },
+                        tooltip: { custom: function({series, seriesIndex, dataPointIndex, w}) { var t = w.config.series[seriesIndex].data[0]; var s = new Date(t.y[0]).toLocaleDateString(); var e = new Date(t.y[1]).toLocaleDateString(); return '<div class="px-3 py-2"><div class="mb-2"><strong>'+ w.config.series[seriesIndex].name +'</strong></div><div class="text-muted small">Duration: '+s+' - '+e+'</div><div class="mt-2"><span class="badge bg-'+(t.status==='Completed'?'success': t.status==='In Progress'?'primary': t.status==='On Hold'?'warning':'secondary')+' me-1">'+t.status+'</span>' + (t.assignee && t.assignee!=='Unassigned' ? '<span class="badge bg-info ms-1"><i class="bi bi-person me-1"></i>'+t.assignee+'</span>': '') + '</div></div>'; } }
+                    };
+
+                    // render chart
+                    $('#modalGanttChart').empty();
+                    try { window._modalGantt && window._modalGantt.destroy(); } catch(e){}
+                    window._modalGantt = new ApexCharts(document.querySelector("#modalGanttChart"), options);
+                    window._modalGantt.render();
+                    // set info
+                    $('#modalTimelineInfo').text(seriesData.length + ' tasks — ' + (projectStart || '') + (projectEnd ? ' to ' + projectEnd : ''));
+                    modal.show();
+                }).fail(function(){
+                    alert('Unable to load project timeline.');
+                });
+            });
+        });
+    </script>
+}

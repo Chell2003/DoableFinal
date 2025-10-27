@@ -2,38 +2,30 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using DoableFinal.Models;
 using DoableFinal.ViewModels;
+using DoableFinal.Data;
+using DoableFinal.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace DoableFinal.Controllers;
 
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly ApplicationDbContext _context;
+    private readonly NotificationService _notificationService;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, NotificationService notificationService)
     {
         _logger = logger;
+        _context = context;
+        _notificationService = notificationService;
     }
 
     public IActionResult Index()
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            if (User.IsInRole("Admin"))
-            {
-                return RedirectToAction("Index", "Admin");
-            }
-            else if (User.IsInRole("Project Manager"))
-            {
-                return RedirectToAction("Index", "ProjectManager");
-            }
-            else if (User.IsInRole("Employee"))
-            {
-                return RedirectToAction("Index", "Employee");
-            }
-            else if (User.IsInRole("Client"))
-            {
-                return RedirectToAction("Index", "Client");
-            }
+            return RedirectToAction("Index", "Dashboard");
         }
 
         return View();
@@ -59,7 +51,30 @@ public class HomeController : Controller
     {
         if (ModelState.IsValid)
         {
-            // Here you would typically send an email or save the contact form
+            // Save inquiry into database
+            var inquiry = new Inquiry
+            {
+                Name = model.Name,
+                Email = model.Email,
+                Subject = model.Subject,
+                Message = model.Message,
+                CreatedAt = DateTime.UtcNow,
+                IsHandled = false
+            };
+
+            _context.Inquiries.Add(inquiry);
+            _context.SaveChanges();
+
+            // Notify all admins via NotificationService
+            var admins = _context.Users.Where(u => u.Role == "Admin" && !u.IsArchived).ToList();
+            foreach (var admin in admins)
+            {
+                // Create an in-app notification
+                _notificationService.CreateNotification(admin.Id, "New Inquiry", $"New inquiry from {inquiry.Name}: {inquiry.Subject}", "/Admin/Inquiries").GetAwaiter().GetResult();
+                // Optionally: send email (if SMTP configured)
+                // _notificationService.SendEmailNotificationAsync(admin.Email, "New Inquiry Received", $"You have a new inquiry from {inquiry.Name} ({inquiry.Email}).\n\nSubject: {inquiry.Subject}\n\nMessage:\n{inquiry.Message}").GetAwaiter().GetResult();
+            }
+
             TempData["SuccessMessage"] = "Thank you for your message. We'll get back to you soon!";
             return RedirectToAction(nameof(Contact));
         }

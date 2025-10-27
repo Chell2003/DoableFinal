@@ -137,6 +137,7 @@
                                     <th>Due Date</th>
                                     <th>Status</th>
                                     <th>Priority</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -169,6 +170,11 @@
                                                 "High" => "danger",
                                                 _ => "secondary"
                                             })">@task.Priority</span>
+                                        </td>
+                                        <td>
+                                            <a asp-action="TaskDetails" asp-route-id="@task.Id" class="btn btn-sm btn-info">
+                                                <i class="fas fa-info-circle"></i> Details
+                                            </a>
                                         </td>
                                     </tr>
                                 }
@@ -245,39 +251,57 @@
                 '#7F8C8D', '#00B894', '#FF7675', '#6C5CE7'
             ];
 
+            // Define colors array
+            const colors = ['#FF5733', '#4834d4', '#6ab04c', '#be2edd', '#22a6b3', '#eb4d4b', '#f0932b', '#686de0', '#badc58', '#130f40'];
+
+            // Create series data
+            const seriesData = tasks.map((task, index) => ({
+                name: task.name,
+                data: [{
+                    x: ' ',
+                    y: [new Date(task.start).getTime(), new Date(task.end).getTime()],
+                    status: task.status,
+                    assignee: task.assignee
+                }]
+            }));
+
             // Configure the Gantt chart
             var options = {
-                series: [{
-                    data: tasks.map(function(task) {
-                        return {
-                            x: 'Project Timeline',
-                            y: [new Date(task.start).getTime(), new Date(task.end).getTime()],
-                            fillColor: task.status === 'Completed' ? '#198754' :
-                                     task.status === 'In Progress' ? '#0d6efd' :
-                                     task.status === 'On Hold' ? '#ffc107' : '#6c757d'
-                        };
-                    })
-                }],
+                series: seriesData,
                 chart: {
-                    height: 120,
+                    height: 150,
                     type: 'rangeBar',
                     toolbar: {
-                        show: false
+                        show: true,
+                        tools: {
+                            download: true,
+                            selection: false,
+                            zoom: false,
+                            zoomin: false,
+                            zoomout: false,
+                            pan: false,
+                            reset: false
+                        }
                     },
                     animations: {
-                        enabled: true
-                    }
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800
+                    },
+                    fontFamily: 'inherit'
                 },
                 plotOptions: {
                     bar: {
                         horizontal: true,
-                        barHeight: '80%',
-                        rangeBarOverlap: true
+                        barHeight: '50%',
+                        rangeBarGroupRows: true,
+                        borderRadius: 4
                     }
                 },
                 dataLabels: {
                     enabled: false
                 },
+                colors: colors,
                 xaxis: {
                     type: 'datetime',
                     min: projectStart,
@@ -292,7 +316,10 @@
                     }
                 },
                 yaxis: {
-                    show: true
+                    show: false,
+                    labels: {
+                        show: false
+                    }
                 },
                 grid: {
                     row: {
@@ -302,14 +329,42 @@
                 },
                 tooltip: {
                     custom: function({series, seriesIndex, dataPointIndex, w}) {
-                        const task = series[seriesIndex];
-                        return '<div class="p-2">' +
-                               '<div><strong><span style="color: ' + task.data[0].fillColor + '">■</span> ' + task.name + '</strong></div>' +
-                               '<div>Start: ' + new Date(task.data[0].y[0]).toLocaleDateString() + '</div>' +
-                               '<div>End: ' + new Date(task.data[0].y[1]).toLocaleDateString() + '</div>' +
-                               '<div>Status: ' + task.data[0].status + '</div>' +
-                               '<div>Assignee: ' + task.data[0].assignee + '</div>' +
+                        var task = w.config.series[seriesIndex].data[0];
+                        var startDate = new Date(task.y[0]).toLocaleDateString();
+                        var endDate = new Date(task.y[1]).toLocaleDateString();
+                        return '<div class="px-3 py-2">' +
+                               '<div class="mb-2"><strong>' + w.config.series[seriesIndex].name + '</strong></div>' +
+                               '<div class="text-muted small">Duration: ' + startDate + ' - ' + endDate + '</div>' +
+                               '<div class="mt-2"><span class="badge bg-' + 
+                               (task.status === 'Completed' ? 'success' : 
+                                task.status === 'In Progress' ? 'primary' : 
+                                task.status === 'On Hold' ? 'warning' : 'secondary') + 
+                               ' me-1">' + task.status + '</span>' +
+                               (task.assignee !== 'Unassigned' ? '<span class="badge bg-info ms-1"><i class="bi bi-person me-1"></i>' + task.assignee + '</span>' : '') +
+                               '</div>' +
                                '</div>';
+                    }
+                },
+                legend: {
+                    show: true,
+                    position: 'top',
+                    horizontalAlign: 'left',
+                    fontSize: '13px',
+                    markers: {
+                        width: 12,
+                        height: 12,
+                        radius: 2,
+                        fillColors: colors
+                    },
+                    labels: {
+                        colors: '#333'
+                    },
+                    itemMargin: {
+                        horizontal: 15
+                    },
+                    containerMargin: {
+                        top: 0,
+                        bottom: 15
                     }
                 }
             };

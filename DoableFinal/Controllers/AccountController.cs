@@ -37,7 +37,13 @@ namespace DoableFinal.Controllers
                     LastName = model.LastName,
                     Role = "Client",
                     IsActive = true,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    CompanyName = model.CompanyName,
+                    CompanyAddress = model.CompanyAddress,
+                    Designation = model.Designation,
+                    MobileNumber = model.MobileNumber,
+                    TinNumber = model.TinNumber,
+                    CompanyType = model.CompanyType
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);

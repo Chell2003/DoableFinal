@@ -21,9 +21,12 @@ namespace DoableFinal.ViewModels
         public int? ProjectId { get; set; }
         public string? AssignedToId { get; set; }
 
-        public List<SelectListItem> Projects { get; set; }
-        public List<SelectListItem> Assignees { get; set; }
-        public List<SelectListItem> PriorityLevels { get; set; }
-        public List<SelectListItem> TicketTypes { get; set; }
+        // These properties are only used to populate select lists for the view.
+        // Mark them nullable so the model binder does not treat them as required
+        // when they aren't posted back from the form.
+        public List<SelectListItem>? Projects { get; set; }
+        public List<SelectListItem>? Assignees { get; set; }
+        public List<SelectListItem>? PriorityLevels { get; set; }
+        public List<SelectListItem>? TicketTypes { get; set; }
     }
 }

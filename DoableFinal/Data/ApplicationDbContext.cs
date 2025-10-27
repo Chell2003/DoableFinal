@@ -16,6 +16,7 @@ namespace DoableFinal.Data
         public DbSet<ProjectTeam> ProjectTeams { get; set; }
         public DbSet<TaskComment> TaskComments { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Inquiry> Inquiries { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<TicketComment> TicketComments { get; set; }

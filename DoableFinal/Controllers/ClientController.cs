@@ -5,8 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using DoableFinal.Data;
 using DoableFinal.Models;
 using DoableFinal.ViewModels;
+using DoableFinal.Services;
 using System.Security.Claims;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace DoableFinal.Controllers
 {
@@ -15,11 +17,16 @@ namespace DoableFinal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly NotificationService _notificationService;
 
-        public ClientController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public ClientController(
+            ApplicationDbContext context, 
+            UserManager<ApplicationUser> userManager,
+            NotificationService notificationService)
         {
             _context = context;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index()
@@ -180,6 +187,15 @@ namespace DoableFinal.Controllers
         [HttpPost]
         public async Task<IActionResult> Profile(ProfileViewModel model)
         {
+            // Defensive: some earlier runs caused model binder to add spurious
+            // validation errors for the select-list properties (Projects, Assignees,
+            // PriorityLevels, TicketTypes) even though they are only used to render
+            // the form. Remove any such errors so user-entered fields control validity.
+            ModelState.Remove("Projects");
+            ModelState.Remove("Assignees");
+            ModelState.Remove("PriorityLevels");
+            ModelState.Remove("TicketTypes");
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -198,7 +214,7 @@ namespace DoableFinal.Controllers
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Profile updated successfully.";
+                TempData["ProfileMessage"] = "Profile updated successfully.";
                 return RedirectToAction(nameof(Profile));
             }
 
@@ -327,6 +343,8 @@ namespace DoableFinal.Controllers
             return View(task);
         }
 
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddComment(int taskId, string commentText)
@@ -449,6 +467,257 @@ namespace DoableFinal.Controllers
                 counts[member.Id] = taskCount;
             }
             return counts;
+        }
+
+        public async Task<IActionResult> Tickets()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var tickets = await _context.Tickets
+                .Include(t => t.CreatedBy)
+                .Include(t => t.AssignedTo)
+                .Where(t => t.CreatedById == currentUser.Id)
+                .OrderByDescending(t => t.CreatedAt)
+                .ToListAsync();
+
+            return View(tickets);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateTicket()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var projects = await _context.Projects
+                .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name
+                })
+                .ToListAsync();
+
+            var vm = new DoableFinal.ViewModels.CreateTicketViewModel
+            {
+                Projects = projects,
+                PriorityLevels = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "Low", Text = "Low" },
+                    new SelectListItem { Value = "Medium", Text = "Medium" },
+                    new SelectListItem { Value = "High", Text = "High" },
+                    new SelectListItem { Value = "Critical", Text = "Critical" }
+                },
+                TicketTypes = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "Bug", Text = "Bug" },
+                    new SelectListItem { Value = "Feature Request", Text = "Feature Request" },
+                    new SelectListItem { Value = "Support", Text = "Support" },
+                    new SelectListItem { Value = "Other", Text = "Other" }
+                }
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateTicket(DoableFinal.ViewModels.CreateTicketViewModel model)
+        {
+            var debug = new System.Text.StringBuilder();
+            debug.AppendLine($"Received Ticket POST - Title: {model?.Title}, ProjectId: {model?.ProjectId}");
+
+            if (model == null)
+            {
+                TempData["Error"] = "Invalid ticket data.";
+                return RedirectToAction(nameof(CreateTicket));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                debug.AppendLine("ModelState invalid:");
+                foreach (var err in ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    debug.AppendLine(err.ErrorMessage);
+                }
+
+                // Reload projects
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser != null)
+                {
+                    model.Projects = await _context.Projects
+                        .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Select(p => new SelectListItem
+                        {
+                            Value = p.Id.ToString(),
+                            Text = p.Name
+                        })
+                        .ToListAsync();
+                }
+
+                TempData["Debug"] = debug.ToString();
+                return View(model);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var project = await _context.Projects
+                .FirstOrDefaultAsync(p => p.Id == model.ProjectId && p.ClientId == user.Id);
+            if (project == null)
+            {
+                ModelState.AddModelError("ProjectId", "Invalid project selection");
+                model.Projects = await _context.Projects
+                    .Where(p => p.ClientId == user.Id && !p.IsArchived)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Select(p => new SelectListItem
+                    {
+                        Value = p.Id.ToString(),
+                        Text = p.Name
+                    })
+                    .ToListAsync();
+                TempData["Debug"] = "Project selection invalid";
+                return View(model);
+            }
+
+            var newTicket = new Ticket
+            {
+                Title = model.Title,
+                Description = model.Description,
+                Priority = string.IsNullOrEmpty(model.Priority) ? "Medium" : model.Priority,
+                Status = "Open",
+                Type = model.Type,
+                ProjectId = model.ProjectId,
+                CreatedById = user.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            try
+            {
+                _context.Tickets.Add(newTicket);
+                var rows = await _context.SaveChangesAsync();
+                debug.AppendLine($"SaveChanges rows: {rows}");
+                TempData["Debug"] = debug.ToString();
+
+                if (project.ProjectManagerId != null)
+                {
+                    await _notificationService.CreateNotification(
+                        project.ProjectManagerId,
+                        "New Support Ticket",
+                        $"New ticket created by {user.FirstName} {user.LastName} for project {project.Name}",
+                        $"/Ticket/Details/{newTicket.Id}"
+                    );
+                }
+
+                var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+                foreach (var admin in adminUsers)
+                {
+                    await _notificationService.CreateNotification(
+                        admin.Id,
+                        "New Support Ticket",
+                        $"New ticket created by {user.FirstName} {user.LastName} for project {project.Name}",
+                        $"/Ticket/Details/{newTicket.Id}"
+                    );
+                }
+
+                TempData["TicketMessage"] = "Support ticket created successfully.";
+                return RedirectToAction(nameof(Tickets));
+            }
+            catch (Exception ex)
+            {
+                debug.AppendLine("Exception when saving ticket: " + ex.Message);
+                TempData["Error"] = "Failed to create ticket: " + ex.Message;
+                TempData["Debug"] = debug.ToString();
+
+                model.Projects = await _context.Projects
+                    .Where(p => p.ClientId == user.Id && !p.IsArchived)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Select(p => new SelectListItem
+                    {
+                        Value = p.Id.ToString(),
+                        Text = p.Name
+                    })
+                    .ToListAsync();
+                return View(model);
+            }
+        }
+
+        public async Task<IActionResult> TicketDetails(int id)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var ticket = await _context.Tickets
+                .Include(t => t.CreatedBy)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.Project)
+                .Include(t => t.Comments.OrderByDescending(c => c.CreatedAt))
+                    .ThenInclude(c => c.CreatedBy)
+                .Include(t => t.Attachments.OrderByDescending(a => a.UploadedAt))
+                    .ThenInclude(a => a.UploadedBy)
+                .FirstOrDefaultAsync(t => t.Id == id && t.Project.ClientId == currentUser.Id);
+
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var viewModel = new DoableFinal.ViewModels.TicketDetailsViewModel
+            {
+                Ticket = ticket,
+                Comments = ticket.Comments?.ToList() ?? new List<DoableFinal.Models.TicketComment>(),
+                Attachments = ticket.Attachments?.ToList() ?? new List<DoableFinal.Models.TicketAttachment>()
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddTicketComment(int ticketId, string comment)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var ticket = await _context.Tickets
+                .FirstOrDefaultAsync(t => t.Id == ticketId && t.CreatedById == currentUser.Id);
+
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var ticketComment = new TicketComment
+            {
+                TicketId = ticketId,
+                CommentText = comment,
+                CreatedById = currentUser.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.TicketComments.Add(ticketComment);
+            await _context.SaveChangesAsync();
+
+            TempData["TicketMessage"] = "Comment added successfully.";
+            return RedirectToAction(nameof(TicketDetails), new { id = ticketId });
         }
     }
 }
