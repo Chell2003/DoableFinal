@@ -6,7 +6,7 @@ DoableFinal is a comprehensive project management system built with ASP.NET Core
 
 ### Step 1: Prerequisites Installation
 Before starting, make sure you have installed:
-1. **.NET 7.0 SDK** or later
+1. **.NET 9.0 SDK** or latest
    - Download from: https://dotnet.microsoft.com/download
    - Verify installation: `dotnet --version`
 
