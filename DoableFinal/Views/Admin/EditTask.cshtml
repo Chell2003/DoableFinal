@@ -38,15 +38,53 @@
 
                         <div class="mb-3">
                             <label asp-for="StartDate" class="form-label"></label>
-                            <input asp-for="StartDate" class="form-control" type="date" />
+                            <input asp-for="StartDate" class="form-control" type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="StartDate" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="DueDate" class="form-label"></label>
-                            <input asp-for="DueDate" class="form-control" type="date" />
+                            <input asp-for="DueDate" class="form-control" type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="DueDate" class="text-danger"></span>
                         </div>
+
+                        <script>
+                            // Additional client-side validation for dates
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const startDateInput = document.querySelector('input[name="StartDate"]');
+                                const dueDateInput = document.querySelector('input[name="DueDate"]');
+                                
+                                // Set minimum date for both inputs
+                                const today = new Date().toISOString().split('T')[0];
+                                startDateInput.min = today;
+                                dueDateInput.min = today;
+
+                                // Ensure due date is after start date
+                                startDateInput.addEventListener('change', function() {
+                                    dueDateInput.min = this.value;
+                                });
+
+                                // Validate dates before form submission
+                                document.querySelector('form').addEventListener('submit', function(e) {
+                                    const startDate = new Date(startDateInput.value);
+                                    const dueDate = new Date(dueDateInput.value);
+                                    const now = new Date();
+                                    now.setHours(0, 0, 0, 0);
+
+                                    if (startDate < now) {
+                                        e.preventDefault();
+                                        alert('Start date cannot be in the past');
+                                        return false;
+                                    }
+
+                                    if (dueDate < startDate) {
+                                        e.preventDefault();
+                                        alert('Due date must be after the start date');
+                                        return false;
+                                    }
+                                });
+                            });
+                        </script>
 
                         <div class="mb-3">
                             <label asp-for="Status" class="form-label"></label>
