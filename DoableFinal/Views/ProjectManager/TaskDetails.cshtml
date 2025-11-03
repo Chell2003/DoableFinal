@@ -31,14 +31,20 @@
                         Task Information
                     </div>
                     <div>
-                        @if (!Model.IsArchived && Model.Status != "In Progress")
+                        @if (!Model.IsArchived)
                         {
-                            <form asp-action="ArchiveTask" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to archive this task?');">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-warning btn-sm">
-                                    <i class="fas fa-archive"></i> Archive Task
-                                </button>
-                            </form>
+                            <a asp-action="EditTask" asp-route-id="@Model.Id" class="btn btn-primary btn-sm me-2">
+                                <i class="fas fa-edit"></i> Edit Task
+                            </a>
+                            @if (Model.Status != "In Progress")
+                            {
+                                <form asp-action="ArchiveTask" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to archive this task?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-archive"></i> Archive Task
+                                    </button>
+                                </form>
+                            }
                         }
                     </div>
                 </div>
@@ -94,18 +100,33 @@
                             <h6>Task Completion Proof</h6>
                             <div class="card">
                                 <div class="card-body">
-                                    <p>
-                                        <a href="@Url.Content(Model.ProofFilePath)" class="btn btn-sm btn-secondary" target="_blank">
-                                            <i class="fas fa-download"></i> View Proof File
-                                        </a>
-                                    </p>
+                                    @if (!string.IsNullOrEmpty(Model.ProofFilePath))
+                                    {
+                                        <p>
+                                            <a href="@Url.Content(Model.ProofFilePath)" class="btn btn-sm btn-secondary" target="_blank">
+                                                <i class="fas fa-download"></i> View Proof File
+                                            </a>
+                                        </p>
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(Model.Remarks))
+                                    {
+                                        <div class="mt-3">
+                                            <h6>Completion Remarks:</h6>
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    @Model.Remarks
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
                                     
                                     @if (!Model.IsConfirmed && Model.Status != "Completed")
                                     {
                                         <div class="d-flex gap-2 mt-3">
-                                            <form asp-action="ApproveTaskProof" asp-controller="ProjectManager" method="post">
+                                            <form asp-action="ApproveTaskProof" asp-controller="ProjectManager" method="post" id="approveForm">
                                                 <input type="hidden" name="taskId" value="@Model.Id" />
-                                                <button type="submit" class="btn btn-success">
+                                                <button type="button" class="btn btn-success" onclick="showApprovalConfirmation()">
                                                     <i class="fas fa-check"></i> Approve and Mark as Completed
                                                 </button>
                                             </form>
@@ -182,3 +203,35 @@
         font-weight: bold;
     }
 </style>
+
+<!-- Approval Confirmation Modal -->
+<div class="modal fade" id="approvalConfirmationModal" tabindex="-1" aria-labelledby="approvalConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalConfirmationModalLabel">Confirm Task Approval</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to approve this task and mark it as completed?
+                <br><br>
+                This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitApproval()">Yes, Approve Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showApprovalConfirmation() {
+    var modal = new bootstrap.Modal(document.getElementById('approvalConfirmationModal'));
+    modal.show();
+}
+
+function submitApproval() {
+    document.getElementById('approveForm').submit();
+}
+</script>

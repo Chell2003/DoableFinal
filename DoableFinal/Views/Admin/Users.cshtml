@@ -77,6 +77,9 @@
                                 <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
                                 <td>
                                     <div class="btn-group">
+                                        <a asp-action="UserDetails" asp-route-id="@user.Id" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
                                         <a asp-action="EditUser" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-pencil"></i>
                                         </a>

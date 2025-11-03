@@ -56,8 +56,14 @@
                                     <form asp-action="SubmitTaskProof" asp-controller="Employee" method="post" enctype="multipart/form-data">
                                         <input type="hidden" name="taskId" value="@Model.Id" />
                                         <div class="mb-3">
-                                            <input type="file" class="form-control" name="proofFile" required @(Model.Status == "Pending Approval" || Model.Status == "Completed" ? "disabled" : "") />
-                                            <small class="text-muted">Upload file as proof of task completion</small>
+                                            <label for="proofFile" class="form-label">Proof File (Optional)</label>
+                                            <input type="file" class="form-control" id="proofFile" name="proofFile" @(Model.Status == "Pending Approval" || Model.Status == "Completed" ? "disabled" : "") />
+                                            <small class="text-muted">Upload file as proof of task completion (optional)</small>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="remarks" class="form-label">Remarks</label>
+                                            <textarea class="form-control" id="remarks" name="remarks" rows="3" required @(Model.Status == "Pending Approval" || Model.Status == "Completed" ? "disabled" : "")></textarea>
+                                            <small class="text-muted">Please provide details about the task completion</small>
                                         </div>
                                         <button type="submit" class="btn btn-primary" @(Model.Status == "Pending Approval" || Model.Status == "Completed" ? "disabled" : "")>Submit for Approval</button>
                                     </form>

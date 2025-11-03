@@ -45,9 +45,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="ProjectId" class="form-label">Project</label>
-                            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select" required>
-                                <option value="">Select a project...</option>
+                            <label asp-for="ProjectId" class="form-label">Project (Optional)</label>
+                            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                                <option value="">No project (general ticket)</option>
                             </select>
                             <span asp-validation-for="ProjectId" class="text-danger"></span>
                         </div>

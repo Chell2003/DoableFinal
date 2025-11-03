@@ -20,6 +20,10 @@ namespace DoableFinal.Services
 
         public async Task NotifyProjectUpdateAsync(Project project, string message)
         {
+            // Skip archive/unarchive notifications for clients
+            if (message.Contains("archived") || message.Contains("unarchived"))
+                return;
+                
             var notification = new Notification
             {
                 UserId = project.ClientId,
@@ -63,6 +67,10 @@ namespace DoableFinal.Services
 
             foreach (var userId in assigneeIds)
             {
+                // Skip archive/unarchive notifications for clients
+                if ((message.Contains("archived") || message.Contains("unarchived")) && userId == project.ClientId)
+                    continue;
+                    
                 var notificationLink = userId == project.ClientId 
                     ? $"/Client/TaskDetails/{task.Id}"
                     : $"/Employee/TaskDetails/{task.Id}";

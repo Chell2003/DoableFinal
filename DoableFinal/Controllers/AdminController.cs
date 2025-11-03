@@ -733,6 +733,18 @@ namespace DoableFinal.Controllers
 
         // User Management
         [HttpGet]
+        public async Task<IActionResult> UserDetails(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return View(user);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> EditUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);

@@ -1,0 +1,108 @@
+@model DoableFinal.ViewModels.EditTaskViewModel
+
+@{
+    ViewData["Title"] = "Edit Task";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Edit Task</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Index">Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Tasks">Tasks</a></li>
+        <li class="breadcrumb-item active">Edit Task</li>
+    </ol>
+
+    <div class="row">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-tasks me-1"></i>
+                    Edit Task Details
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditTask" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label"></label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ProjectId" class="form-label">Project</label>
+                            <select asp-for="ProjectId" asp-items="ViewBag.Projects" class="form-select">
+                                <option value="">Select a project</option>
+                            </select>
+                            <span asp-validation-for="ProjectId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="AssignedToIds" class="form-label">Assigned Employees</label>
+                            <select asp-for="AssignedToIds" asp-items="ViewBag.Employees" class="form-select" multiple>
+                            </select>
+                            <span asp-validation-for="AssignedToIds" class="text-danger"></span>
+                            <small class="text-muted">Hold Ctrl/Cmd to select multiple employees</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="StartDate" class="form-label"></label>
+                                <input asp-for="StartDate" class="form-control" type="date" />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DueDate" class="form-label"></label>
+                                <input asp-for="DueDate" class="form-control" type="date" />
+                                <span asp-validation-for="DueDate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Status" class="form-label"></label>
+                                <select asp-for="Status" asp-items="ViewBag.Statuses" class="form-select">
+                                    <option value="">Select status</option>
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Priority" class="form-label"></label>
+                                <select asp-for="Priority" asp-items="ViewBag.Priorities" class="form-select">
+                                    <option value="">Select priority</option>
+                                </select>
+                                <span asp-validation-for="Priority" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a asp-action="TaskDetails" asp-route-id="@Model.Id" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function () {
+            // Initialize multiple select with Select2
+            $('.form-select[multiple]').select2({
+                theme: 'bootstrap4',
+                placeholder: 'Select employees',
+                allowClear: true
+            });
+        });
+    </script>
+}

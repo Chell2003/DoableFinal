@@ -26,5 +26,24 @@ namespace DoableFinal.ViewModels
 
         [Display(Name = "Email Notifications")]
         public bool EmailNotificationsEnabled { get; set; }
+
+        // Client-specific fields
+        [Display(Name = "Company Name")]
+        public string? CompanyName { get; set; }
+
+        [Display(Name = "Company Address")]
+        public string? CompanyAddress { get; set; }
+
+        [Display(Name = "Company Type")]
+        public string? CompanyType { get; set; }
+
+        [Display(Name = "Designation")]
+        public string? Designation { get; set; }
+
+        [Display(Name = "Mobile Number")]
+        public string? MobileNumber { get; set; }
+
+        [Display(Name = "TIN Number")]
+        public string? TinNumber { get; set; }
     }
 } 

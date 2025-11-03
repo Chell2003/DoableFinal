@@ -27,6 +27,7 @@ namespace DoableFinal.Models
         public Project Project { get; set; }
 
         public string? ProofFilePath { get; set; } // Path to the uploaded file
+        public string? Remarks { get; set; } // Remarks for task completion
         public bool IsConfirmed { get; set; } = false; // Whether the task is confirmed by the Project Manager
         public bool IsArchived { get; set; }
         public DateTime? ArchivedAt { get; set; }

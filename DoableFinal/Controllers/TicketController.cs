@@ -374,7 +374,21 @@ namespace DoableFinal.Controllers
 
             var ticket = await _context.Tickets
                 .Include(t => t.AssignedTo)
-                .FirstOrDefaultAsync(t => t.Id == ticketId);            if (ticket != null && ticket.AssignedToId != null && ticket.AssignedToId != currentUser.Id)
+                .FirstOrDefaultAsync(t => t.Id == ticketId);
+
+            // If comment is from admin, notify the ticket creator
+            var isAdmin = await _userManager.IsInRoleAsync(currentUser, "Admin");
+            if (ticket != null && isAdmin && ticket.CreatedById != null && ticket.CreatedById != currentUser.Id)
+            {
+                await _notificationService.CreateNotification(
+                    ticket.CreatedById,
+                    "Admin Comment on Ticket",
+                    $"An administrator has commented on your ticket: {ticket.Title}",
+                    $"/Ticket/Details/{ticketId}"
+                );
+            }
+            // If not from admin, notify the assigned user
+            else if (ticket != null && !isAdmin && ticket.AssignedToId != null && ticket.AssignedToId != currentUser.Id)
             {
                 await _notificationService.CreateNotification(
                     ticket.AssignedToId,

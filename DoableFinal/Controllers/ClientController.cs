@@ -178,7 +178,15 @@ namespace DoableFinal.Controllers
                 Role = user.Role,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
-                EmailNotificationsEnabled = user.EmailNotificationsEnabled
+                EmailNotificationsEnabled = user.EmailNotificationsEnabled,
+
+                // Client-specific values
+                CompanyName = user.CompanyName ?? string.Empty,
+                CompanyAddress = user.CompanyAddress ?? string.Empty,
+                CompanyType = user.CompanyType ?? string.Empty,
+                Designation = user.Designation ?? string.Empty,
+                MobileNumber = user.MobileNumber ?? string.Empty,
+                TinNumber = user.TinNumber ?? string.Empty
             };
 
             return View(model);
@@ -210,6 +218,13 @@ namespace DoableFinal.Controllers
             user.FirstName = model.FirstName;
             user.LastName = model.LastName;
             user.EmailNotificationsEnabled = model.EmailNotificationsEnabled;
+            // Save client-specific fields
+            user.CompanyName = model.CompanyName;
+            user.CompanyAddress = model.CompanyAddress;
+            user.CompanyType = model.CompanyType;
+            user.Designation = model.Designation;
+            user.MobileNumber = model.MobileNumber;
+            user.TinNumber = model.TinNumber;
 
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
@@ -574,22 +589,26 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            var project = await _context.Projects
-                .FirstOrDefaultAsync(p => p.Id == model.ProjectId && p.ClientId == user.Id);
-            if (project == null)
+            Project project = null;
+            if (model.ProjectId.HasValue)
             {
-                ModelState.AddModelError("ProjectId", "Invalid project selection");
-                model.Projects = await _context.Projects
-                    .Where(p => p.ClientId == user.Id && !p.IsArchived)
-                    .OrderByDescending(p => p.CreatedAt)
-                    .Select(p => new SelectListItem
-                    {
-                        Value = p.Id.ToString(),
-                        Text = p.Name
-                    })
-                    .ToListAsync();
-                TempData["Debug"] = "Project selection invalid";
-                return View(model);
+                project = await _context.Projects
+                    .FirstOrDefaultAsync(p => p.Id == model.ProjectId && p.ClientId == user.Id);
+                if (project == null)
+                {
+                    ModelState.AddModelError("ProjectId", "Invalid project selection");
+                    model.Projects = await _context.Projects
+                        .Where(p => p.ClientId == user.Id && !p.IsArchived)
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Select(p => new SelectListItem
+                        {
+                            Value = p.Id.ToString(),
+                            Text = p.Name
+                        })
+                        .ToListAsync();
+                    TempData["Debug"] = "Project selection invalid";
+                    return View(model);
+                }
             }
 
             var newTicket = new Ticket
@@ -611,7 +630,8 @@ namespace DoableFinal.Controllers
                 debug.AppendLine($"SaveChanges rows: {rows}");
                 TempData["Debug"] = debug.ToString();
 
-                if (project.ProjectManagerId != null)
+                // Notify project manager if ticket is associated with a project
+                if (project?.ProjectManagerId != null)
                 {
                     await _notificationService.CreateNotification(
                         project.ProjectManagerId,
@@ -624,15 +644,25 @@ namespace DoableFinal.Controllers
                 var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
                 foreach (var admin in adminUsers)
                 {
+                    var message = project != null
+                        ? $"New ticket created by {user.FirstName} {user.LastName} for project {project.Name}"
+                        : $"New ticket created by {user.FirstName} {user.LastName}";
+
                     await _notificationService.CreateNotification(
                         admin.Id,
                         "New Support Ticket",
-                        $"New ticket created by {user.FirstName} {user.LastName} for project {project.Name}",
+                        message,
                         $"/Ticket/Details/{newTicket.Id}"
                     );
                 }
 
-                TempData["TicketMessage"] = "Support ticket created successfully.";
+                // Send notification to the client about successful ticket creation
+                await _notificationService.CreateNotification(
+                    user.Id,
+                    "Ticket Created",
+                    $"Your ticket '{newTicket.Title}' has been created successfully.",
+                    $"/Client/TicketDetails/{newTicket.Id}"
+                );
                 return RedirectToAction(nameof(Tickets));
             }
             catch (Exception ex)
@@ -718,6 +748,61 @@ namespace DoableFinal.Controllers
 
             TempData["TicketMessage"] = "Comment added successfully.";
             return RedirectToAction(nameof(TicketDetails), new { id = ticketId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditTicketComment(int commentId, string comment)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var ticketComment = await _context.TicketComments
+                .Include(tc => tc.Ticket)
+                .FirstOrDefaultAsync(tc => tc.Id == commentId && tc.CreatedById == currentUser.Id);
+
+            if (ticketComment == null || ticketComment.IsArchived)
+            {
+                return NotFound();
+            }
+
+            ticketComment.CommentText = comment;
+            ticketComment.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["TicketMessage"] = "Comment updated successfully.";
+            return RedirectToAction(nameof(TicketDetails), new { id = ticketComment.TicketId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveTicketComment(int commentId)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var ticketComment = await _context.TicketComments
+                .Include(tc => tc.Ticket)
+                .FirstOrDefaultAsync(tc => tc.Id == commentId && tc.CreatedById == currentUser.Id);
+
+            if (ticketComment == null)
+            {
+                return NotFound();
+            }
+
+            // Soft delete
+            ticketComment.IsArchived = true;
+            ticketComment.ArchivedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["TicketMessage"] = "Comment removed successfully.";
+            return RedirectToAction(nameof(TicketDetails), new { id = ticketComment.TicketId });
         }
     }
 }

@@ -51,6 +51,52 @@
                             <input asp-for="Role" class="form-control" readonly />
                         </div>
 
+                        <hr />
+                        <h5 class="mb-3">Company Information</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="CompanyName" class="form-label"></label>
+                            <input asp-for="CompanyName" class="form-control" />
+                            <span asp-validation-for="CompanyName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CompanyAddress" class="form-label"></label>
+                            <textarea asp-for="CompanyAddress" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="CompanyAddress" class="text-danger"></span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="CompanyType" class="form-label"></label>
+                                <select asp-for="CompanyType" class="form-select">
+                                    <option value="">Select Company Type</option>
+                                    <option value="Sole Proprietorship">Sole Proprietorship</option>
+                                    <option value="Partnership">Partnership</option>
+                                    <option value="Corporation">Corporation</option>
+                                </select>
+                                <span asp-validation-for="CompanyType" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Designation" class="form-label"></label>
+                                <input asp-for="Designation" class="form-control" />
+                                <span asp-validation-for="Designation" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="MobileNumber" class="form-label"></label>
+                                <input asp-for="MobileNumber" class="form-control" />
+                                <span asp-validation-for="MobileNumber" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="TinNumber" class="form-label"></label>
+                                <input asp-for="TinNumber" class="form-control" />
+                                <span asp-validation-for="TinNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save"></i> Save Changes

@@ -201,9 +201,12 @@ namespace DoableFinal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
         {
+            // If model validation fails, redirect back to Profile and show errors there
             if (!ModelState.IsValid)
             {
-                return View(model);
+                var errors = string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                TempData["PasswordErrorMessage"] = string.IsNullOrWhiteSpace(errors) ? "Please correct the errors in the form." : errors;
+                return RedirectToAction(nameof(Profile));
             }
 
             var user = await _userManager.GetUserAsync(User);
@@ -215,14 +218,13 @@ namespace DoableFinal.Controllers
             var changePasswordResult = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
             if (!changePasswordResult.Succeeded)
             {
-                foreach (var error in changePasswordResult.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                return View(model);
+                var errors = string.Join(" ", changePasswordResult.Errors.Select(e => e.Description));
+                TempData["PasswordErrorMessage"] = string.IsNullOrWhiteSpace(errors) ? "Failed to change password." : errors;
+                return RedirectToAction(nameof(Profile));
             }
 
-            TempData["SuccessMessage"] = "Your password has been changed successfully.";
+            // Success - show message on Profile page (which contains the change-password component)
+            TempData["PasswordSuccessMessage"] = "Your password has been changed successfully.";
             return RedirectToAction(nameof(Profile));
         }
 
@@ -363,11 +365,11 @@ namespace DoableFinal.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SubmitTaskProof(int taskId, IFormFile proofFile)
+        public async Task<IActionResult> SubmitTaskProof(int taskId, IFormFile proofFile, string remarks)
         {
-            if (proofFile == null || proofFile.Length == 0)
+            if (string.IsNullOrWhiteSpace(remarks))
             {
-                TempData["Error"] = "Please select a file to upload.";
+                TempData["Error"] = "Please provide remarks about the task completion.";
                 return RedirectToAction(nameof(TaskDetails), new { id = taskId });
             }
 
@@ -387,22 +389,28 @@ namespace DoableFinal.Controllers
                 return Forbid();
             }
 
-            // Create the uploads directory if it doesn't exist
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "proofs");
-            Directory.CreateDirectory(uploadsFolder);
-
-            // Generate a unique filename
-            var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(proofFile.FileName)}";
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            // Save the file
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            if (proofFile != null && proofFile.Length > 0)
             {
-                await proofFile.CopyToAsync(stream);
+                // Create the uploads directory if it doesn't exist
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "proofs");
+                Directory.CreateDirectory(uploadsFolder);
+
+                // Generate a unique filename
+                var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(proofFile.FileName)}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // Save the file
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await proofFile.CopyToAsync(stream);
+                }
+
+                // Update the task proof file path
+                task.ProofFilePath = $"/uploads/proofs/{uniqueFileName}";
             }
 
             // Update the task
-            task.ProofFilePath = $"/uploads/proofs/{uniqueFileName}";
+            task.Remarks = remarks;
             task.Status = "Pending Approval";
             task.UpdatedAt = DateTime.UtcNow;
 

@@ -18,7 +18,7 @@ using Microsoft.Extensions.Logging;
 namespace DoableFinal.Controllers
 {
     [Authorize(Roles = "Project Manager")]
-    public class ProjectManagerController : Controller
+    public partial class ProjectManagerController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
@@ -627,7 +627,10 @@ namespace DoableFinal.Controllers
             }
 
             task.IsConfirmed = false;
-            task.Status = "Pending Review";
+            // Clear the submitted proof so the employee can upload a revised proof and so the UI no longer displays "Pending Approval"
+            task.ProofFilePath = null;
+            // Mark task as needing revision (not "Pending Approval")
+            task.Status = "Needs Revision";
             task.CompletedAt = null;
             task.UpdatedAt = DateTime.UtcNow;
 
@@ -828,9 +831,12 @@ namespace DoableFinal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
         {
+            // If model validation fails, send errors back to the Profile page where the change-password widget lives
             if (!ModelState.IsValid)
             {
-                return View(model);
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Where(s => !string.IsNullOrWhiteSpace(s));
+                TempData["PasswordErrorMessage"] = string.Join(" ", errors);
+                return RedirectToAction(nameof(Profile));
             }
 
             var user = await _userManager.GetUserAsync(User);
@@ -842,14 +848,17 @@ namespace DoableFinal.Controllers
             var changePasswordResult = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
             if (!changePasswordResult.Succeeded)
             {
-                foreach (var error in changePasswordResult.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                return View(model);
+                // Collect Identity errors and show them on the Profile page
+                var identityErrors = changePasswordResult.Errors.Select(e => e.Description).Where(s => !string.IsNullOrWhiteSpace(s));
+                // If there are no identity errors, provide a generic message
+                TempData["PasswordErrorMessage"] = identityErrors.Any()
+                    ? string.Join(" ", identityErrors)
+                    : "Current password is incorrect or new password does not meet requirements.";
+
+                return RedirectToAction(nameof(Profile));
             }
 
-            TempData["SuccessMessage"] = "Your password has been changed successfully.";
+            TempData["PasswordSuccessMessage"] = "Your password has been changed successfully.";
             return RedirectToAction(nameof(Profile));
         }
 
@@ -1061,22 +1070,123 @@ namespace DoableFinal.Controllers
             return RedirectToAction(nameof(ArchivedTasks));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> EditTask(int id)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.TaskAssignments)
+                    .ThenInclude(ta => ta.Employee)
+                .FirstOrDefaultAsync(t => t.Id == id && t.Project.ProjectManagerId == currentUser.Id);
+
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            var model = new EditTaskViewModel
+            {
+                Id = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                StartDate = task.StartDate,
+                DueDate = task.DueDate,
+                Status = task.Status,
+                Priority = task.Priority,
+                ProjectId = task.ProjectId,
+                AssignedToIds = task.TaskAssignments.Select(ta => ta.EmployeeId).ToList()
+            };
+
+            // Get projects managed by the current Project Manager
+            var projects = await _context.Projects
+                .Where(p => p.ProjectManagerId == currentUser.Id)
+                .Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name
+                })
+                .ToListAsync();
+
+            // Get all active employees
+            var employees = await _userManager.GetUsersInRoleAsync("Employee");
+            var employeeItems = employees.Select(e => new SelectListItem
+            {
+                Value = e.Id,
+                Text = $"{e.FirstName} {e.LastName}"
+            });
+
+            ViewBag.Projects = projects;
+            ViewBag.Employees = employeeItems;
+            ViewBag.Statuses = new List<SelectListItem>
+            {
+                new SelectListItem("Not Started", "Not Started"),
+                new SelectListItem("In Progress", "In Progress"),
+                new SelectListItem("On Hold", "On Hold"),
+                new SelectListItem("For Review", "For Review"),
+                new SelectListItem("Completed", "Completed")
+            };
+            ViewBag.Priorities = new List<SelectListItem>
+            {
+                new SelectListItem("Low", "Low"),
+                new SelectListItem("Medium", "Medium"),
+                new SelectListItem("High", "High")
+            };
+
+            return View(model);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditTask(EditTaskViewModel model)
         {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return NotFound();
+            }
+
             if (ModelState.IsValid)
             {
                 var task = await _context.Tasks
+                    .Include(t => t.Project)
                     .Include(t => t.TaskAssignments)
-                    .FirstOrDefaultAsync(t => t.Id == model.Id);
+                    .FirstOrDefaultAsync(t => t.Id == model.Id && t.Project.ProjectManagerId == currentUser.Id);
 
                 if (task == null)
                 {
                     return NotFound();
                 }
 
+                // Validate task dates against project dates
+                var project = await _context.Projects.FindAsync(model.ProjectId);
+                if (project == null)
+                {
+                    ModelState.AddModelError("ProjectId", "Invalid project selected");
+                    return View(model);
+                }
+
+                if (model.StartDate < project.StartDate)
+                {
+                    ModelState.AddModelError("StartDate", "Task cannot start before the project start date");
+                    return View(model);
+                }
+
+                if (project.EndDate.HasValue && model.DueDate > project.EndDate.Value)
+                {
+                    ModelState.AddModelError("DueDate", "Task cannot end after the project end date");
+                    return View(model);
+                }
+
+                // Store old status for notification
                 var oldStatus = task.Status;
+
+                // Update task properties
                 task.Title = model.Title;
                 task.Description = model.Description;
                 task.StartDate = model.StartDate;
@@ -1090,7 +1200,6 @@ namespace DoableFinal.Controllers
                 var currentAssignments = await _context.TaskAssignments
                     .Where(ta => ta.ProjectTaskId == task.Id)
                     .ToListAsync();
-
                 _context.TaskAssignments.RemoveRange(currentAssignments);
                 await _context.SaveChangesAsync();
 
@@ -1132,15 +1241,62 @@ namespace DoableFinal.Controllers
                 // Send notification if status changed
                 if (oldStatus != task.Status)
                 {
-                    await _notificationService.NotifyTaskUpdateAsync(task, $"Task status updated from {oldStatus} to {task.Status}");
+                    await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' status updated from {oldStatus} to {task.Status}");
                 }
 
-                TempData["SuccessMessage"] = "Task updated successfully.";
-                return RedirectToAction(nameof(Tasks));
+                // Notify all assigned employees about the task update
+                foreach (var employeeId in model.AssignedToIds ?? new List<string>())
+                {
+                    var notification = new Notification
+                    {
+                        UserId = employeeId,
+                        Title = "Task Updated",
+                        Message = $"Task '{task.Title}' has been updated by {currentUser.FirstName} {currentUser.LastName}",
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false,
+                        Link = $"/Employee/TaskDetails/{task.Id}"
+                    };
+                    _context.Notifications.Add(notification);
+                }
+                await _context.SaveChangesAsync();
+
+                TempData["TaskMessage"] = "Task updated successfully.";
+                return RedirectToAction(nameof(TaskDetails), new { id = model.Id });
             }
 
-            ViewBag.Projects = await _context.Projects.ToListAsync();
-            ViewBag.Employees = await _context.Users.Where(u => u.Role == "Employee").ToListAsync();
+            // If we got this far, something failed, redisplay form
+            var projects = await _context.Projects
+                .Where(p => p.ProjectManagerId == currentUser.Id)
+                .Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name
+                })
+                .ToListAsync();
+
+            var employees = await _userManager.GetUsersInRoleAsync("Employee");
+            var employeeItems = employees.Select(e => new SelectListItem
+            {
+                Value = e.Id,
+                Text = $"{e.FirstName} {e.LastName}"
+            });
+
+            ViewBag.Projects = projects;
+            ViewBag.Employees = employeeItems;
+            ViewBag.Statuses = new List<SelectListItem>
+            {
+                new SelectListItem("Not Started", "Not Started"),
+                new SelectListItem("In Progress", "In Progress"),
+                new SelectListItem("On Hold", "On Hold"),
+                new SelectListItem("For Review", "For Review"),
+                new SelectListItem("Completed", "Completed")
+            };
+            ViewBag.Priorities = new List<SelectListItem>
+            {
+                new SelectListItem("Low", "Low"),
+                new SelectListItem("Medium", "Medium"),
+                new SelectListItem("High", "High")
+            };
 
             return View(model);
         }
