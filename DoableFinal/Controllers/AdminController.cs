@@ -1678,5 +1678,93 @@ namespace DoableFinal.Controllers
             TempData["SuccessMessage"] = "Ticket status updated successfully.";
             return RedirectToAction(nameof(Tickets));
         }
+
+        public async Task<IActionResult> TicketDetails(int id)
+        {
+            var ticket = await _context.Tickets
+                .Include(t => t.Project)
+                .Include(t => t.AssignedTo)
+                .Include(t => t.CreatedBy)
+                .Include(t => t.Comments.OrderByDescending(c => c.CreatedAt))
+                    .ThenInclude(c => c.CreatedBy)
+                .Include(t => t.Attachments.OrderByDescending(a => a.UploadedAt))
+                    .ThenInclude(a => a.UploadedBy)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var viewModel = new TicketDetailsViewModel
+            {
+                Ticket = ticket,
+                Comments = ticket.Comments?.ToList() ?? new List<TicketComment>(),
+                Attachments = ticket.Attachments?.ToList() ?? new List<TicketAttachment>()
+            };
+
+            return View(viewModel);
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAttachment(int ticketId, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                TempData["ErrorMessage"] = "Please select a file to upload.";
+                return RedirectToAction(nameof(TicketDetails), new { id = ticketId });
+            }
+
+            var ticket = await _context.Tickets.FindAsync(ticketId);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Challenge();
+            }
+
+            // Create uploads directory if it doesn't exist
+          
+
+            // Generate a unique filename
+            var fileName = Path.GetFileName(file.FileName);
+            var uniqueFileName = $"{DateTime.Now.Ticks}_{fileName}";
+
+
+           
+
+            var attachment = new TicketAttachment
+            {
+                TicketId = ticketId,
+                FilePath = $"/uploads/tickets/{ticketId}/{uniqueFileName}",
+                FileName = fileName,
+                FileType = file.ContentType,
+                FileSize = file.Length,
+                UploadedById = currentUser.Id,
+                UploadedAt = DateTime.UtcNow
+            };
+
+            _context.TicketAttachments.Add(attachment);
+            await _context.SaveChangesAsync();
+
+            // Notify the ticket creator if they're not the one uploading
+            if (ticket.CreatedById != currentUser.Id)
+            {
+                await _notificationService.CreateNotification(
+                    ticket.CreatedById,
+                    "New Attachment on Your Ticket",
+                    $"An admin has added an attachment to your ticket: {ticket.Title}",
+                    $"/Admin/TicketDetails/{ticketId}"
+                );
+            }
+
+            return RedirectToAction(nameof(TicketDetails), new { id = ticketId });
+        }
     }
 }

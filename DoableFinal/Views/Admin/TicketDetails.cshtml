@@ -1,0 +1,190 @@
+@model DoableFinal.ViewModels.TicketDetailsViewModel
+
+@{
+    ViewData["Title"] = "Ticket Details";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Tickets" asp-controller="Admin">Tickets</a></li>
+                    <li class="breadcrumb-item active">Ticket @Model.Ticket.Title</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Ticket Details -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">@Model.Ticket.Title</h4>
+                        <span class="badge bg-primary">Ticket #@Model.Ticket.Id</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p class="text-muted">@Model.Ticket.Description</p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Details</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="ps-0">Status:</th>
+                                    <td>
+                                        @{
+                                            var statusClass = Model.Ticket.Status switch
+                                            {
+                                                "Open" => "bg-danger",
+                                                "In Progress" => "bg-warning",
+                                                "Resolved" => "bg-success",
+                                                "Closed" => "bg-secondary",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @statusClass">@Model.Ticket.Status</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-0">Priority:</th>
+                                    <td>
+                                        @{
+                                            var priorityClass = Model.Ticket.Priority switch
+                                            {
+                                                "Low" => "bg-success",
+                                                "Medium" => "bg-warning",
+                                                "High" => "bg-danger",
+                                                "Critical" => "bg-danger text-white",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @priorityClass">@Model.Ticket.Priority</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-0">Type:</th>
+                                    <td><span class="badge bg-secondary">@Model.Ticket.Type</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>People</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="ps-0">Created By:</th>
+                                    <td>@($"{Model.Ticket.CreatedBy.FirstName} {Model.Ticket.CreatedBy.LastName}")</td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-0">Created:</th>
+                                    <td>@Model.Ticket.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                                </tr>
+                                @if (Model.Ticket.UpdatedAt.HasValue)
+                                {
+                                    <tr>
+                                        <th class="ps-0">Last Updated:</th>
+                                        <td>@Model.Ticket.UpdatedAt.Value.ToString("MMM dd, yyyy HH:mm")</td>
+                                    </tr>
+                                }
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mb-4">
+                        <h5>Actions</h5>
+                        <form asp-action="EditTicket" asp-controller="Admin" method="post" class="d-inline">
+                            <input type="hidden" name="Id" value="@Model.Ticket.Id" />
+                            <input type="hidden" name="Title" value="@Model.Ticket.Title" />
+                            <div class="btn-group">
+                                <button type="submit" name="CurrentStatus" value="Open" class="btn btn-outline-danger">Open</button>
+                                <button type="submit" name="CurrentStatus" value="In Progress" class="btn btn-outline-warning">In Progress</button>
+                                <button type="submit" name="CurrentStatus" value="Resolved" class="btn btn-outline-success">Resolved</button>
+                                <button type="submit" name="CurrentStatus" value="Closed" class="btn btn-outline-secondary">Closed</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="mb-4">
+                        <h5>Comments</h5>
+                        <form asp-action="AddComment" asp-controller="Admin" method="post" class="mb-3">
+                            <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
+                            <div class="mb-3">
+                                <textarea name="content" class="form-control" rows="3" placeholder="Add a comment..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Comment</button>
+                        </form>
+
+                        <div class="comments-section">
+                            @foreach (var comment in Model.Comments)
+                            {
+                                <div class="card mb-2">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div>
+                                                <strong>@($"{comment.CreatedBy.FirstName} {comment.CreatedBy.LastName}")</strong>
+                                                <small class="text-muted ms-2">@comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                            </div>
+                                        </div>
+                                        <p class="mb-0">@comment.CommentText</p>
+                                        @if (Model.Ticket.Project != null)
+                                        {
+                                            <small class="text-muted">Project: @Model.Ticket.Project.Name</small>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Attachments Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Attachments</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddAttachment" asp-controller="Admin" method="post" enctype="multipart/form-data" class="mb-3">
+                        <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
+                        <div class="mb-3">
+                            <input type="file" name="file" class="form-control" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </form>
+
+                    <div class="attachments-list">
+                        @foreach (var attachment in Model.Attachments)
+                        {
+                            <div class="attachment-item d-flex align-items-center justify-content-between border-bottom py-2">
+                                <div>
+                                    <i class="bi bi-paperclip"></i>
+                                    <a href="@attachment.FilePath" target="_blank">@attachment.FileName</a>
+                                    <br/>
+                                    <small class="text-muted">
+                                        @($"Uploaded by {attachment.UploadedBy.FirstName} {attachment.UploadedBy.LastName}")
+                                        <br/>
+                                        @attachment.UploadedAt.ToString("MMM dd, yyyy HH:mm")
+                                    </small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -700,7 +700,8 @@ namespace DoableFinal.Controllers
                     .ThenInclude(c => c.CreatedBy)
                 .Include(t => t.Attachments.OrderByDescending(a => a.UploadedAt))
                     .ThenInclude(a => a.UploadedBy)
-                .FirstOrDefaultAsync(t => t.Id == id && t.Project.ClientId == currentUser.Id);
+                .FirstOrDefaultAsync(t => t.Id == id && 
+                    (t.CreatedById == currentUser.Id || (t.Project != null && t.Project.ClientId == currentUser.Id)));
 
             if (ticket == null)
             {

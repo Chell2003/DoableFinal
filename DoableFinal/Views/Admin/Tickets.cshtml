@@ -92,7 +92,7 @@ else
                         <td>@t.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                         <td class="text-end">
                             <a class="btn btn-sm btn-outline-primary me-1" href="@Url.Action("EditTicket", "Admin", new { id = t.Id })">Edit</a>
-                            <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Details", "Ticket", new { id = t.Id })">Details</a>
+                            <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("TicketDetails", "Admin", new { id = t.Id })">Details</a>
                         </td>
                     </tr>
                 }
