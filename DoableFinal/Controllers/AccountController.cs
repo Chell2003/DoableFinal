@@ -119,7 +119,16 @@ namespace DoableFinal.Controllers
                 Role = user.Role,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
-                EmailNotificationsEnabled = user.EmailNotificationsEnabled
+                EmailNotificationsEnabled = user.EmailNotificationsEnabled,
+
+                ResidentialAddress = user.ResidentialAddress ?? string.Empty,
+                Birthday = user.Birthday,
+                PagIbigAccount = user.PagIbigAccount ?? string.Empty,
+                Position = user.Position ?? string.Empty,
+
+                IsActive = user.IsActive,
+                IsArchived = user.IsArchived,
+                ArchivedAt = user.ArchivedAt
             };
 
             return View(model);
@@ -145,6 +154,16 @@ namespace DoableFinal.Controllers
             user.LastName = model.LastName;
             user.EmailNotificationsEnabled = model.EmailNotificationsEnabled;
 
+            // Additional fields
+            user.ResidentialAddress = model.ResidentialAddress;
+            user.Birthday = model.Birthday;
+            user.PagIbigAccount = model.PagIbigAccount;
+            user.Position = model.Position;
+
+            user.IsActive = model.IsActive;
+            user.IsArchived = model.IsArchived;
+            user.ArchivedAt = model.ArchivedAt;
+
             // Update email if changed
             if (!string.IsNullOrEmpty(model.Email) && model.Email != user.Email)
             {
@@ -163,7 +182,7 @@ namespace DoableFinal.Controllers
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Profile updated successfully.";
+                TempData["ProfileMessage"] = "Profile updated successfully.";
                 return RedirectToAction(nameof(Profile));
             }
 
@@ -199,7 +218,7 @@ namespace DoableFinal.Controllers
             var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Your password has been changed successfully.";
+                TempData["PasswordSuccessMessage"] = "Your password has been changed successfully.";
                 return RedirectToAction(nameof(Profile));
             }
 

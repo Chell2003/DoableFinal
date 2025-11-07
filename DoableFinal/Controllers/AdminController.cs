@@ -70,7 +70,7 @@ namespace DoableFinal.Controllers
             inquiry.IsHandled = true;
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Inquiry marked as handled.";
+            TempData["InquiryMessage"] = "Inquiry marked as handled.";
             return RedirectToAction(nameof(Inquiries));
         }
 
@@ -322,7 +322,7 @@ namespace DoableFinal.Controllers
                     try
                     {
                         await _userManager.AddToRoleAsync(user, model.Role);
-                        TempData["SuccessMessage"] = $"{model.Role} account created successfully.";
+                        TempData["UserManagementMessage"] = $"{model.Role} account created successfully.";
                         return RedirectToAction(nameof(Users));
                     }
                     catch (Exception ex)
@@ -441,7 +441,7 @@ namespace DoableFinal.Controllers
                 _context.Projects.Add(project);
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Project created successfully.";
+                TempData["ProjectMessage"] = "Project created successfully.";
                 return RedirectToAction(nameof(Projects));
             }
 
@@ -635,7 +635,16 @@ namespace DoableFinal.Controllers
                 Role = user.Role,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
-                EmailNotificationsEnabled = user.EmailNotificationsEnabled
+                EmailNotificationsEnabled = user.EmailNotificationsEnabled,
+
+                ResidentialAddress = user.ResidentialAddress ?? string.Empty,
+                Birthday = user.Birthday,
+                PagIbigAccount = user.PagIbigAccount ?? string.Empty,
+                Position = user.Position ?? string.Empty,
+
+                IsActive = user.IsActive,
+                IsArchived = user.IsArchived,
+                ArchivedAt = user.ArchivedAt
             };
 
             return View(model);
@@ -656,10 +665,20 @@ namespace DoableFinal.Controllers
                 user.LastName = model.LastName;
                 user.EmailNotificationsEnabled = model.EmailNotificationsEnabled;
 
+                // Additional fields
+                user.ResidentialAddress = model.ResidentialAddress;
+                user.Birthday = model.Birthday;
+                user.PagIbigAccount = model.PagIbigAccount;
+                user.Position = model.Position;
+
+                user.IsActive = model.IsActive;
+                user.IsArchived = model.IsArchived;
+                user.ArchivedAt = model.ArchivedAt;
+
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
-                    TempData["SuccessMessage"] = "Profile updated successfully.";
+                    TempData["ProfileMessage"] = "Profile updated successfully.";
                     return RedirectToAction(nameof(Profile));
                 }
 
@@ -727,7 +746,7 @@ namespace DoableFinal.Controllers
             var currentStatus = await _userManager.GetTwoFactorEnabledAsync(user);
             await _userManager.SetTwoFactorEnabledAsync(user, !currentStatus);
 
-            TempData["SuccessMessage"] = $"Two-factor authentication has been {(!currentStatus ? "enabled" : "disabled")}.";
+            TempData["UserManagementMessage"] = $"Two-factor authentication has been {(!currentStatus ? "enabled" : "disabled")}.";
             return RedirectToAction(nameof(Profile));
         }
 
@@ -796,7 +815,7 @@ namespace DoableFinal.Controllers
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
-                    TempData["SuccessMessage"] = "User updated successfully.";
+                    TempData["UserManagementMessage"] = "User updated successfully.";
                     return RedirectToAction(nameof(Users));
                 }
 
@@ -822,7 +841,7 @@ namespace DoableFinal.Controllers
             var result = await _userManager.DeleteAsync(user);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "User deleted successfully.";
+                TempData["UserManagementMessage"] = "User deleted successfully.";
             }
             else
             {
@@ -916,7 +935,7 @@ namespace DoableFinal.Controllers
                     await _notificationService.NotifyProjectUpdateAsync(project, $"Project status updated from {oldStatus} to {project.Status}");
                 }
 
-                TempData["SuccessMessage"] = "Project updated successfully.";
+                TempData["ProjectMessage"] = "Project updated successfully.";
                 return RedirectToAction(nameof(Projects));
             }
 
@@ -964,7 +983,7 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been archived");
 
-            TempData["SuccessMessage"] = "Project has been archived successfully.";
+            TempData["ProjectMessage"] = "Project has been archived successfully.";
             return RedirectToAction(nameof(Projects));
         }
 
@@ -1011,7 +1030,7 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been unarchived by admin");
 
-            TempData["SuccessMessage"] = "Project has been unarchived successfully.";
+            TempData["ProjectMessage"] = "Project has been unarchived successfully.";
             return RedirectToAction(nameof(ArchivedProjects));
         }
 
@@ -1038,7 +1057,7 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been unarchived by admin");
 
-            TempData["SuccessMessage"] = "Task has been unarchived successfully.";
+            TempData["TaskMessage"] = "Task has been unarchived successfully.";
             return RedirectToAction(nameof(ArchivedTasks));
         }
 
@@ -1077,7 +1096,7 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been marked as completed");
 
-            TempData["SuccessMessage"] = "Project has been marked as completed.";
+            TempData["ProjectMessage"] = "Project has been marked as completed.";
             return RedirectToAction(nameof(ProjectDetails), new { id });
         }
 
@@ -1190,7 +1209,7 @@ namespace DoableFinal.Controllers
                     await _notificationService.NotifyTaskUpdateAsync(task, $"Task status updated from {oldStatus} to {task.Status}");
                 }
 
-                TempData["SuccessMessage"] = "Task updated successfully.";
+                TempData["TaskMessage"] = "Task updated successfully.";
                 return RedirectToAction(nameof(Tasks));
             }
 
@@ -1230,7 +1249,7 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been archived");
 
-            TempData["SuccessMessage"] = "Task has been archived successfully.";
+            TempData["TaskMessage"] = "Task has been archived successfully.";
             return RedirectToAction(nameof(Tasks));
         }
 
@@ -1322,7 +1341,7 @@ namespace DoableFinal.Controllers
             _context.TaskComments.Add(comment);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Comment posted successfully.";
+            TempData["TaskMessage"] = "Comment posted successfully.";
             return RedirectToAction("TaskDetails", new { id = taskId });
         }
 
@@ -1371,7 +1390,7 @@ namespace DoableFinal.Controllers
             task.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Task has been confirmed as completed.";
+            TempData["TaskMessage"] = "Task has been confirmed as completed.";
             return RedirectToAction(nameof(TaskDetails), new { id });
         }
 
@@ -1553,7 +1572,7 @@ namespace DoableFinal.Controllers
 
                 await _notificationService.NotifyTaskUpdateAsync(task, $"New task '{task.Title}' has been created");
 
-                TempData["SuccessMessage"] = "Task created successfully.";
+                TempData["TaskMessage"] = "Task created successfully.";
                 return RedirectToAction(nameof(Tasks));
             }
             catch (Exception ex)
@@ -1571,7 +1590,8 @@ namespace DoableFinal.Controllers
                 .Include(t => t.Project)
                 .Include(t => t.AssignedTo)
                 .Include(t => t.CreatedBy)
-                .Where(t => !t.Project.IsArchived)
+                // include tickets with no project as well as tickets whose project is not archived
+                .Where(t => t.Project == null || !t.Project.IsArchived)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(statusFilter))
@@ -1675,7 +1695,7 @@ namespace DoableFinal.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            TempData["SuccessMessage"] = "Ticket status updated successfully.";
+            TempData["TicketMessage"] = "Ticket status updated successfully.";
             return RedirectToAction(nameof(Tickets));
         }
 

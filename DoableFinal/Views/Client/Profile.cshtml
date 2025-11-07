@@ -126,6 +126,8 @@
                         </div>
                     }
                     <form asp-action="ChangePassword" method="post" id="changePasswordForm">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
                         <div class="mb-3">
                             <label for="currentPassword" class="form-label">Current Password</label>
                             <div class="input-group">
@@ -137,10 +139,14 @@
                         <div class="mb-3">
                             <label for="newPassword" class="form-label">New Password</label>
                             <div class="input-group">
-                                <input type="password" id="newPassword" name="newPassword" class="form-control" required pattern="^(?=.*[A-Z])(?=.*[a-zA-Z0-9]).{6,}$" title="Password must be alphanumeric and contain at least one capital letter." />
-                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('newPassword', this)"><i class="bi bi-eye"></i></button>
+                                <input type="password" id="newPassword" name="newPassword" class="form-control" 
+                                       required pattern="^(?=.*[A-Z])(?=.*[a-zA-Z0-9]).{6,}$" 
+                                       title="Password must be at least 6 characters long and contain at least one capital letter" />
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('newPassword', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </div>
-                            <small class="text-muted">Password must be at least 6 characters long and contain at least one capital letter.</small>
+                            <small class="text-muted">Password must be at least 6 characters long and contain at least one capital letter</small>
                             <div id="passwordStrength" class="mt-1"></div>
                         </div>
 
@@ -148,20 +154,11 @@
                             <label for="confirmPassword" class="form-label">Confirm New Password</label>
                             <div class="input-group">
                                 <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required />
-                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('confirmPassword', this)"><i class="bi bi-eye"></i></button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('confirmPassword', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </div>
-<script>
-function togglePasswordVisibility(fieldId, btn) {
-    var input = document.getElementById(fieldId);
-    if (input.type === "password") {
-        input.type = "text";
-        btn.innerHTML = '<i class="bi bi-eye-slash"></i>';
-    } else {
-        input.type = "password";
-        btn.innerHTML = '<i class="bi bi-eye"></i>';
-    }
-}
-</script>
+                            <div id="confirmPasswordFeedback" class="invalid-feedback"></div>
                         </div>
 
                         <div class="d-grid">
@@ -227,4 +224,98 @@ function togglePasswordVisibility(fieldId, btn) {
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-} 
+    <script>
+        $(document).ready(function() {
+            // Password strength indicator
+            $('#newPassword').on('input', function() {
+                var password = $(this).val();
+                var strength = 0;
+                var feedback = [];
+
+                // Length check
+                if (password.length >= 6) {
+                    strength += 1;
+                } else {
+                    feedback.push('At least 6 characters');
+                }
+
+                // Capital letter check
+                if (password.match(/[A-Z]/)) {
+                    strength += 1;
+                } else {
+                    feedback.push('At least one capital letter');
+                }
+
+                // Update password strength indicator
+                var strengthDiv = $('#passwordStrength');
+                strengthDiv.removeClass('text-danger text-warning text-success');
+                
+                if (strength === 0) {
+                    strengthDiv.html('Weak password').addClass('text-danger');
+                } else if (strength === 1) {
+                    strengthDiv.html('Moderate password').addClass('text-warning');
+                } else {
+                    strengthDiv.html('Strong password').addClass('text-success');
+                }
+
+                if (feedback.length > 0) {
+                    strengthDiv.html(feedback.join(', '));
+                }
+            });
+
+            // Password confirmation match check
+            $('#confirmPassword').on('input', function() {
+                var newPassword = $('#newPassword').val();
+                var confirmPassword = $(this).val();
+                var feedback = $('#confirmPasswordFeedback');
+
+                if (newPassword !== confirmPassword) {
+                    feedback.text('Passwords do not match').addClass('d-block');
+                    $(this).addClass('is-invalid');
+                } else {
+                    feedback.text('').removeClass('d-block');
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Form submission validation
+            $('#changePasswordForm').on('submit', function(e) {
+                var newPassword = $('#newPassword').val();
+                var confirmPassword = $('#confirmPassword').val();
+                var currentPassword = $('#currentPassword').val();
+
+                if (!currentPassword) {
+                    $('#currentPasswordFeedback').text('Current password is required').addClass('d-block');
+                    $('#currentPassword').addClass('is-invalid');
+                    e.preventDefault();
+                    return false;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    $('#confirmPasswordFeedback').text('Passwords do not match').addClass('d-block');
+                    $('#confirmPassword').addClass('is-invalid');
+                    e.preventDefault();
+                    return false;
+                }
+
+                return true;
+            });
+        });
+
+        // Password visibility toggle
+        function togglePasswordVisibility(fieldId, btn) {
+            var input = document.getElementById(fieldId);
+            var icon = btn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+    </script>
+}

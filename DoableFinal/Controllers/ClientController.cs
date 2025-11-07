@@ -186,7 +186,17 @@ namespace DoableFinal.Controllers
                 CompanyType = user.CompanyType ?? string.Empty,
                 Designation = user.Designation ?? string.Empty,
                 MobileNumber = user.MobileNumber ?? string.Empty,
-                TinNumber = user.TinNumber ?? string.Empty
+                TinNumber = user.TinNumber ?? string.Empty,
+
+                // Common additional fields (may be empty for clients)
+                ResidentialAddress = user.ResidentialAddress ?? string.Empty,
+                Birthday = user.Birthday,
+                PagIbigAccount = user.PagIbigAccount ?? string.Empty,
+                Position = user.Position ?? string.Empty,
+
+                IsActive = user.IsActive,
+                IsArchived = user.IsArchived,
+                ArchivedAt = user.ArchivedAt
             };
 
             return View(model);
@@ -226,6 +236,10 @@ namespace DoableFinal.Controllers
             user.MobileNumber = model.MobileNumber;
             user.TinNumber = model.TinNumber;
 
+            // Save common/additional fields if provided
+            user.ResidentialAddress = model.ResidentialAddress;
+            user.Position = model.Position;
+
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
@@ -252,7 +266,9 @@ namespace DoableFinal.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View(model);
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Where(s => !string.IsNullOrWhiteSpace(s));
+                TempData["PasswordErrorMessage"] = string.Join(" ", errors);
+                return RedirectToAction(nameof(Profile));
             }
 
             var user = await _userManager.GetUserAsync(User);
@@ -264,16 +280,16 @@ namespace DoableFinal.Controllers
             var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "Your password has been changed successfully.";
+                TempData["PasswordSuccessMessage"] = "Your password has been changed successfully.";
                 return RedirectToAction(nameof(Profile));
             }
 
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
+            var identityErrors = result.Errors.Select(e => e.Description).Where(s => !string.IsNullOrWhiteSpace(s));
+            TempData["PasswordErrorMessage"] = identityErrors.Any()
+                ? string.Join(" ", identityErrors)
+                : "Current password is incorrect or new password does not meet requirements.";
 
-            return View(model);
+            return RedirectToAction(nameof(Profile));
         }
 
         public async Task<IActionResult> Tasks(int? projectId)
@@ -419,7 +435,7 @@ namespace DoableFinal.Controllers
             _context.TaskComments.Add(comment);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Comment posted successfully.";
+            TempData["TicketMessage"] = "Comment posted successfully.";
             return RedirectToAction("TaskDetails", new { id = taskId });
         }
 
@@ -548,7 +564,7 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> CreateTicket(DoableFinal.ViewModels.CreateTicketViewModel model)
         {
             var debug = new System.Text.StringBuilder();
-            debug.AppendLine($"Received Ticket POST - Title: {model?.Title}, ProjectId: {model?.ProjectId}");
+            
 
             if (model == null)
             {

@@ -72,6 +72,15 @@
                                     <th class="ps-0">Type:</th>
                                     <td><span class="badge bg-secondary">@Model.Ticket.Type</span></td>
                                 </tr>
+                                @if (Model.Ticket.Project != null)
+                                {
+                                    <tr>
+                                        <th class="ps-0">Project:</th>
+                                        <td>
+                                            <a asp-controller="Admin" asp-action="ProjectDetails" asp-route-id="@Model.Ticket.Project.Id">@Model.Ticket.Project.Name</a>
+                                        </td>
+                                    </tr>
+                                }
                             </table>
                         </div>
                         <div class="col-md-6">

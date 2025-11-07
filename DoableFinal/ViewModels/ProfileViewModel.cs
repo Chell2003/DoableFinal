@@ -45,5 +45,28 @@ namespace DoableFinal.ViewModels
 
         [Display(Name = "TIN Number")]
         public string? TinNumber { get; set; }
+
+        // Employee / Project Manager additional fields
+        [Display(Name = "Residential Address")]
+        public string? ResidentialAddress { get; set; }
+
+        [Display(Name = "Birthday")]
+        public DateTime? Birthday { get; set; }
+
+        [Display(Name = "Pag-IBIG Account")]
+        public string? PagIbigAccount { get; set; }
+
+        [Display(Name = "Position")]
+        public string? Position { get; set; }
+
+        // Admin / account fields
+        [Display(Name = "Active")]
+        public bool IsActive { get; set; }
+
+        [Display(Name = "Archived")]
+        public bool IsArchived { get; set; }
+
+        [Display(Name = "Archived At")]
+        public DateTime? ArchivedAt { get; set; }
     }
 } 

@@ -75,7 +75,7 @@ public class HomeController : Controller
                 // _notificationService.SendEmailNotificationAsync(admin.Email, "New Inquiry Received", $"You have a new inquiry from {inquiry.Name} ({inquiry.Email}).\n\nSubject: {inquiry.Subject}\n\nMessage:\n{inquiry.Message}").GetAwaiter().GetResult();
             }
 
-            TempData["SuccessMessage"] = "Thank you for your message. We'll get back to you soon!";
+            TempData["ContactMessage"] = "Thank you for your message. We'll get back to you soon!";
             return RedirectToAction(nameof(Contact));
         }
 

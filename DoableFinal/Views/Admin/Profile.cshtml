@@ -42,6 +42,48 @@
                             <input asp-for="Role" class="form-control" readonly />
                         </div>
 
+                        <div class="mb-3">
+                            <label asp-for="Position" class="form-label"></label>
+                            <input asp-for="Position" class="form-control" />
+                            <span asp-validation-for="Position" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ResidentialAddress" class="form-label"></label>
+                            <textarea asp-for="ResidentialAddress" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="ResidentialAddress" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Birthday" class="form-label"></label>
+                            <input asp-for="Birthday" class="form-control" type="date" />
+                            <span asp-validation-for="Birthday" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PagIbigAccount" class="form-label"></label>
+                            <input asp-for="PagIbigAccount" class="form-control" />
+                            <span asp-validation-for="PagIbigAccount" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox">
+                            <label class="form-check-label" for="IsActive">Account Active</label>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input asp-for="IsArchived" class="form-check-input" type="checkbox">
+                            <label class="form-check-label" for="IsArchived">Account Archived</label>
+                        </div>
+
+                        @if (Model.ArchivedAt.HasValue)
+                        {
+                            <div class="mb-3">
+                                <label asp-for="ArchivedAt" class="form-label"></label>
+                                <input asp-for="ArchivedAt" class="form-control" readonly />
+                            </div>
+                        }
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save"></i> Save Changes

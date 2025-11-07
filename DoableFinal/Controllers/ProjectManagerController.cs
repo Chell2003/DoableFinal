@@ -87,8 +87,8 @@ namespace DoableFinal.Controllers
 
             // Get statistics
             ViewBag.MyProjects = await _context.Projects
-                .Where(p => p.ProjectManagerId != null && 
-                           p.ProjectManagerId == userId && 
+                .Where(p => p.ProjectManagerId != null &&
+                           p.ProjectManagerId == userId &&
                            !p.IsArchived)
                 .CountAsync();
 
@@ -186,7 +186,7 @@ namespace DoableFinal.Controllers
                 await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been marked as completed");
             }
 
-            TempData["SuccessMessage"] = "Project has been marked as completed.";
+            TempData["ProjectMessage"] = "Project has been marked as completed.";
             return RedirectToAction(nameof(ProjectDetails), new { id });
         }
 
@@ -413,7 +413,7 @@ namespace DoableFinal.Controllers
 
                 await _notificationService.NotifyTaskUpdateAsync(task, $"New task '{task.Title}' has been created");
 
-                TempData["SuccessMessage"] = "Task created successfully.";
+                TempData["TaskMessage"] = "Task created successfully.";
                 return RedirectToAction(nameof(Tasks));
             }
             catch (Exception ex)
@@ -539,7 +539,7 @@ namespace DoableFinal.Controllers
                 task,
                 $"Task '{task.Title}' has been marked as completed by {authorName}");
 
-            TempData["SuccessMessage"] = "Task has been confirmed as completed.";
+            TempData["TaskMessage"] = "Task has been confirmed as completed.";
             return RedirectToAction(nameof(TaskDetails), new { id });
         }
 
@@ -602,7 +602,7 @@ namespace DoableFinal.Controllers
             _context.TaskComments.Add(comment);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Comment posted successfully.";
+            TempData["TaskMessage"] = "Comment posted successfully.";
             return RedirectToAction("TaskDetails", new { id = taskId });
         }
 
@@ -655,7 +655,7 @@ namespace DoableFinal.Controllers
             // Send email notifications if enabled
             foreach (var assignment in task.TaskAssignments)
             {
-                if (assignment.Employee.EmailNotificationsEnabled && assignment.Employee.Email != null)
+                if (assignment.Employee != null && assignment.Employee.EmailNotificationsEnabled && !string.IsNullOrWhiteSpace(assignment.Employee.Email))
                 {
                     await _notificationService.SendEmailNotificationAsync(
                         assignment.Employee.Email,
@@ -714,7 +714,7 @@ namespace DoableFinal.Controllers
             // Send email notifications if enabled
             foreach (var assignment in task.TaskAssignments)
             {
-                if (assignment.Employee.EmailNotificationsEnabled)
+                if (assignment.Employee != null && assignment.Employee.EmailNotificationsEnabled && !string.IsNullOrWhiteSpace(assignment.Employee.Email))
                 {
                     await _notificationService.SendEmailNotificationAsync(
                         assignment.Employee.Email,
@@ -821,6 +821,47 @@ namespace DoableFinal.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Project Manager")]
+        public async Task<IActionResult> Profile(ProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.EmailNotificationsEnabled = model.EmailNotificationsEnabled;
+
+            // Employee / PM fields
+            user.ResidentialAddress = model.ResidentialAddress;
+            user.Birthday = model.Birthday;
+            user.PagIbigAccount = model.PagIbigAccount;
+            user.Position = model.Position;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                TempData["ProfileMessage"] = "Profile updated successfully.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            return View(model);
+        }
+
         [HttpGet]
         public IActionResult ChangePassword()
         {
@@ -907,7 +948,7 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been archived");
 
-            TempData["SuccessMessage"] = "Project has been archived successfully.";
+            TempData["ProjectMessage"] = "Project has been archived successfully.";
             return RedirectToAction(nameof(MyProjects));
         }
 
@@ -948,7 +989,7 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been archived");
 
-            TempData["SuccessMessage"] = "Task has been archived successfully.";
+            TempData["TaskMessage"] = "Task has been archived successfully.";
             return RedirectToAction(nameof(Tasks));
         }
 
@@ -1011,7 +1052,7 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been unarchived");
 
-            TempData["SuccessMessage"] = "Project has been unarchived successfully.";
+            TempData["ProjectMessage"] = "Project has been unarchived successfully.";
             return RedirectToAction(nameof(ArchivedProjects));
         }
 
@@ -1066,7 +1107,7 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been unarchived");
 
-            TempData["SuccessMessage"] = "Task has been unarchived successfully.";
+            TempData["TaskMessage"] = "Task has been unarchived successfully.";
             return RedirectToAction(nameof(ArchivedTasks));
         }
 

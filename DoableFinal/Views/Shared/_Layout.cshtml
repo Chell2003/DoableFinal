@@ -254,6 +254,7 @@
 
                 <!-- Main Content -->
                 <main role="main" class="content-wrapper">
+                    @await Html.PartialAsync("_Alerts")
                     @RenderBody()
                 </main>
             </div>
@@ -300,6 +301,7 @@
 
         <div class="container">
             <main role="main" class="pb-3">
+                @await Html.PartialAsync("_Alerts")
                 @RenderBody()
             </main>
         </div>

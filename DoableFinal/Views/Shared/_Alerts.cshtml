@@ -1,0 +1,39 @@
+@{
+    var keys = new[] {
+        "TaskMessage",
+        "TicketMessage",
+        "InquiryMessage",
+        "ProjectMessage",
+        "ContactMessage",
+        "SuccessMessage",
+        "Success",
+        "ErrorMessage",
+        "Error",
+        "PasswordSuccessMessage",
+        "PasswordErrorMessage",
+        "ProfileMessage",
+        "UserManagementMessage",
+        "Debug"
+    };
+}
+
+@foreach (var key in keys)
+{
+    if (TempData.ContainsKey(key))
+    {
+        var raw = TempData[key] as string ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(raw))
+        {
+            var lower = key.ToLowerInvariant();
+            var alertClass = "alert-info";
+            if (lower.Contains("error")) alertClass = "alert-danger";
+            else if (lower.Contains("success") || lower.Contains("task") || lower.Contains("ticket") || lower.Contains("project") || lower.Contains("profile") || lower.Contains("usermanagement")) alertClass = "alert-success";
+            else if (lower.Contains("debug")) alertClass = "alert-warning";
+
+            <div class="alert @alertClass alert-dismissible fade show" role="alert">
+                @Html.Raw(raw)
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+    }
+}

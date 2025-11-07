@@ -114,6 +114,7 @@
             <!-- Main Content -->
             <main role="main" class="content-wrapper p-4">
                 <div class="container-fluid">
+                    @await Html.PartialAsync("_Alerts")
                     @RenderBody()
                 </div>
             </main>

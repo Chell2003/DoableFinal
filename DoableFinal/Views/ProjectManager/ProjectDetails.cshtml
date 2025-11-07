@@ -243,15 +243,7 @@
                     : "Unassigned"
             }) ?? Enumerable.Empty<object>()));
 
-            // Define a set of distinct colors for tasks
-            const taskColors = [
-                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
-                '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB',
-                '#F1C40F', '#E67E22', '#1ABC9C', '#34495E',
-                '#7F8C8D', '#00B894', '#FF7675', '#6C5CE7'
-            ];
-
-            // Define colors array
+            // Configure colors array
             const colors = ['#FF5733', '#4834d4', '#6ab04c', '#be2edd', '#22a6b3', '#eb4d4b', '#f0932b', '#686de0', '#badc58', '#130f40'];
 
             // Create series data
@@ -290,6 +282,7 @@
                     },
                     fontFamily: 'inherit'
                 },
+                colors: ['#FF5733'],
                 plotOptions: {
                     bar: {
                         horizontal: true,
@@ -305,7 +298,7 @@
                 xaxis: {
                     type: 'datetime',
                     min: projectStart,
-                    max: Math.max(projectEnd, new Date().getTime()), // Use latest between project end and current date
+                    max: projectEnd,
                     labels: {
                         datetimeFormatter: {
                             year: 'yyyy',
@@ -323,8 +316,14 @@
                 },
                 grid: {
                     row: {
-                        colors: ['#f3f4f5', '#fff'],
+                        colors: ['#f8f9fa', '#fff'],
                         opacity: 1
+                    },
+                    padding: {
+                        top: -10,
+                        right: 0,
+                        bottom: -10,
+                        left: 0
                     }
                 },
                 tooltip: {

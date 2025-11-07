@@ -185,7 +185,12 @@ namespace DoableFinal.Controllers
                 Role = "Employee",
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
-                EmailNotificationsEnabled = user.EmailNotificationsEnabled
+                EmailNotificationsEnabled = user.EmailNotificationsEnabled,
+
+                ResidentialAddress = user.ResidentialAddress ?? string.Empty,
+                Birthday = user.Birthday,
+                PagIbigAccount = user.PagIbigAccount ?? string.Empty,
+                Position = user.Position ?? string.Empty
             };
 
             return View(model);
@@ -244,10 +249,16 @@ namespace DoableFinal.Controllers
                 user.LastName = model.LastName;
                 user.EmailNotificationsEnabled = model.EmailNotificationsEnabled;
 
+                // Employee / Project Manager fields
+                user.ResidentialAddress = model.ResidentialAddress;
+                user.Birthday = model.Birthday;
+                user.PagIbigAccount = model.PagIbigAccount;
+                user.Position = model.Position;
+
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
-                    TempData["SuccessMessage"] = "Profile updated successfully.";
+                    TempData["ProfileMessage"] = "Profile updated successfully.";
                     return RedirectToAction(nameof(Profile));
                 }
 
@@ -328,6 +339,7 @@ namespace DoableFinal.Controllers
             // Check if the user is assigned to the task
             var task = await _context.Tasks
                 .Include(t => t.TaskAssignments)
+                .Include(t => t.Project)
                 .FirstOrDefaultAsync(t => t.Id == id && t.TaskAssignments.Any(ta => ta.EmployeeId == user.Id));
 
             if (task == null)
@@ -352,9 +364,20 @@ namespace DoableFinal.Controllers
                 task.Status = "For Review";
                 task.UpdatedAt = DateTime.UtcNow;
 
+                // If the task belongs to a project, ensure the project status is at least "In Progress"
+                if (task.Project != null)
+                {
+                    if (!string.Equals(task.Project.Status, "In Progress", StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(task.Project.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        task.Project.Status = "In Progress";
+                        task.Project.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = "Task submitted for review successfully. Waiting for Project Manager confirmation.";
+                TempData["TaskMessage"] = "Task submitted for review successfully. Waiting for Project Manager confirmation.";
             }
             else
             {
@@ -413,6 +436,17 @@ namespace DoableFinal.Controllers
             task.Remarks = remarks;
             task.Status = "Pending Approval";
             task.UpdatedAt = DateTime.UtcNow;
+
+            // If the task belongs to a project, ensure the project status is at least "In Progress"
+            if (task.Project != null)
+            {
+                if (!string.Equals(task.Project.Status, "In Progress", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(task.Project.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                {
+                    task.Project.Status = "In Progress";
+                    task.Project.UpdatedAt = DateTime.UtcNow;
+                }
+            }
 
             await _context.SaveChangesAsync();
 
@@ -521,7 +555,7 @@ namespace DoableFinal.Controllers
             _context.TaskComments.Add(comment);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = "Comment posted successfully.";
+            TempData["TaskMessage"] = "Comment posted successfully.";
             return RedirectToAction("TaskDetails", new { id = taskId });
         }
 

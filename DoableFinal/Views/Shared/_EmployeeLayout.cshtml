@@ -77,6 +77,7 @@
 
             <!-- Main Content -->
             <div class="container-fluid py-4">
+                @await Html.PartialAsync("_Alerts")
                 @RenderBody()
             </div>
         </div>

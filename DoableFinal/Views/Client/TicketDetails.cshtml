@@ -70,6 +70,17 @@
                         <h6 class="fw-bold">Description:</h6>
                         <p class="card-text">@Model.Ticket.Description</p>
                     </div>
+                    @if (Model.Ticket.Project != null)
+                    {
+                        <div class="mt-3">
+                            <h6 class="fw-bold">Project:</h6>
+                            <p>
+                                <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@Model.Ticket.Project.Id">
+                                    @Model.Ticket.Project.Name
+                                </a>
+                            </p>
+                        </div>
+                    }
                 </div>
             </div>
 

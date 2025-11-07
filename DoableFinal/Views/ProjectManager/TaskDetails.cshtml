@@ -94,7 +94,7 @@
                         </div>
                     </div>
 
-                    @if (!string.IsNullOrEmpty(Model.ProofFilePath))
+                    @if (!string.IsNullOrEmpty(Model.ProofFilePath) || !string.IsNullOrEmpty(Model.Remarks) || Model.Status == "Pending Approval" || Model.Status == "For Review")
                     {
                         <div class="mt-4">
                             <h6>Task Completion Proof</h6>
@@ -107,6 +107,12 @@
                                                 <i class="fas fa-download"></i> View Proof File
                                             </a>
                                         </p>
+                                    }
+
+                                    @* If there's no uploaded file but there are remarks or the task is pending review, show a note so PM can approve based on remarks *@
+                                    @if (string.IsNullOrEmpty(Model.ProofFilePath) && !string.IsNullOrEmpty(Model.Remarks))
+                                    {
+                                        <p class="text-muted">No proof file uploaded. Approval can be based on the submitted remarks below.</p>
                                     }
 
                                     @if (!string.IsNullOrEmpty(Model.Remarks))
@@ -202,7 +208,28 @@
         font-size: 14px;
         font-weight: bold;
     }
+
+    /* Timeline Styles */
+    #taskGanttChart {
+        min-height: 150px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .apexcharts-tooltip {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .timeline-tooltip-content {
+        padding: 12px;
+        max-width: 300px;
+    }
 </style>
+
+<!-- Required Chart Scripts -->
+<link href="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.css" rel="stylesheet">
 
 <!-- Approval Confirmation Modal -->
 <div class="modal fade" id="approvalConfirmationModal" tabindex="-1" aria-labelledby="approvalConfirmationModalLabel" aria-hidden="true">
@@ -224,6 +251,10 @@
         </div>
     </div>
 </div>
+
+<!-- Chart and Modal Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 
 <script>
 function showApprovalConfirmation() {

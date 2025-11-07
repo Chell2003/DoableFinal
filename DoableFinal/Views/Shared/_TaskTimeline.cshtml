@@ -1,104 +1,174 @@
 @model DoableFinal.Models.ProjectTask
 
 <div class="card mb-4">
-    <div class="card-header">
-        <i class="fas fa-chart-bar me-1"></i>
-        Task Timeline
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <i class="bi bi-clock-history me-1"></i>
+            Task Timeline
+        </div>
+        <div>
+            <span class="badge bg-@(Model.Status switch {
+                "Completed" => "success",
+                "In Progress" => "primary",
+                "Pending Approval" => "info",
+                "On Hold" => "warning",
+                _ => "secondary"
+            })">@Model.Status</span>
+        </div>
     </div>
     <div class="card-body">
         <div id="taskGanttChart"></div>
     </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Get task data
-        var task = {
-            id: @Model.Id,
-            name: "@Model.Title",
-            start: "@Model.StartDate.ToString("yyyy-MM-dd")",
-            end: "@Model.DueDate.ToString("yyyy-MM-dd")",
-            status: "@Model.Status",
+    try {
+        // Get task dates as strings
+        var startStr = '@Model.StartDate.ToString("yyyy-MM-dd")';
+        var endStr = '@Model.DueDate.ToString("yyyy-MM-dd")';
+        var createdAtStr = '@Model.CreatedAt.ToString("yyyy-MM-dd")';
+        var updatedAtStr = '@(Model.UpdatedAt?.ToString("yyyy-MM-dd") ?? Model.CreatedAt.ToString("yyyy-MM-dd"))';
+        
+        // Parse dates using moment
+        var taskStart = moment(startStr).startOf('day');
+        var taskEnd = moment(endStr).endOf('day');
+        var chartStart = moment(startStr).subtract(1, 'day').startOf('day');
+        var chartEnd = moment(endStr).add(1, 'day').endOf('day');
+        
+        // Log dates for debugging
+        console.log('Date parsing:', {
+            start: taskStart.format(),
+            end: taskEnd.format(),
+            chartStart: chartStart.format(),
+            chartEnd: chartEnd.format()
+        });
+
+        // Determine status color and icon
+        var statusConfig = {
+            'Completed': { color: '#198754', icon: 'check-circle' },
+            'In Progress': { color: '#0d6efd', icon: 'arrow-repeat' },
+            'Pending Approval': { color: '#0dcaf0', icon: 'clock-history' },
+            'On Hold': { color: '#ffc107', icon: 'pause-circle' }
+        };
+        
+        var status = '@Model.Status';
+        var statusInfo = statusConfig[status] || { color: '#6c757d', icon: 'tasks' };
+        
+        // Task data with proper date handling
+        var taskData = {
+            id: '@Model.Id',
+            name: @Html.Raw(Json.Serialize(Model.Title)),
+            start: taskStart.valueOf(),
+            end: taskEnd.valueOf(),
+            status: status,
             assignee: @Html.Raw(Json.Serialize(Model.TaskAssignments != null && Model.TaskAssignments.Any()
                 ? string.Join(", ", Model.TaskAssignments.Select(a => a.Employee.FirstName))
                 : "Unassigned"))
         };
 
-        // Configure the Gantt chart
         var options = {
             series: [{
                 data: [{
-                    x: task.name,
-                    y: [
-                        new Date(task.start).getTime(),
-                        new Date(task.end).getTime()
-                    ],
-                    fillColor: task.status === 'Completed' ? '#198754' :
-                             task.status === 'In Progress' ? '#0d6efd' :
-                             task.status === 'On Hold' ? '#ffc107' : '#6c757d',
-                    assignee: task.assignee,
-                    status: task.status
+                    x: taskData.name,
+                    y: [taskData.start, taskData.end],
+                    fillColor: statusInfo.color,
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                    borderRadius: 4
                 }]
             }],
             chart: {
-                height: 350,
+                height: 150,
                 type: 'rangeBar',
                 toolbar: {
-                    show: false // Disable zooming and other toolbar options
-                }
+                    show: false
+                },
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
+                },
+                fontFamily: 'inherit'
             },
             plotOptions: {
                 bar: {
                     horizontal: true,
-                    distributed: true,
-                    dataLabels: {
-                        hideOverflowingLabels: false
-                    }
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                formatter: function(val, opts) {
-                    return task.assignee + ' - ' + task.status;
+                    barHeight: '60%',
+                    rangeBarGroupRows: true,
+                    borderRadius: 4
                 }
             },
             xaxis: {
                 type: 'datetime',
-                min: new Date(task.start).getTime(),
-                max: new Date(task.end).getTime(),
+                min: chartStart.valueOf(),
+                max: chartEnd.valueOf(),
                 labels: {
-                    datetimeFormatter: {
-                        year: 'yyyy',
-                        month: 'MMM yyyy',
-                        day: 'dd MMM',
-                        hour: 'HH:mm'
+                    datetimeUTC: false,
+                    formatter: function(value) {
+                        return moment(value).format('MMM D');
+                    },
+                    style: {
+                        colors: '#333',
+                        fontSize: '11px'
                     }
-                }
+                },
+                tickAmount: 6
             },
             yaxis: {
-                show: true
+                show: false
             },
             grid: {
                 row: {
-                    colors: ['#f3f4f5', '#fff'],
+                    colors: ['#f8f9fa', '#fff'],
                     opacity: 1
+                },
+                padding: {
+                    top: 0,
+                    right: 15,
+                    bottom: 0,
+                    left: 15
                 }
             },
             tooltip: {
                 custom: function({series, seriesIndex, dataPointIndex, w}) {
-                    return '<div class="p-2">' +
-                           '<div><strong>' + task.name + '</strong></div>' +
-                           '<div>Start: ' + task.start + '</div>' +
-                           '<div>End: ' + task.end + '</div>' +
-                           '<div>Status: ' + task.status + '</div>' +
-                           '<div>Assignee: ' + task.assignee + '</div>' +
+                    const startFormatted = moment(taskData.start).format('MMM D, YYYY');
+                    const endFormatted = moment(taskData.end).format('MMM D, YYYY');
+                    
+                    return '<div class="px-3 py-2">' +
+                           '<div class="mb-2"><strong>' + taskData.name + '</strong></div>' +
+                           '<div class="text-muted small mb-2">Duration: ' + startFormatted + ' - ' + endFormatted + '</div>' +
+                           '<div class="d-flex align-items-center gap-2">' +
+                           '<span class="badge bg-' + 
+                           (taskData.status === 'Completed' ? 'success' : 
+                            taskData.status === 'In Progress' ? 'primary' : 
+                            taskData.status === 'Pending Approval' ? 'info' :
+                            taskData.status === 'On Hold' ? 'warning' : 'secondary') + 
+                           '"><i class="bi bi-' + statusInfo.icon + ' me-1"></i>' + taskData.status + '</span>' +
+                           (taskData.assignee !== 'Unassigned' ? 
+                            '<span class="badge bg-info"><i class="bi bi-person me-1"></i>' + taskData.assignee + '</span>' : 
+                            '<span class="badge bg-secondary"><i class="bi bi-person-x me-1"></i>Unassigned</span>') +
+                           '</div>' +
                            '</div>';
                 }
             }
         };
 
-        // Render the chart
-        var chart = new ApexCharts(document.querySelector("#taskGanttChart"), options);
-        chart.render();
-    });
+        // Initialize chart
+        var chartElement = document.querySelector("#taskGanttChart");
+        if (chartElement) {
+            var chart = new ApexCharts(chartElement, options);
+            chart.render().then(() => {
+                console.log('Chart rendered successfully');
+            }).catch(error => {
+                console.error('Error rendering chart:', error);
+            });
+        } else {
+            console.error('Chart element not found');
+        }
+    } catch (error) {
+        console.error('Error in timeline initialization:', error);
+    }
+});
 </script> 
