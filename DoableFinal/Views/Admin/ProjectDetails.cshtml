@@ -14,7 +14,6 @@
 <div class="container-fluid px-4">
     <h1 class="mt-4">Project Details</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Index">Dashboard</a></li>
         <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Projects">Projects</a></li>
         <li class="breadcrumb-item active">Project Details</li>
     </ol>
@@ -112,42 +111,6 @@
                 </div>
             </div>
 
-            <!-- Project Team -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-users me-1"></i>
-                    Project Team
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Joined Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var member in Model.ProjectTeams)
-                                {
-                                    <tr>
-                                        <td>
-                                            @($"{member.User.FirstName} {member.User.LastName}")
-                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                                <i class="bi bi-envelope"></i>
-                                            </a>
-                                        </td>
-                                        <td>@member.Role</td>
-                                        <td>@member.JoinedAt.ToString(dateFormat)</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
             <!-- Project Tasks -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -208,6 +171,41 @@
                                                 View
                                             </a>
                                         </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    Project Team
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var member in Model.ProjectTeams)
+                                {
+                                    <tr>
+                                        <td>
+                                            @($"{member.User.FirstName} {member.User.LastName}")
+                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        </td>
+                                        <td>@member.Role</td>
                                     </tr>
                                 }
                             </tbody>

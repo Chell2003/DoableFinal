@@ -9,8 +9,11 @@
 <div class="container-fluid px-4">
     <h1 class="mt-4">Task Details</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Index">Dashboard</a></li>
-        <li class="breadcrumb-item"><a asp-controller="ProjectManager" asp-action="Tasks">Tasks</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="ProjectManager" asp-action="ProjectDetails" asp-route-id="@Model.ProjectId">
+                Project: @Model.Project?.Name
+            </a>
+        </li>
         <li class="breadcrumb-item active">Task Details</li>
     </ol>
 
