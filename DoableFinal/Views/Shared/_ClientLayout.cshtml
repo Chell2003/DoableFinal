@@ -43,7 +43,11 @@
             <div class="sidebar-user">
                 <div class="user-info">
                     <i class="bi bi-person-circle"></i>
-                    <span>@(User.Identity?.Name ?? "Guest")</span>
+                    @{ 
+                        var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
+                        var displayName = currentUser?.FirstName ?? User.Identity?.Name ?? "Guest";
+                    }
+                    <span>@displayName</span>
                 </div>
             </div>
 
