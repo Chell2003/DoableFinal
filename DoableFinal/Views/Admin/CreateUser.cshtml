@@ -104,6 +104,11 @@
                         <input asp-for="Position" class="form-control" />
                         <span asp-validation-for="Position" class="text-danger"></span>
                     </div>
+
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="EmailNotificationsEnabled" class="form-check-input" type="checkbox" id="EmailNotificationsEnabled">
+                        <label class="form-check-label" for="EmailNotificationsEnabled">Email Notifications</label>
+                    </div>
                 </div>
 
                 <!-- Client Fields -->
@@ -169,9 +174,10 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
         $(document).ready(function() {
-            function toggleFields() {
+                function toggleFields() {
                 var role = $("#Role").val();
-                if (role === "Employee" || role === "Project Manager") {
+                // Show employee-like fields for Employee, Project Manager, and Admin
+                if (role === "Employee" || role === "Project Manager" || role === "Admin") {
                     $("#employeeFields").slideDown();
                     $("#clientFields").slideUp();
                 } else if (role === "Client") {

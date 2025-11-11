@@ -123,10 +123,10 @@
                     <!-- Comments Section -->
                     <div class="mb-4">
                         <h5>Comments</h5>
-                        <form asp-action="AddComment" asp-controller="Admin" method="post" class="mb-3">
+                        <form asp-action="AddTicketComment" asp-controller="Admin" method="post" class="mb-3">
                             <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
                             <div class="mb-3">
-                                <textarea name="content" class="form-control" rows="3" placeholder="Add a comment..."></textarea>
+                                <textarea name="commentText" class="form-control" rows="3" placeholder="Add a comment..."></textarea>
                             </div>
                             <button type="submit" class="btn btn-primary">Add Comment</button>
                         </form>

@@ -190,6 +190,7 @@ namespace DoableFinal.Controllers
                 ResidentialAddress = user.ResidentialAddress ?? string.Empty,
                 Birthday = user.Birthday,
                 PagIbigAccount = user.PagIbigAccount ?? string.Empty,
+                TinNumber = user.TinNumber ?? string.Empty,
                 Position = user.Position ?? string.Empty
             };
 
@@ -253,6 +254,7 @@ namespace DoableFinal.Controllers
                 user.ResidentialAddress = model.ResidentialAddress;
                 user.Birthday = model.Birthday;
                 user.PagIbigAccount = model.PagIbigAccount;
+                user.TinNumber = model.TinNumber;
                 user.Position = model.Position;
 
                 var result = await _userManager.UpdateAsync(user);

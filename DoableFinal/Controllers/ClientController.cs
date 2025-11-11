@@ -140,15 +140,28 @@ namespace DoableFinal.Controllers
             // Calculate project progress
             ViewBag.ProjectProgress = (await GetProjectProgress(new[] { project }))[project.Id];
 
-            // Get project team
-            ViewBag.ProjectTeam = await _context.ProjectTeams
+            // Get project team including the project manager
+            var projectTeam = new List<ApplicationUser>();
+            
+            // Add project manager first
+            if (project.ProjectManager != null)
+            {
+                projectTeam.Add(project.ProjectManager);
+            }
+
+            // Add team members from ProjectTeams
+            var teamMembers = await _context.ProjectTeams
                 .Include(pt => pt.User)
                 .Where(pt => pt.ProjectId == id)
                 .Select(pt => pt.User)
                 .ToListAsync();
 
+            projectTeam.AddRange(teamMembers);
+
+            ViewBag.ProjectTeam = projectTeam;
+
             // Get member task counts
-            ViewBag.MemberTaskCounts = await GetMemberTaskCounts(ViewBag.ProjectTeam);
+            ViewBag.MemberTaskCounts = await GetMemberTaskCounts(projectTeam);
 
             // Get recent tasks with their assignments
             ViewBag.RecentTasks = await _context.Tasks
@@ -512,7 +525,8 @@ namespace DoableFinal.Controllers
                 .Include(t => t.CreatedBy)
                 .Include(t => t.AssignedTo)
                 .Where(t => t.CreatedById == currentUser.Id)
-                .OrderByDescending(t => t.CreatedAt)
+                .OrderByDescending(t => t.Priority == "Critical" ? 4 : t.Priority == "High" ? 3 : t.Priority == "Medium" ? 2 : t.Priority == "Low" ? 1 : 0)
+                .ThenByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
             return View(tickets);
@@ -643,8 +657,11 @@ namespace DoableFinal.Controllers
             {
                 _context.Tickets.Add(newTicket);
                 var rows = await _context.SaveChangesAsync();
-                debug.AppendLine($"SaveChanges rows: {rows}");
-                TempData["Debug"] = debug.ToString();
+                debug.AppendLine($"Your ticket '{newTicket.Title}' has been created successfully.");
+                // TempData["Debug"] = debug.ToString();
+                // Also set a ticket-specific success message so the shared alerts partial
+                // renders this as a success (green) alert instead of the debug (yellow) alert.
+                TempData["TicketMessage"] = $"Your ticket '{newTicket.Title}' has been created successfully.";
 
                 // Notify project manager if ticket is associated with a project
                 if (project?.ProjectManagerId != null)

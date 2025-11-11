@@ -43,6 +43,9 @@ namespace DoableFinal.ViewModels
         [Display(Name = "TIN Number")]
         public string? TinNumber { get; set; }
 
+        [Display(Name = "Email Notifications")]
+        public bool EmailNotificationsEnabled { get; set; } = true;
+
         [Display(Name = "Pag-IBIG Account")]
         public string? PagIbigAccount { get; set; }
 

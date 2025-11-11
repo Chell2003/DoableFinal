@@ -17,13 +17,13 @@
         <li class="breadcrumb-item active">Task Details</li>
     </ol>
 
-    @if (TempData["TaskMessage"] != null)
+    <!-- @if (TempData["TaskMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             @TempData["TaskMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    }
+    } -->
 
     <div class="row">
         <div class="col-xl-8">
@@ -130,7 +130,7 @@
                                         </div>
                                     }
                                     
-                                    @if (!Model.IsConfirmed && Model.Status != "Completed")
+                                    @if (Model.Status == "Pending Approval" && !Model.IsConfirmed)
                                     {
                                         <div class="d-flex gap-2 mt-3">
                                             <form asp-action="ApproveTaskProof" asp-controller="ProjectManager" method="post" id="approveForm">

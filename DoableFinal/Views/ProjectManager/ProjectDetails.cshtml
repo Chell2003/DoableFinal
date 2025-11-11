@@ -201,6 +201,27 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                <!-- Project Manager -->
+                                <tr>
+                                    <td>
+                                        @($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")
+                                        <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                            <i class="bi bi-envelope"></i>
+                                        </a>
+                                    </td>
+                                    <td>Project Manager</td>
+                                </tr>
+                                <!-- Client -->
+                                <tr>
+                                    <td>
+                                        @($"{Model.Client.FirstName} {Model.Client.LastName}")
+                                        <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.Client.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                            <i class="bi bi-envelope"></i>
+                                        </a>
+                                    </td>
+                                    <td>Client</td>
+                                </tr>
+                                <!-- Team Members -->
                                 @foreach (var member in Model.ProjectTeams)
                                 {
                                     <tr>

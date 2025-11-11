@@ -117,14 +117,47 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                <!-- Project Manager -->
+                                <tr>
+                                    <td>
+                                        @($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")
+                                        @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
+                                        {
+                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        }
+                                    </td>
+                                    <td>Project Manager</td>
+                                    <td>@Model.StartDate.ToString(dateFormat)</td>
+                                </tr>
+                                <!-- Client -->
+                                <tr>
+                                    <td>
+                                        @($"{Model.Client.FirstName} {Model.Client.LastName}")
+                                        @if (Model.Client.Id != ViewBag.CurrentUserId)
+                                        {
+                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.Client.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        }
+                                    </td>
+                                    <td>Client</td>
+                                    <td>@Model.StartDate.ToString(dateFormat)</td>
+                                </tr>
+                                <!-- Team Members -->
                                 @foreach (var member in Model.ProjectTeams)
                                 {
                                     <tr>
                                         <td>
                                             @($"{member.User.FirstName} {member.User.LastName}")
-                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                                <i class="bi bi-envelope"></i>
-                                            </a>
+                                            @* Hide the message icon for the current user to avoid messaging oneself *@
+                                            @if (member.User.Id != ViewBag.CurrentUserId)
+                                            {
+                                                <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                    <i class="bi bi-envelope"></i>
+                                                </a>
+                                            }
                                         </td>
                                         <td>@member.Role</td>
                                         <td>@member.JoinedAt.ToString(dateFormat)</td>

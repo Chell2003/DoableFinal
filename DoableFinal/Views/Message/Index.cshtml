@@ -9,12 +9,32 @@
         <div class="col-md-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
                         <h5 class="card-title mb-0">Conversations</h5>
                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newMessageModal">
                             <i class="bi bi-plus-lg"></i> New Message
                         </button>
                     </div>
+                    @* Project filter dropdown for Clients and Project Managers *@
+                    @if (ViewBag.Projects != null && ViewBag.Projects.Count > 0)
+                    {
+                        <div class="mb-2">
+                            <select id="projectFilter" class="form-select form-select-sm" onchange="filterByProject()">
+                                <option value="">All Projects</option>
+                                @foreach (var project in ViewBag.Projects)
+                                {
+                                    @if (ViewBag.SelectedProjectId == project.Id)
+                                    {
+                                        <option value="@project.Id" selected>@project.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@project.Id">@project.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    }
                 </div>
                 <div class="card-body p-0">                            <div class="list-group list-group-flush" style="height: calc(100vh - 250px); overflow-y: auto;">
                                 @{
@@ -121,6 +141,7 @@
                         <label for="projectId" class="form-label">Project (Optional):</label>
                         <select name="projectId" id="projectId" class="form-select">
                             <option value="">Select project...</option>
+                            @* Initially show projects related to the current user. This will be replaced dynamically when recipient changes. *@
                             @foreach (var project in ViewBag.Projects)
                             {
                                 <option value="@project.Id">@project.Name</option>
@@ -282,6 +303,55 @@
                 refreshConversation(currentUserId);
             }
         }, 10000);
+
+        // Update project dropdown to only show projects shared between current user and selected recipient
+        document.getElementById('receiverId').addEventListener('change', function (e) {
+            const recipientId = e.target.value;
+            const projectSelect = document.getElementById('projectId');
+
+            // Reset to default if no recipient
+            if (!recipientId) {
+                projectSelect.innerHTML = '<option value="">Select project...</option>';
+                @* Re-populate with initial projects from server-side ViewBag *@
+                var initialOptions = `@Html.Raw(Json.Serialize(ViewBag.Projects ?? new List<object>()))`;
+                try {
+                    var opts = JSON.parse(initialOptions);
+                    opts.forEach(function(p) {
+                        const opt = document.createElement('option');
+                        opt.value = p.Id;
+                        opt.text = p.Name;
+                        projectSelect.appendChild(opt);
+                    });
+                } catch (err) {
+                    // fallback: do nothing
+                }
+                return;
+            }
+
+            fetch(`/Message/GetSharedProjects?recipientId=${recipientId}`)
+                .then(r => r.json())
+                .then(data => {
+                    projectSelect.innerHTML = '<option value="">Select project...</option>';
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach(function (p) {
+                            const opt = document.createElement('option');
+                            opt.value = p.id || p.Id || '';
+                            opt.text = p.name || p.Name || '';
+                            projectSelect.appendChild(opt);
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed to load shared projects', err);
+                });
+        });
+
+        // Filter messages by project
+        function filterByProject() {
+            const projectId = document.getElementById('projectFilter').value;
+            const url = projectId ? `/Message/Index?projectId=${projectId}` : '/Message/Index';
+            window.location.href = url;
+        }
     </script>
 
     <style>

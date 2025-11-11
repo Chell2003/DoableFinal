@@ -288,7 +288,7 @@ namespace DoableFinal.Controllers
                 };
 
                 // Set role-specific fields
-                if (model.Role == "Employee" || model.Role == "Project Manager")
+                if (model.Role == "Employee" || model.Role == "Project Manager" || model.Role == "Admin")
                 {
                     user.ResidentialAddress = model.ResidentialAddress;
                     user.MobileNumber = model.MobileNumber;
@@ -296,6 +296,7 @@ namespace DoableFinal.Controllers
                     user.TinNumber = model.TinNumber;
                     user.PagIbigAccount = model.PagIbigAccount;
                     user.Position = model.Position;
+                    user.EmailNotificationsEnabled = model.EmailNotificationsEnabled;
                 }
                 else if (model.Role == "Client")
                 {
@@ -305,6 +306,7 @@ namespace DoableFinal.Controllers
                     user.Designation = model.Designation;
                     user.MobileNumber = model.MobileNumber;
                     user.TinNumber = model.TinNumber;
+                    user.EmailNotificationsEnabled = model.EmailNotificationsEnabled;
                 }
 
                 // Check for existing email
@@ -1600,7 +1602,8 @@ namespace DoableFinal.Controllers
             }
 
             var tickets = await query
-                .OrderByDescending(t => t.UpdatedAt ?? t.CreatedAt)
+                .OrderByDescending(t => t.Priority == "Critical" ? 4 : t.Priority == "High" ? 3 : t.Priority == "Medium" ? 2 : t.Priority == "Low" ? 1 : 0)
+                .ThenByDescending(t => t.UpdatedAt ?? t.CreatedAt)
                 .ToListAsync();
 
             ViewBag.StatusFilter = statusFilter;
@@ -1726,6 +1729,44 @@ namespace DoableFinal.Controllers
             return View(viewModel);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddTicketComment(int ticketId, string commentText)
+        {
+            if (string.IsNullOrWhiteSpace(commentText))
+            {
+                TempData["ErrorMessage"] = "Comment text cannot be empty.";
+                return RedirectToAction(nameof(TicketDetails), new { id = ticketId });
+            }
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser?.Id == null)
+            {
+                TempData["ErrorMessage"] = "You must be logged in to post a comment.";
+                return RedirectToAction(nameof(TicketDetails), new { id = ticketId });
+            }
+
+            var ticket = await _context.Tickets.FindAsync(ticketId);
+            if (ticket == null)
+            {
+                TempData["ErrorMessage"] = "Ticket not found.";
+                return RedirectToAction(nameof(Tickets));
+            }
+
+            var comment = new TicketComment
+            {
+                TicketId = ticketId,
+                CommentText = commentText,
+                CreatedById = currentUser.Id,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.TicketComments.Add(comment);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Comment added successfully.";
+            return RedirectToAction(nameof(TicketDetails), new { id = ticketId });
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]

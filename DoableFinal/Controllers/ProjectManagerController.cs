@@ -815,7 +815,13 @@ namespace DoableFinal.Controllers
                 Role = "Project Manager",
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
-                EmailNotificationsEnabled = user.EmailNotificationsEnabled
+                EmailNotificationsEnabled = user.EmailNotificationsEnabled,
+
+                ResidentialAddress = user.ResidentialAddress ?? string.Empty,
+                Birthday = user.Birthday,
+                PagIbigAccount = user.PagIbigAccount ?? string.Empty,
+                Position = user.Position ?? string.Empty,
+                TinNumber = user.TinNumber ?? string.Empty
             };
 
             return View(model);
@@ -846,6 +852,7 @@ namespace DoableFinal.Controllers
             user.Birthday = model.Birthday;
             user.PagIbigAccount = model.PagIbigAccount;
             user.Position = model.Position;
+            user.TinNumber = model.TinNumber;
 
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
