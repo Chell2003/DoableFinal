@@ -1729,6 +1729,99 @@ namespace DoableFinal.Controllers
             return View(viewModel);
         }
 
+        // --- Content Management for public pages ---
+        private readonly string _contentFile = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "content", "home_pages.json");
+
+        private IDictionary<string, ViewModels.ContentPageViewModel> LoadContentPages()
+        {
+            try
+            {
+                if (!System.IO.File.Exists(_contentFile))
+                {
+                    // Ensure directory exists
+                    Directory.CreateDirectory(Path.GetDirectoryName(_contentFile));
+
+                    var defaultPages = new Dictionary<string, ViewModels.ContentPageViewModel>
+                    {
+                        { "Index", new ViewModels.ContentPageViewModel { Key = "Index", DisplayName = "Home - Index", TitleHtml = "<h1>QONNEC</h1>", BodyHtml = "<p>Streamline your projects...</p>", ImagePath = "" } },
+                        { "About", new ViewModels.ContentPageViewModel { Key = "About", DisplayName = "Home - About", TitleHtml = "<h1>About Us</h1>", BodyHtml = "<p>About content...</p>", ImagePath = "" } },
+                        { "Services", new ViewModels.ContentPageViewModel { Key = "Services", DisplayName = "Home - Services", TitleHtml = "<h1>Our Services</h1>", BodyHtml = "<p>Services...</p>", ImagePath = "" } },
+                        { "Contact", new ViewModels.ContentPageViewModel { Key = "Contact", DisplayName = "Home - Contact", TitleHtml = "<h1>Contact</h1>", BodyHtml = "<p>Contact form text...</p>", ImagePath = "" } }
+                    };
+                    var json = System.Text.Json.JsonSerializer.Serialize(defaultPages, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                    System.IO.File.WriteAllText(_contentFile, json);
+                }
+
+                var contentJson = System.IO.File.ReadAllText(_contentFile);
+                var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, ViewModels.ContentPageViewModel>>(contentJson) ?? new Dictionary<string, ViewModels.ContentPageViewModel>();
+                return dict.ToDictionary(k => k.Key, v => v.Value);
+            }
+            catch
+            {
+                return new Dictionary<string, ViewModels.ContentPageViewModel>();
+            }
+        }
+
+        private void SaveContentPages(IDictionary<string, ViewModels.ContentPageViewModel> pages)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(_contentFile));
+            var json = System.Text.Json.JsonSerializer.Serialize(pages, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            System.IO.File.WriteAllText(_contentFile, json);
+        }
+
+        [HttpGet]
+        public IActionResult ContentMS()
+        {
+            var pages = LoadContentPages().Values.ToList();
+            return View(pages);
+        }
+
+        [HttpGet]
+        public IActionResult EditContent(string key)
+        {
+            if (string.IsNullOrEmpty(key)) return RedirectToAction(nameof(ContentMS));
+            var pages = LoadContentPages();
+            if (!pages.ContainsKey(key)) return RedirectToAction(nameof(ContentMS));
+            return View(pages[key]);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveContent(string key, string titleHtml, string bodyHtml, IFormFile imageFile)
+        {
+            if (string.IsNullOrEmpty(key)) return RedirectToAction(nameof(ContentMS));
+
+            var pages = LoadContentPages();
+            if (!pages.ContainsKey(key))
+            {
+                pages[key] = new ViewModels.ContentPageViewModel { Key = key, DisplayName = key };
+            }
+
+            var page = pages[key];
+            page.TitleHtml = titleHtml ?? string.Empty;
+            page.BodyHtml = bodyHtml ?? string.Empty;
+
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "content", key);
+                Directory.CreateDirectory(uploadDir);
+                var fileName = $"{DateTime.UtcNow.Ticks}_{Path.GetFileName(imageFile.FileName)}";
+                var filePath = Path.Combine(uploadDir, fileName);
+                using (var stream = System.IO.File.Create(filePath))
+                {
+                    await imageFile.CopyToAsync(stream);
+                }
+                // store web path
+                page.ImagePath = $"/uploads/content/{key}/{fileName}";
+            }
+
+            pages[key] = page;
+            SaveContentPages(pages);
+
+            TempData["ContentMessage"] = "Content saved successfully.";
+            return RedirectToAction(nameof(ContentMS));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddTicketComment(int ticketId, string commentText)

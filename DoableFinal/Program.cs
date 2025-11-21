@@ -35,6 +35,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // Register the TimelineAdjustmentService
 builder.Services.AddScoped<TimelineAdjustmentService>();
 builder.Services.AddScoped<NotificationService>();
+// Register ContentService for reading editable home pages
+builder.Services.AddSingleton<ContentService>();
 
 // Configure cookie policy
 builder.Services.ConfigureApplicationCookie(options =>
@@ -81,6 +83,11 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapStaticAssets();
+
+// Area route (required for controllers decorated with [Area("Admin")] )
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",

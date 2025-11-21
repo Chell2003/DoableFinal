@@ -13,12 +13,14 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> _logger;
     private readonly ApplicationDbContext _context;
     private readonly NotificationService _notificationService;
+    private readonly ContentService _contentService;
 
-    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, NotificationService notificationService)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, NotificationService notificationService, ContentService contentService)
     {
         _logger = logger;
         _context = context;
         _notificationService = notificationService;
+        _contentService = contentService;
     }
 
     public IActionResult Index()
@@ -28,22 +30,27 @@ public class HomeController : Controller
             return RedirectToAction("Index", "Dashboard");
         }
 
-        return View();
+        var page = _contentService?.GetPage("Index");
+        return View(page);
     }
 
     public IActionResult About()
     {
-        return View();
+        var page = _contentService?.GetPage("About");
+        return View(page);
     }
 
     public IActionResult Services()
     {
-        return View();
+        var page = _contentService?.GetPage("Services");
+        return View(page);
     }
 
     public IActionResult Contact()
     {
-        return View();
+        var page = _contentService?.GetPage("Contact");
+        ViewBag.ContentPage = page;
+        return View(new ContactViewModel());
     }
 
     [HttpPost]

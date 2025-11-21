@@ -1,22 +1,43 @@
-﻿@{
+﻿@model DoableFinal.ViewModels.ContentPageViewModel
+@{
     ViewData["Title"] = "Home";
 }
 
-<!-- Hero Section -->
-<section class="hero-section bg-primary text-white py-5 d-flex align-items-center">
-    <div class="container">
-        <div class="row justify-content-center text-center">
-            <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-4">QONNEC</h1>
-                <p class="lead mb-4">Streamline your projects, collaborate with your team, and achieve better results with our comprehensive project management solution.</p>
-                <div class="d-flex gap-3 justify-content-center">
-                    <a asp-controller="Account" asp-action="Register" class="btn btn-light btn-lg">Get Started</a>
-                    <a href="#features" class="btn btn-outline-light btn-lg">Learn More</a>
+@if (Model != null)
+{
+    <section class="hero-section bg-primary text-white py-5 d-flex align-items-center">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    @Html.Raw(Model.TitleHtml)
+                    @Html.Raw(Model.BodyHtml)
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-light btn-lg">Get Started</a>
+                        <a href="#features" class="btn btn-outline-light btn-lg">Learn More</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+}
+else
+{
+    <!-- Hero Section -->
+    <section class="hero-section bg-primary text-white py-5 d-flex align-items-center">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-4">QONNEC</h1>
+                    <p class="lead mb-4">Streamline your projects, collaborate with your team, and achieve better results with our comprehensive project management solution.</p>
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-light btn-lg">Get Started</a>
+                        <a href="#features" class="btn btn-outline-light btn-lg">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
 
 <!-- Features Section -->
 <section id="features" class="py-5">

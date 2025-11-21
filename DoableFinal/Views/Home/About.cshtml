@@ -1,21 +1,48 @@
+@model DoableFinal.ViewModels.ContentPageViewModel
 @{
     ViewData["Title"] = "About Us";
 }
 
-<!-- About Hero Section -->
-<section class="bg-light py-5">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">About Us</h1>
-                <p class="lead">We're dedicated to revolutionizing project management through innovative solutions and exceptional service.</p>
-            </div>
-            <div class="col-lg-6">
-                <img src="~/images/logo-combined1.png" alt="About Us" class="img-fluid">
+@if (Model != null)
+{
+    <section class="bg-light py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    @Html.Raw(Model.TitleHtml)
+                    @Html.Raw(Model.BodyHtml)
+                </div>
+                <div class="col-lg-6">
+                    @if (!string.IsNullOrEmpty(Model.ImagePath))
+                    {
+                        <img src="@(Model.ImagePath)" alt="About" class="img-fluid" />
+                    }
+                    else
+                    {
+                        <img src="~/images/logo-combined1.png" alt="About Us" class="img-fluid" />
+                    }
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+}
+else
+{
+    <!-- About Hero Section -->
+    <section class="bg-light py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">About Us</h1>
+                    <p class="lead">We're dedicated to revolutionizing project management through innovative solutions and exceptional service.</p>
+                </div>
+                <div class="col-lg-6">
+                    <img src="~/images/logo-combined1.png" alt="About Us" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </section>
+}
 
 <!-- Our Story Section -->
 <section class="py-5">

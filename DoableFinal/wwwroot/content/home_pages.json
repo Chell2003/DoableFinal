@@ -1,0 +1,30 @@
+{
+  "Index": {
+    "Key": "Index",
+    "DisplayName": "Home - Index",
+    "TitleHtml": "\u003Ch1\u003EQONNECs\u003C/h1\u003E",
+    "BodyHtml": "\u003Cp\u003EStreamline your projects...\u003C/p\u003E",
+    "ImagePath": ""
+  },
+  "About": {
+    "Key": "About",
+    "DisplayName": "Home - About",
+    "TitleHtml": "\u003Ch1\u003EAmong Us\u003C/h1\u003E",
+    "BodyHtml": "\u003Cp\u003EAbout content...\u003C/p\u003E",
+    "ImagePath": ""
+  },
+  "Services": {
+    "Key": "Services",
+    "DisplayName": "Home - Services",
+    "TitleHtml": "\u003Ch1\u003EOur Services\u003C/h1\u003E",
+    "BodyHtml": "\u003Cp\u003EServices...\u003C/p\u003E",
+    "ImagePath": ""
+  },
+  "Contact": {
+    "Key": "Contact",
+    "DisplayName": "Home - Contact",
+    "TitleHtml": "\u003Ch1\u003EContact\u003C/h1\u003E",
+    "BodyHtml": "\u003Cp\u003EContact form text...\u003C/p\u003E",
+    "ImagePath": ""
+  }
+}

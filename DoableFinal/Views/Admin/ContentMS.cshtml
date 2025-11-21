@@ -1,0 +1,32 @@
+@model IEnumerable<DoableFinal.ViewModels.ContentPageViewModel>
+@{
+    ViewData["Title"] = "Content Management";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Content Management</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Index">Admin</a></li>
+        <li class="breadcrumb-item active">Content Management</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <p>Manage editable pages for the public site. Click <strong>Edit</strong> to update content and images.</p>
+            <div class="list-group">
+                @foreach (var p in Model)
+                {
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>@(p.DisplayName)</strong>
+                            <div class="text-muted small">Key: @(p.Key)</div>
+                        </div>
+                        <div>
+                            <a asp-action="EditContent" asp-route-key="@(p.Key)" class="btn btn-sm btn-primary me-2">Edit</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -607,7 +607,8 @@ namespace DoableFinal.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DisapproveTaskProof(int taskId)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DisapproveTaskProof(int taskId, string disapprovalRemark)
         {
             var task = await _context.Tasks
                 .Include(t => t.Project)
@@ -626,7 +627,17 @@ namespace DoableFinal.Controllers
                 return Forbid();
             }
 
+            if (string.IsNullOrWhiteSpace(disapprovalRemark))
+            {
+                TempData["ErrorMessage"] = "Please provide a reason for disapproval.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
+            }
+
             task.IsConfirmed = false;
+            // Store manager's disapproval remark and timestamp
+            task.DisapprovalRemark = disapprovalRemark?.Trim();
+            task.DisapprovedAt = DateTime.UtcNow;
+
             // Clear the submitted proof so the employee can upload a revised proof and so the UI no longer displays "Pending Approval"
             task.ProofFilePath = null;
             // Mark task as needing revision (not "Pending Approval")
@@ -641,7 +652,7 @@ namespace DoableFinal.Controllers
                 {
                     UserId = assignment.EmployeeId,
                     Title = "Task Proof Disapproved",
-                    Message = $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}. The task needs revision.",
+                    Message = $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}. Reason: {task.DisapprovalRemark}",
                     CreatedAt = DateTime.UtcNow,
                     IsRead = false,
                     Link = $"/Employee/TaskDetails/{task.Id}"
@@ -660,7 +671,7 @@ namespace DoableFinal.Controllers
                     await _notificationService.SendEmailNotificationAsync(
                         assignment.Employee.Email,
                         "Task Proof Disapproved",
-                        $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}. Please review and submit a new proof. View details at: /Employee/TaskDetails/{task.Id}"
+                        $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}. Reason: {task.DisapprovalRemark}\n\nPlease review and submit a new proof. View details at: /Employee/TaskDetails/{task.Id}"
                     );
                 }
             }

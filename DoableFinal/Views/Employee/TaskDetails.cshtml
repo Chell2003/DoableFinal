@@ -90,6 +90,39 @@
                                             <span class="badge bg-warning">Pending Approval</span>
                                         }
                                     </p>
+                                    @* Show manager disapproval remark if present *@
+                                    @if (!string.IsNullOrEmpty(Model.DisapprovalRemark))
+                                    {
+                                        <div class="mt-3">
+                                            <h6>Disapproval Reason (Project Manager):</h6>
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    @Model.DisapprovalRemark
+                                                    @if (Model.DisapprovedAt.HasValue)
+                                                    {
+                                                        <div class="small text-muted mt-2">Disapproved at: @Model.DisapprovedAt.Value.ToString(dateTimeFormat)</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            @* If proof file was cleared by the Project Manager during disapproval,
+                               still show the disapproval remark so the employee knows why it was rejected. *@
+                            @if (string.IsNullOrEmpty(Model.ProofFilePath) && !string.IsNullOrEmpty(Model.DisapprovalRemark))
+                            {
+                                <div class="mt-3">
+                                    <h6>Disapproval Reason (Project Manager):</h6>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            @Model.DisapprovalRemark
+                                            @if (Model.DisapprovedAt.HasValue)
+                                            {
+                                                <div class="small text-muted mt-2">Disapproved at: @Model.DisapprovedAt.Value.ToString(dateTimeFormat)</div>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
                             }
                         </div>

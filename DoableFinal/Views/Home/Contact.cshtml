@@ -3,20 +3,49 @@
     ViewData["Title"] = "Contact Us";
 }
 
-<!-- Contact Hero Section -->
-<section class="bg-light py-5">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">Contact Us</h1>
-                <p class="lead">Get in touch with our team. We're here to help!</p>
-            </div>
-            <div class="col-lg-6">
-                <img src="~/images/logo-combined1.png" alt="Contact Us" class="img-fluid">
+@{
+    var contentPage = ViewBag.ContentPage as DoableFinal.ViewModels.ContentPageViewModel;
+}
+@if (contentPage != null)
+{
+    <section class="bg-light py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    @Html.Raw(contentPage.TitleHtml)
+                    @Html.Raw(contentPage.BodyHtml)
+                </div>
+                <div class="col-lg-6">
+                    @if (!string.IsNullOrEmpty(contentPage.ImagePath))
+                    {
+                        <img src="@(contentPage.ImagePath)" alt="Contact" class="img-fluid" />
+                    }
+                    else
+                    {
+                        <img src="~/images/logo-combined1.png" alt="Contact Us" class="img-fluid" />
+                    }
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+}
+else
+{
+    <!-- Contact Hero Section -->
+    <section class="bg-light py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">Contact Us</h1>
+                    <p class="lead">Get in touch with our team. We're here to help!</p>
+                </div>
+                <div class="col-lg-6">
+                    <img src="~/images/logo-combined1.png" alt="Contact Us" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </section>
+}
 
 <!-- Contact Form Section -->
 <section class="py-5">

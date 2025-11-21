@@ -55,34 +55,40 @@
                 </div>
 
                 <ul class="list-unstyled components">
-                    @if (User.IsInRole("Admin"))
+                        @if (User.IsInRole("Admin"))
                     {
                         <li>
-                            <a asp-controller="Admin" asp-action="Index">
+                            <a asp-area="" asp-controller="Admin" asp-action="Index">
                                 <i class="bi bi-speedometer2"></i>
                                 <span>Dashboard</span>
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Admin" asp-action="Projects">
+                            <a asp-area="" asp-controller="Admin" asp-action="Projects">
                                 <i class="bi bi-folder"></i>
                                 <span>Projects</span>
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Admin" asp-action="Inquiries">
+                            <a asp-area="" asp-controller="Admin" asp-action="Inquiries">
                                 <i class="bi bi-envelope"></i>
                                 <span>Inquiries</span>
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Admin" asp-action="Users">
+                            <a asp-area="" asp-controller="Admin" asp-action="Users">
                                 <i class="bi bi-people"></i>
                                 <span>User Management</span>
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Admin" asp-action="Profile">
+                            <a asp-area="" asp-controller="Admin" asp-action="ContentMS">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span>Content</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-area="" asp-controller="Admin" asp-action="Profile">
                                 <i class="bi bi-person"></i>
                                 <span>Profile</span>
                             </a>
@@ -94,19 +100,19 @@
                             </a>
                             <ul class="collapse list-unstyled" id="archiveSubmenu">
                                 <li>
-                                    <a asp-controller="Admin" asp-action="ArchivedProjects">
+                                    <a asp-area="" asp-controller="Admin" asp-action="ArchivedProjects">
                                         <i class="bi bi-folder-x"></i>
                                         <span>Archived Projects</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <a asp-controller="Admin" asp-action="ArchivedTasks">
+                                    <a asp-area="" asp-controller="Admin" asp-action="ArchivedTasks">
                                         <i class="bi bi-list-task"></i>
                                         <span>Archived Tasks</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <a asp-controller="Admin" asp-action="ArchivedUsers">
+                                    <a asp-area="" asp-controller="Admin" asp-action="ArchivedUsers">
                                         <i class="bi bi-person-x"></i>
                                         <span>Archived Users</span>
                                     </a>
@@ -319,6 +325,7 @@
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/table-sort.js" asp-append-version="true"></script>
     @if (User.Identity?.IsAuthenticated == true)
     {
         <script>
