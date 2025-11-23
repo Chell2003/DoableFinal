@@ -75,6 +75,13 @@
                             <span asp-validation-for="ProjectManagerId" class="text-danger"></span>
                         </div>
 
+                        <div class="mb-3">
+                            <label for="SelectedTicketIds" class="form-label">Assign Existing Tickets (optional)</label>
+                            <select asp-for="SelectedTicketIds" asp-items="Model.AvailableTickets" class="form-select" multiple size="6">
+                            </select>
+                            <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple. Leave empty to not assign tickets.</div>
+                        </div>
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-folder-plus"></i> Create Project

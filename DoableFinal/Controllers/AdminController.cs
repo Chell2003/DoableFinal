@@ -407,6 +407,17 @@ namespace DoableFinal.Controllers
                 }).ToList()
             };
 
+            // Provide tickets that are not yet assigned to any project so admin can optionally attach them
+            var unassignedTickets = await _context.Tickets
+                .Where(t => t.ProjectId == null)
+                .ToListAsync();
+
+            viewModel.AvailableTickets = unassignedTickets.Select(t => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+            {
+                Value = t.Id.ToString(),
+                Text = t.Title
+            }).ToList();
+
             return View(viewModel);
         }
 
@@ -443,6 +454,21 @@ namespace DoableFinal.Controllers
                 _context.Projects.Add(project);
                 await _context.SaveChangesAsync();
 
+                // If tickets were selected, assign them to the newly created project
+                if (model.SelectedTicketIds != null && model.SelectedTicketIds.Any())
+                {
+                    var ticketsToAssign = await _context.Tickets
+                        .Where(t => model.SelectedTicketIds.Contains(t.Id))
+                        .ToListAsync();
+
+                    foreach (var ticket in ticketsToAssign)
+                    {
+                        ticket.ProjectId = project.Id;
+                        ticket.UpdatedAt = DateTime.UtcNow;
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
                 TempData["ProjectMessage"] = "Project created successfully.";
                 return RedirectToAction(nameof(Projects));
             }
@@ -469,6 +495,17 @@ namespace DoableFinal.Controllers
             {
                 Value = pm.Id,
                 Text = $"{pm.FirstName} {pm.LastName}"
+            }).ToList();
+
+            // also populate available (unassigned) tickets for the view
+            var unassignedTickets = await _context.Tickets
+                .Where(t => t.ProjectId == null)
+                .ToListAsync();
+
+            model.AvailableTickets = unassignedTickets.Select(t => new SelectListItem
+            {
+                Value = t.Id.ToString(),
+                Text = t.Title
             }).ToList();
 
             return View(model);

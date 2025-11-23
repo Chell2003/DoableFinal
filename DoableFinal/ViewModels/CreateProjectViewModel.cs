@@ -38,11 +38,17 @@ namespace DoableFinal.ViewModels
 
         public List<SelectListItem> Clients { get; set; }
         public List<SelectListItem> ProjectManagers { get; set; }
+        // Tickets that can be optionally assigned to the project
+        public List<SelectListItem> AvailableTickets { get; set; }
+        // Selected ticket ids to assign to the new project (optional)
+        public List<int> SelectedTicketIds { get; set; }
 
         public CreateProjectViewModel()
         {
             Clients = new List<SelectListItem>();
             ProjectManagers = new List<SelectListItem>();
+            AvailableTickets = new List<SelectListItem>();
+            SelectedTicketIds = new List<int>();
             StartDate = DateTime.Today;
             EndDate = DateTime.Today.AddMonths(1);
         }
