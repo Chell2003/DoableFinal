@@ -56,13 +56,13 @@
 
                         <div class="mb-3">
                             <label asp-for="Birthday" class="form-label"></label>
-                            <input asp-for="Birthday" class="form-control" type="date" />
+                            <input asp-for="Birthday" class="form-control" type="date" max="@DateTime.Today.AddYears(-18).ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="Birthday" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="PagIbigAccount" class="form-label"></label>
-                            <input asp-for="PagIbigAccount" class="form-control" />
+                                <input asp-for="PagIbigAccount" class="form-control" placeholder="12 digits e.g. 123456789012" />
                             <span asp-validation-for="PagIbigAccount" class="text-danger"></span>
                         </div>
 

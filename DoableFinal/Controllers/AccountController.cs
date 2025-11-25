@@ -29,6 +29,26 @@ namespace DoableFinal.Controllers
         {
             if (ModelState.IsValid)
             {
+                var phoneAttr = new DoableFinal.Validation.PhonePHAttribute();
+                var tinAttr = new DoableFinal.Validation.TinAttribute();
+
+                if (!string.IsNullOrEmpty(model.MobileNumber) && !phoneAttr.IsValid(model.MobileNumber))
+                {
+                    ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits). ");
+                    return View(model);
+                }
+
+                if (!string.IsNullOrEmpty(model.TinNumber) && !tinAttr.IsValid(model.TinNumber))
+                {
+                    ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
+                    return View(model);
+                }
+                // Additional server-side check in case the MinAge validation attribute is bypassed
+                if (model.Birthday > DateTime.Today.AddYears(-18))
+                {
+                    ModelState.AddModelError("Birthday", "You must be at least 18 years old to register.");
+                    return View(model);
+                }
                 var user = new ApplicationUser
                 {
                     UserName = model.Email,
@@ -38,6 +58,7 @@ namespace DoableFinal.Controllers
                     Role = "Client",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
+                    Birthday = model.Birthday,
                     CompanyName = model.CompanyName,
                     CompanyAddress = model.CompanyAddress,
                     Designation = model.Designation,
@@ -140,6 +161,27 @@ namespace DoableFinal.Controllers
         {
             if (!ModelState.IsValid)
             {
+                return View(model);
+            }
+
+            // Defensive validation for fields
+            var phoneAttr = new DoableFinal.Validation.PhonePHAttribute();
+            var tinAttr = new DoableFinal.Validation.TinAttribute();
+            var pagIbigAttr = new DoableFinal.Validation.PagIbigAttribute();
+
+            if (!string.IsNullOrWhiteSpace(model.MobileNumber) && !phoneAttr.IsValid(model.MobileNumber))
+            {
+                ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits). ");
+                return View(model);
+            }
+            if (!string.IsNullOrWhiteSpace(model.TinNumber) && !tinAttr.IsValid(model.TinNumber))
+            {
+                ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
+                return View(model);
+            }
+            if (!string.IsNullOrWhiteSpace(model.PagIbigAccount) && !pagIbigAttr.IsValid(model.PagIbigAccount))
+            {
+                ModelState.AddModelError("PagIbigAccount", "Invalid Pag-IBIG MID. Expected 12 numeric digits.");
                 return View(model);
             }
 

@@ -1,2 +1,97 @@
 ﻿<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
 <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+
+<script>
+	// Custom input sanitizers and validation UI for numeric fields
+	(function ($) {
+		$(function () {
+			// Helper: Show validation message in the asp-validation-for span if present
+			function showValidationMessage($input, msg) {
+				var name = $input.attr('name') || $input.attr('id');
+				var $span = $("span[data-valmsg-for='" + name + "']");
+				if (!$span || $span.length === 0) {
+					// fallback to next sibling
+					$span = $input.next("span.text-danger");
+				}
+				if ($span && $span.length) {
+					$span.text(msg);
+				}
+			}
+
+			function clearValidationMessage($input) {
+				var name = $input.attr('name') || $input.attr('id');
+				var $span = $("span[data-valmsg-for='" + name + "']");
+				if (!$span || $span.length === 0) {
+					$span = $input.next("span.text-danger");
+				}
+				if ($span && $span.length) {
+					$span.text('');
+				}
+			}
+
+			// Mobile: allow digits only; max 11 digits (09XXXXXXXXX)
+			$(document).on('input', "input[name='MobileNumber'], input[name$='.MobileNumber'], input[id$='MobileNumber']", function () {
+				var $this = $(this);
+				var original = $this.val() || '';
+				var sanitized = (original || '').replace(/\D/g, '');
+				if (sanitized.length > 11) sanitized = sanitized.slice(0, 11);
+				if (sanitized !== original) {
+					$this.val(sanitized);
+					showValidationMessage($this, 'Only digits allowed for mobile number');
+				} else {
+					clearValidationMessage($this);
+				}
+
+				// Additional format hint if too short
+				if (sanitized.length > 0 && sanitized.length < 11) {
+					showValidationMessage($this, 'Mobile number should be 11 digits (09XXXXXXXXX)');
+				}
+			});
+
+			// Pag-IBIG: digits-only, 12 digits max
+			$(document).on('input', "input[name='PagIbigAccount'], input[name$='.PagIbigAccount'], input[id$='PagIbigAccount']", function () {
+				var $this = $(this);
+				var original = $this.val() || '';
+				var sanitized = (original || '').replace(/\D/g, '');
+				if (sanitized.length > 12) sanitized = sanitized.slice(0, 12);
+				if (sanitized !== original) {
+					$this.val(sanitized);
+					showValidationMessage($this, 'Only digits allowed for Pag-IBIG MID');
+				} else {
+					clearValidationMessage($this);
+				}
+
+				if (sanitized.length > 0 && sanitized.length < 12) {
+					showValidationMessage($this, 'Pag-IBIG MID should be 12 digits');
+				}
+			});
+
+			// TIN: allow digits and dashes only; validate pattern on blur
+			$(document).on('input', "input[name='TinNumber'], input[name$='.TinNumber'], input[id$='TinNumber']", function () {
+				var $this = $(this);
+				var original = $this.val() || '';
+				var sanitized = (original || '').replace(/[^0-9\-]/g, '');
+				if (sanitized !== original) {
+					$this.val(sanitized);
+					showValidationMessage($this, 'Only digits and dashes (-) are allowed for TIN');
+				} else {
+					clearValidationMessage($this);
+				}
+			});
+
+			// TIN on blur: check pattern
+			$(document).on('blur', "input[name='TinNumber'], input[name$='.TinNumber'], input[id$='TinNumber']", function () {
+				var $this = $(this);
+				var v = ($this.val() || '').trim();
+				if (!v) { clearValidationMessage($this); return; }
+				var simplePattern = /^\d{3}-\d{3}-\d{3}$/;
+				var extendedPattern = /^\d{3}-\d{3}-\d{3}-\d{3}$/;
+				if (!simplePattern.test(v) && !extendedPattern.test(v)) {
+					showValidationMessage($this, 'Expected TIN: 123-456-789 or 123-456-789-012');
+				} else {
+					clearValidationMessage($this);
+				}
+			});
+		});
+	})(jQuery);
+</script>

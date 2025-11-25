@@ -265,6 +265,14 @@ namespace DoableFinal.Controllers
                 return View(model);
             }
 
+            // Extra server-side validation: if Birthday is provided, ensure age >= 18
+            if (model.Birthday.HasValue && model.Birthday.Value > DateTime.Today.AddYears(-18))
+            {
+                ModelState.AddModelError("Birthday", "User must be at least 18 years old.");
+                ViewBag.Role = model.Role;
+                return View(model);
+            }
+
             // Additional validation for password
             if (string.IsNullOrEmpty(model.Password))
             {
@@ -275,6 +283,31 @@ namespace DoableFinal.Controllers
 
             try
             {
+                // Defensive server-side validation for mobile/tin/pag-ibig
+                var phoneAttr = new DoableFinal.Validation.PhonePHAttribute();
+                var tinAttr = new DoableFinal.Validation.TinAttribute();
+                var pagIbigAttr = new DoableFinal.Validation.PagIbigAttribute();
+
+                if (!string.IsNullOrEmpty(model.MobileNumber) && !phoneAttr.IsValid(model.MobileNumber))
+                {
+                    ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits).");
+                    ViewBag.Role = model.Role;
+                    return View(model);
+                }
+
+                if (!string.IsNullOrEmpty(model.TinNumber) && !tinAttr.IsValid(model.TinNumber))
+                {
+                    ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
+                    ViewBag.Role = model.Role;
+                    return View(model);
+                }
+
+                if (!string.IsNullOrEmpty(model.PagIbigAccount) && !pagIbigAttr.IsValid(model.PagIbigAccount))
+                {
+                    ModelState.AddModelError("PagIbigAccount", "Invalid Pag-IBIG MID. Expected 12 numeric digits.");
+                    ViewBag.Role = model.Role;
+                    return View(model);
+                }
                 var user = new ApplicationUser
                 {
                     UserName = model.Email,
@@ -408,8 +441,9 @@ namespace DoableFinal.Controllers
             };
 
             // Provide tickets that are not yet assigned to any project so admin can optionally attach them
+            // Only show tickets that are not assigned to a project and not assigned to an employee
             var unassignedTickets = await _context.Tickets
-                .Where(t => t.ProjectId == null)
+                .Where(t => t.ProjectId == null && string.IsNullOrEmpty(t.AssignedToId))
                 .ToListAsync();
 
             viewModel.AvailableTickets = unassignedTickets.Select(t => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
@@ -457,8 +491,9 @@ namespace DoableFinal.Controllers
                 // If tickets were selected, assign them to the newly created project
                 if (model.SelectedTicketIds != null && model.SelectedTicketIds.Any())
                 {
+                    // Only assign tickets that are still unassigned (server-side validation)
                     var ticketsToAssign = await _context.Tickets
-                        .Where(t => model.SelectedTicketIds.Contains(t.Id))
+                        .Where(t => model.SelectedTicketIds.Contains(t.Id) && t.ProjectId == null && string.IsNullOrEmpty(t.AssignedToId))
                         .ToListAsync();
 
                     foreach (var ticket in ticketsToAssign)
@@ -498,8 +533,9 @@ namespace DoableFinal.Controllers
             }).ToList();
 
             // also populate available (unassigned) tickets for the view
+            // Only show tickets that are not assigned to a project and not assigned to an employee
             var unassignedTickets = await _context.Tickets
-                .Where(t => t.ProjectId == null)
+                .Where(t => t.ProjectId == null && string.IsNullOrEmpty(t.AssignedToId))
                 .ToListAsync();
 
             model.AvailableTickets = unassignedTickets.Select(t => new SelectListItem
@@ -694,6 +730,25 @@ namespace DoableFinal.Controllers
         {
             if (ModelState.IsValid)
             {
+                var phoneAttr = new DoableFinal.Validation.PhonePHAttribute();
+                var tinAttr = new DoableFinal.Validation.TinAttribute();
+                var pagIbigAttr = new DoableFinal.Validation.PagIbigAttribute();
+
+                if (!string.IsNullOrWhiteSpace(model.MobileNumber) && !phoneAttr.IsValid(model.MobileNumber))
+                {
+                    ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits). ");
+                    return View(model);
+                }
+                if (!string.IsNullOrWhiteSpace(model.TinNumber) && !tinAttr.IsValid(model.TinNumber))
+                {
+                    ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
+                    return View(model);
+                }
+                if (!string.IsNullOrWhiteSpace(model.PagIbigAccount) && !pagIbigAttr.IsValid(model.PagIbigAccount))
+                {
+                    ModelState.AddModelError("PagIbigAccount", "Invalid Pag-IBIG MID. Expected 12 numeric digits.");
+                    return View(model);
+                }
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null)
                 {

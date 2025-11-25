@@ -40,12 +40,19 @@ namespace DoableFinal.ViewModels
         public string Designation { get; set; }
 
         [Required]
-        [Phone]
         [Display(Name = "Mobile Number")]
+        [DoableFinal.Validation.PhonePHAttribute(ErrorMessage = "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits).")]
         public string MobileNumber { get; set; }
 
         [Required]
+        [Display(Name = "Birthday")]
+        [DataType(DataType.Date)]
+        [DoableFinal.Validation.MinAgeAttribute(18, ErrorMessage = "You must be at least 18 years old to register.")]
+        public DateTime Birthday { get; set; }
+
+        [Required]
         [Display(Name = "TIN Number")]
+        [DoableFinal.Validation.TinAttribute(ErrorMessage = "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.")]
         public string TinNumber { get; set; }
 
         [Required]

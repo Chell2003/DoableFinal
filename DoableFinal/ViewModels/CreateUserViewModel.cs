@@ -33,20 +33,23 @@ namespace DoableFinal.ViewModels
         public string? ResidentialAddress { get; set; }
 
         [Display(Name = "Mobile Number")]
-        [Phone]
+        [DoableFinal.Validation.PhonePHAttribute(ErrorMessage = "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits).")]
         public string? MobileNumber { get; set; }
 
         [Display(Name = "Birthday")]
         [DataType(DataType.Date)]
+        [DoableFinal.Validation.MinAgeAttribute(18, ErrorMessage = "User must be at least 18 years old.")]
         public DateTime? Birthday { get; set; }
 
         [Display(Name = "TIN Number")]
+        [DoableFinal.Validation.TinAttribute(ErrorMessage = "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.")]
         public string? TinNumber { get; set; }
 
         [Display(Name = "Email Notifications")]
         public bool EmailNotificationsEnabled { get; set; } = true;
 
         [Display(Name = "Pag-IBIG Account")]
+        [DoableFinal.Validation.PagIbigAttribute(ErrorMessage = "Invalid Pag-IBIG MID. Expected 12 numeric digits.")]
         public string? PagIbigAccount { get; set; }
 
         [Display(Name = "Position")]

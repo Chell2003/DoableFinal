@@ -88,8 +88,13 @@
 
                                 <div class="form-group mb-3">
                                     <label asp-for="MobileNumber" class="form-label"></label>
-                                    <input asp-for="MobileNumber" class="form-control" />
+                                    <input asp-for="MobileNumber" class="form-control" placeholder="09XXXXXXXXX" />
                                     <span asp-validation-for="MobileNumber" class="text-danger"></span>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label asp-for="Birthday" class="form-label"></label>
+                                    <input asp-for="Birthday" class="form-control" type="date" max="@DateTime.Today.AddYears(-18).ToString("yyyy-MM-dd")" />
+                                    <span asp-validation-for="Birthday" class="text-danger"></span>
                                 </div>
                             </div>
 
@@ -110,7 +115,7 @@
 
                                 <div class="form-group mb-3">
                                     <label asp-for="TinNumber" class="form-label"></label>
-                                    <input asp-for="TinNumber" class="form-control" />
+                                    <input asp-for="TinNumber" class="form-control" placeholder="123-456-789 or 123-456-789-012" />
                                     <span asp-validation-for="TinNumber" class="text-danger"></span>
                                 </div>
 
@@ -169,4 +174,26 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(function() {
+            $('form[asp-action="Register"]').on('submit', function(e) {
+                var bday = $('#Birthday').val();
+                if (!bday) return; // Required validation will handle empty
+                var birth = new Date(bday);
+                var today = new Date();
+                var age = today.getFullYear() - birth.getFullYear();
+                var m = today.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                    age--;
+                }
+                if (age < 18) {
+                    e.preventDefault();
+                    var msg = 'You must be at least 18 years old to register.';
+                    $('#Birthday').siblings('span.text-danger').text(msg);
+                    $('#Birthday').addClass('is-invalid');
+                    return false;
+                }
+            });
+        });
+    </script>
 } 

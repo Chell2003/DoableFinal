@@ -74,13 +74,13 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="MobileNumber" class="form-label"></label>
-                            <input asp-for="MobileNumber" class="form-control" />
+                            <input asp-for="MobileNumber" class="form-control" placeholder="09XXXXXXXXX" />
                             <span asp-validation-for="MobileNumber" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label asp-for="Birthday" class="form-label"></label>
-                            <input asp-for="Birthday" class="form-control" type="date" />
+                            <input asp-for="Birthday" class="form-control" type="date" max="@DateTime.Today.AddYears(-18).ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="Birthday" class="text-danger"></span>
                         </div>
                     </div>
@@ -88,13 +88,13 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="TinNumber" class="form-label"></label>
-                            <input asp-for="TinNumber" class="form-control" />
+                            <input asp-for="TinNumber" class="form-control" placeholder="123-456-789 or 123-456-789-012" />
                             <span asp-validation-for="TinNumber" class="text-danger"></span>
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label asp-for="PagIbigAccount" class="form-label"></label>
-                            <input asp-for="PagIbigAccount" class="form-control" />
+                            <input asp-for="PagIbigAccount" class="form-control" placeholder="12 digits e.g. 123456789012" />
                             <span asp-validation-for="PagIbigAccount" class="text-danger"></span>
                         </div>
                     </div>
@@ -201,6 +201,30 @@
 
             // Enable client-side validation
             $.validator.unobtrusive.parse(document);
+        });
+    </script>
+    <script>
+        $(function() {
+            $('form[asp-action="CreateUser"]').on('submit', function(e) {
+                // If birthday field is visible and has a value, ensure age >= 18
+                var bday = $('#Birthday').val();
+                if (bday && $('#Birthday').is(':visible')) {
+                    var birth = new Date(bday);
+                    var today = new Date();
+                    var age = today.getFullYear() - birth.getFullYear();
+                    var m = today.getMonth() - birth.getMonth();
+                    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                        age--;
+                    }
+                    if (age < 18) {
+                        e.preventDefault();
+                        var msg = 'User must be at least 18 years old.';
+                        $('#Birthday').siblings('span.text-danger').text(msg);
+                        $('#Birthday').addClass('is-invalid');
+                        return false;
+                    }
+                }
+            });
         });
     </script>
 }

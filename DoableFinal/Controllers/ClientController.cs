@@ -232,6 +232,21 @@ namespace DoableFinal.Controllers
                 return View(model);
             }
 
+            var phoneAttr = new DoableFinal.Validation.PhonePHAttribute();
+            var tinAttr = new DoableFinal.Validation.TinAttribute();
+            var pagIbigAttr = new DoableFinal.Validation.PagIbigAttribute();
+
+            if (!string.IsNullOrWhiteSpace(model.MobileNumber) && !phoneAttr.IsValid(model.MobileNumber))
+            {
+                ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits). ");
+                return View(model);
+            }
+            if (!string.IsNullOrWhiteSpace(model.TinNumber) && !tinAttr.IsValid(model.TinNumber))
+            {
+                ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
+                return View(model);
+            }
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
