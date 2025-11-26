@@ -32,7 +32,12 @@
                             {
                                 var rawLink = notification.Link.Trim();
                                 resolvedLink = rawLink;
-                                if (rawLink.Contains("/Ticket/Details", StringComparison.OrdinalIgnoreCase))
+
+                                // Normalized mapping: allow Admin or raw Ticket link to be remapped to Client TicketDetails
+                                if (rawLink.Contains("/Ticket/Details", StringComparison.OrdinalIgnoreCase)
+                                    || rawLink.Contains("/Admin/TicketDetails", StringComparison.OrdinalIgnoreCase)
+                                    || rawLink.Contains("/Admin/EditTicket", StringComparison.OrdinalIgnoreCase)
+                                    || rawLink.Contains("/Admin/EditTicket/", StringComparison.OrdinalIgnoreCase))
                                 {
                                     var parts = rawLink.TrimEnd('/').Split('/');
                                     var last = parts.LastOrDefault();

@@ -1,0 +1,50 @@
+@model DoableFinal.Models.HomePageSection
+@{
+    ViewData["Title"] = $"Edit: {Model.DisplayName}";
+}
+
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Edit About Section</h1>
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-info-circle me-1"></i>
+            @Model.DisplayName
+        </div>
+        <div class="card-body">
+            <form asp-action="EditAboutPageSection" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label">Section</label>
+                    <input type="text" class="form-control" value="@Model.DisplayName" disabled />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Key</label>
+                    <code class="d-block bg-light p-2 rounded">@Model.SectionKey</code>
+                </div>
+
+                <div class="mb-3">
+                    <label for="content" class="form-label">Content (HTML Allowed)</label>
+                    <textarea class="form-control" id="content" name="content" rows="10">@Model.Content</textarea>
+                    <small class="form-text text-muted">You can use HTML tags like &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;, etc.</small>
+                </div>
+
+                <div class="mb-3">
+                    <a href="javascript:history.back()" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-eye me-1"></i>
+            Preview
+        </div>
+        <div class="card-body">
+            @Html.Raw(Model.Content)
+        </div>
+    </div>
+</div>

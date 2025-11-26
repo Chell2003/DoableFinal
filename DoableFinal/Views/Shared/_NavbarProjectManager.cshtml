@@ -1,0 +1,25 @@
+@{
+    var isProjectManager = User.IsInRole("Project Manager");
+}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <div class="container-fluid">
+        <span class="navbar-brand">
+            <i class="bi bi-person-workspace"></i> Project Manager
+        </span>
+        <div class="navbar-nav ms-auto">
+            @if (isProjectManager)
+            {
+                <a class="nav-link" asp-controller="ProjectManager" asp-action="Index" title="Dashboard">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+                <a class="nav-link" asp-controller="ProjectManager" asp-action="MyProjects" title="My Projects">
+                    <i class="bi bi-folder"></i> My Projects
+                </a>
+                <a class="nav-link" asp-controller="ProjectManager" asp-action="ArchivedProjects" title="Archives">
+                    <i class="bi bi-archive"></i> Archives
+                </a>
+            }
+        </div>
+    </div>
+</nav>

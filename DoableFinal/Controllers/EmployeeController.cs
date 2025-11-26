@@ -188,6 +188,7 @@ namespace DoableFinal.Controllers
                 EmailNotificationsEnabled = user.EmailNotificationsEnabled,
 
                 ResidentialAddress = user.ResidentialAddress ?? string.Empty,
+                MobileNumber = user.MobileNumber ?? string.Empty,
                 Birthday = user.Birthday,
                 PagIbigAccount = user.PagIbigAccount ?? string.Empty,
                 TinNumber = user.TinNumber ?? string.Empty,
@@ -274,6 +275,7 @@ namespace DoableFinal.Controllers
                 user.Birthday = model.Birthday;
                 user.PagIbigAccount = model.PagIbigAccount;
                 user.TinNumber = model.TinNumber;
+                user.MobileNumber = model.MobileNumber;
                 user.Position = model.Position;
 
                 var result = await _userManager.UpdateAsync(user);

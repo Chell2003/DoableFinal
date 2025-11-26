@@ -17,7 +17,7 @@
         <!-- Project Information -->
         <div class="col-xl-8">
             <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div id="projectActions" class="card-header d-flex justify-content-between align-items-center">
                     <div>
                         <i class="fas fa-project-diagram me-1"></i>
                         Project Information
@@ -32,7 +32,7 @@
                         {
                             @if (projectProgress == 100 && Model.Status != "Completed")
                             {
-                                <form asp-action="CompleteProject" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                <form id="completeProjectForm" asp-action="CompleteProject" asp-route-id="@Model.Id" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-success btn-sm me-2">
                                         <i class="fas fa-check-circle"></i> Complete Project
@@ -41,7 +41,7 @@
                             }
                             @if (Model.Status != "In Progress")
                             {
-                                <form asp-action="ArchiveProject" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to archive this project?');">
+                                <form id="archiveProjectForm" asp-action="ArchiveProject" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to archive this project?');">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-warning btn-sm">
                                         <i class="fas fa-archive"></i> Archive Project
@@ -62,12 +62,19 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Client:</div>
-                        <div class="col-md-9">@($"{Model.Client.FirstName} {Model.Client.LastName}")</div>
+                        <div class="col-md-9">@($"{Model.Client.FirstName} {Model.Client.LastName}")
+                        @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
+                                        {
+                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        }
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Status:</div>
                         <div class="col-md-9">
-                            <span class="badge bg-@(Model.Status switch {
+                            <span id="projectStatusBadge" class="badge bg-@(Model.Status switch {
                                 "Not Started" => "secondary",
                                 "In Progress" => "primary",
                                 "On Hold" => "warning",
@@ -122,9 +129,12 @@
                         <i class="fas fa-tasks me-1"></i>
                         Project Tasks
                     </div>
-                    <a asp-action="CreateTask" asp-route-projectId="@Model.Id" class="btn btn-sm btn-primary">
-                        <i class="bi bi-plus-lg"></i> Create Task
-                    </a>
+                    @if (!Model.IsArchived)
+                    {
+                        <a id="createTaskBtn" asp-action="CreateTask" asp-route-projectId="@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-lg"></i> Create Task
+                        </a>
+                    }
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -205,9 +215,7 @@
                                 <tr>
                                     <td>
                                         @($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")
-                                        <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                            <i class="bi bi-envelope"></i>
-                                        </a>
+                                        
                                     </td>
                                     <td>Project Manager</td>
                                 </tr>
@@ -215,9 +223,12 @@
                                 <tr>
                                     <td>
                                         @($"{Model.Client.FirstName} {Model.Client.LastName}")
-                                        <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.Client.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                            <i class="bi bi-envelope"></i>
-                                        </a>
+                                        <!-- @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
+                                        {
+                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        } -->
                                     </td>
                                     <td>Client</td>
                                 </tr>
@@ -227,9 +238,7 @@
                                     <tr>
                                         <td>
                                             @($"{member.User.FirstName} {member.User.LastName}")
-                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                                <i class="bi bi-envelope"></i>
-                                            </a>
+                                            @* Message button removed for team members: only Project Manager should be a message recipient *@
                                         </td>
                                         <td>@member.Role</td>
                                     </tr>
@@ -241,16 +250,21 @@
             </div>
         </div>
     </div>
+    @if (Model.IsArchived)
+    {
+        <form asp-action="UnarchiveProject" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Reopen this project?');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-success btn-sm">
+                <i class="fas fa-folder-open"></i> Reopen Project
+            </button>
+        </form>
+    }
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Get project start and end dates
-            var projectStart = new Date("@Model.StartDate.ToString("yyyy-MM-dd")").getTime();
-            var projectEnd = new Date("@Model.EndDate?.ToString("yyyy-MM-dd")").getTime();
-
             // Prepare task data
             var tasks = @Html.Raw(Json.Serialize(Model.Tasks?.Select(t => new {
                 id = t.Id,
@@ -263,6 +277,41 @@
                     : "Unassigned"
             }) ?? Enumerable.Empty<object>()));
 
+            // Get project start and end dates
+            var projectStart = new Date("@Model.StartDate.ToString("yyyy-MM-dd")");
+            var projectEnd = new Date("@Model.EndDate?.ToString("yyyy-MM-dd")");
+
+            // If the project's start or end date is missing or invalid, fall back to tasks' dates
+            if (!projectStart || isNaN(projectStart.getTime())) {
+                if (tasks && tasks.length > 0) {
+                    var validStarts = tasks.filter(t => t.start).map(t => new Date(t.start).getTime());
+                    if (validStarts.length > 0) {
+                        projectStart = new Date(Math.min.apply(null, validStarts));
+                    } else {
+                        projectStart = new Date();
+                    }
+                } else {
+                    projectStart = new Date();
+                }
+            }
+            if (!projectEnd || isNaN(projectEnd.getTime())) {
+                if (tasks && tasks.length > 0) {
+                    var validEnds = tasks.filter(t => t.end).map(t => new Date(t.end).getTime());
+                    if (validEnds.length > 0) {
+                        projectEnd = new Date(Math.max.apply(null, validEnds));
+                    } else {
+                        projectEnd = new Date(projectStart.getTime() + 30 * 24 * 60 * 60 * 1000);
+                    }
+                } else {
+                    // Default to one month after start
+                    projectEnd = new Date(projectStart.getTime() + 30 * 24 * 60 * 60 * 1000);
+                }
+            }
+
+            projectStart = projectStart.getTime();
+            projectEnd = projectEnd.getTime();
+
+
             // Configure colors array
             const colors = ['#FF5733', '#4834d4', '#6ab04c', '#be2edd', '#22a6b3', '#eb4d4b', '#f0932b', '#686de0', '#badc58', '#130f40'];
 
@@ -271,7 +320,7 @@
                 name: task.name,
                 data: [{
                     x: ' ',
-                    y: [new Date(task.start).getTime(), new Date(task.end).getTime()],
+                    y: [task.start ? new Date(task.start).getTime() : projectStart, task.end ? new Date(task.end).getTime() : projectEnd],
                     status: task.status,
                     assignee: task.assignee
                 }]
@@ -291,9 +340,9 @@
                             zoom: false,
                             zoomin: false,
                             zoomout: false,
-                            pan: false,
                             reset: false
                         }
+                        
                     },
                     animations: {
                         enabled: true,
@@ -302,7 +351,6 @@
                     },
                     fontFamily: 'inherit'
                 },
-                colors: ['#FF5733'],
                 plotOptions: {
                     bar: {
                         horizontal: true,
@@ -387,6 +435,102 @@
                     }
                 }
             };
+
+            // Hook AJAX for complete project button (moved outside chart options)
+            const completeForm = document.getElementById('completeProjectForm');
+            if (completeForm) {
+                completeForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const tokenElement = completeForm.querySelector('input[name="__RequestVerificationToken"]');
+                    const token = tokenElement ? tokenElement.value : null;
+                    try {
+                        const response = await fetch(completeForm.action, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': token,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const result = await response.json();
+                        if (result && result.success) {
+                            // Update status badge
+                            const badge = document.getElementById('projectStatusBadge');
+                            if (badge) {
+                                badge.textContent = result.status;
+                                badge.className = 'badge bg-success';
+                            }
+                            // Hide Complete/Archive/Create Task buttons and disable edit
+                            const createTaskBtn = document.getElementById('createTaskBtn');
+                            if (createTaskBtn) createTaskBtn.classList.add('d-none');
+                            const editBtn = document.getElementById('editProjectBtn');
+                            if (editBtn) editBtn.classList.add('d-none');
+                            const archiveForm = document.getElementById('archiveProjectForm');
+                            if (archiveForm) archiveForm.remove();
+                            // Add Reopen button if not present
+                            let reopenForm = document.getElementById('unarchiveProjectForm');
+                            if (!reopenForm) {
+                                const reopenHtml = `<button id="reopenProjectBtn" class="btn btn-success btn-sm"><i class="fas fa-folder-open"></i> Reopen Project</button>`;
+                                // Append to header actions
+                                const header = document.getElementById('projectActions');
+                                const headerActions = header ? header.querySelector('div:last-child') : null;
+                                if (headerActions) headerActions.insertAdjacentHTML('beforeend', reopenHtml);
+                                // Add listener for reopening
+                                const reopenBtn = document.getElementById('reopenProjectBtn');
+                                if (reopenBtn) {
+                                    reopenBtn.addEventListener('click', async function (e) {
+                                        e.preventDefault();
+                                        const tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
+                                        const token = tokenEl ? tokenEl.value : null;
+                                        try {
+                                            const response = await fetch('/ProjectManager/UnarchiveProject/' + @Model.Id, {
+                                                method: 'POST',
+                                                headers: { 'RequestVerificationToken': token, 'X-Requested-With': 'XMLHttpRequest' }
+                                            });
+                                            if (!response.ok) throw new Error('Network error');
+                                            const result = await response.json();
+                                            if (result && result.success) {
+                                                // Restore UI controls
+                                                if (createTaskBtn) createTaskBtn.classList.remove('d-none');
+                                                if (archiveForm) {
+                                                    // add it back? redirect for simplicity
+                                                }
+                                                if (editBtn) editBtn.classList.remove('d-none');
+                                                // Update status badge
+                                                const badge = document.getElementById('projectStatusBadge');
+                                                if (badge) {
+                                                    badge.textContent = result.status;
+                                                    badge.className = 'badge bg-primary';
+                                                }
+                                                showToast('Project reopened successfully');
+                                            }
+                                        } catch (err) {
+                                            console.error(err);
+                                            showToast('Failed to reopen project');
+                                        }
+                                    });
+                                }
+                            }
+                            // Optionally show notification
+                            showToast('Project completed and archived');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showToast('Failed to complete project.');
+                    }
+                });
+            }
+
+            // Show a simple toast/alert for notifications
+            function showToast(message) {
+                const container = document.createElement('div');
+                container.className = 'alert alert-info alert-dismissible fade show';
+                container.setAttribute('role', 'alert');
+                container.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                const main = document.querySelector('.container-fluid');
+                if (main) main.insertBefore(container, main.firstChild);
+                setTimeout(() => { if (container) container.remove(); }, 4000);
+            }
 
             // Render the chart
             var chart = new ApexCharts(document.querySelector("#ganttChart"), options);

@@ -32,7 +32,16 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Project Manager:</div>
-                        <div class="col-md-9">@($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")</div>
+                        <div class="col-md-9">
+                            @($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")
+                            @* Allow messaging the Project Manager, but only if the current user isn't the PM themself *@
+                            @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
+                            {
+                                <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message PM" class="btn btn-sm btn-outline-secondary ms-2">
+                                    <i class="bi bi-envelope"></i>
+                                </a>
+                            }
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Status:</div>
@@ -100,74 +109,7 @@
                 </div>
             </div>
 
-            <!-- Project Team -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-users me-1"></i>
-                    Project Team
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Joined Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Project Manager -->
-                                <tr>
-                                    <td>
-                                        @($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")
-                                        @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
-                                        {
-                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                                <i class="bi bi-envelope"></i>
-                                            </a>
-                                        }
-                                    </td>
-                                    <td>Project Manager</td>
-                                    <td>@Model.StartDate.ToString(dateFormat)</td>
-                                </tr>
-                                <!-- Client -->
-                                <tr>
-                                    <td>
-                                        @($"{Model.Client.FirstName} {Model.Client.LastName}")
-                                        @if (Model.Client.Id != ViewBag.CurrentUserId)
-                                        {
-                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.Client.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                                <i class="bi bi-envelope"></i>
-                                            </a>
-                                        }
-                                    </td>
-                                    <td>Client</td>
-                                    <td>@Model.StartDate.ToString(dateFormat)</td>
-                                </tr>
-                                <!-- Team Members -->
-                                @foreach (var member in Model.ProjectTeams)
-                                {
-                                    <tr>
-                                        <td>
-                                            @($"{member.User.FirstName} {member.User.LastName}")
-                                            @* Hide the message icon for the current user to avoid messaging oneself *@
-                                            @if (member.User.Id != ViewBag.CurrentUserId)
-                                            {
-                                                <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                                    <i class="bi bi-envelope"></i>
-                                                </a>
-                                            }
-                                        </td>
-                                        <td>@member.Role</td>
-                                        <td>@member.JoinedAt.ToString(dateFormat)</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <!-- Project Team is moved to sidebar right column -->
 
             <!-- My Tasks in this Project -->
             <div class="card mb-4">
@@ -218,6 +160,61 @@
                                             <a asp-controller="Employee" asp-action="TaskDetails" asp-route-id="@task.Id" 
                                                class="btn btn-sm btn-outline-primary">View</a>
                                         </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4">
+            <!-- Project Team (moved to the right sidebar) -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    Project Team
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Project Manager -->
+                                <tr>
+                                    <td>
+                                        @($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")
+                                        @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
+                                        {
+                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        }
+                                    </td>
+                                    <td>Project Manager</td>
+                                </tr>
+                                <!-- Client -->
+                                <tr>
+                                    <td>
+                                        @($"{Model.Client.FirstName} {Model.Client.LastName}")
+                                        @* Client message button removed: only Project Manager should be message recipient *@
+                                    </td>
+                                    <td>Client</td>
+                                </tr>
+                                <!-- Team Members -->
+                                @foreach (var member in Model.ProjectTeams)
+                                {
+                                    <tr>
+                                        <td>
+                                            @($"{member.User.FirstName} {member.User.LastName}")
+                                            @* Message button removed for team members: only Project Manager should be a message recipient *@
+                                        </td>
+                                        <td>@member.Role</td>
                                     </tr>
                                 }
                             </tbody>

@@ -22,15 +22,17 @@ namespace DoableFinal.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly TimelineAdjustmentService _timelineAdjustmentService;
         private readonly NotificationService _notificationService;
+        private readonly HomePageService _homePageService;
         private readonly ILogger<AdminController> _logger;
 
-        public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, TimelineAdjustmentService timelineAdjustmentService, NotificationService notificationService, ILogger<AdminController> logger)
+        public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, TimelineAdjustmentService timelineAdjustmentService, NotificationService notificationService, HomePageService homePageService, ILogger<AdminController> logger)
         {
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
             _timelineAdjustmentService = timelineAdjustmentService;
             _notificationService = notificationService;
+            _homePageService = homePageService;
             _logger = logger;
         }
 
@@ -248,27 +250,25 @@ namespace DoableFinal.Controllers
         {
             // Log the received values for debugging
             _logger.LogInformation($"Received form data - Email: {model.Email}, Role: {model.Role}, Password present: {!string.IsNullOrEmpty(model.Password)}");
+            _logger.LogInformation($"MobileNumber RAW: '{model.MobileNumber}' (null:{model.MobileNumber == null}, empty:{string.IsNullOrEmpty(model.MobileNumber)}, whitespace:{string.IsNullOrWhiteSpace(model.MobileNumber)})");
+            _logger.LogInformation($"TinNumber RAW: '{model.TinNumber}' (null:{model.TinNumber == null}, empty:{string.IsNullOrEmpty(model.TinNumber)}, whitespace:{string.IsNullOrWhiteSpace(model.TinNumber)})");
+            _logger.LogInformation($"PagIbigAccount RAW: '{model.PagIbigAccount}' (null:{model.PagIbigAccount == null}, empty:{string.IsNullOrEmpty(model.PagIbigAccount)}, whitespace:{string.IsNullOrWhiteSpace(model.PagIbigAccount)})");
 
             if (!ModelState.IsValid)
             {
-                foreach (var modelStateVal in ModelState.Values)
+                _logger.LogWarning($"ModelState is invalid. Total errors: {ModelState.ErrorCount}");
+                foreach (var modelStateKey in ModelState.Keys)
                 {
+                    var modelStateVal = ModelState[modelStateKey];
                     if (modelStateVal.Errors.Count > 0)
                     {
+                        _logger.LogError($"Field: {modelStateKey}");
                         foreach (var error in modelStateVal.Errors)
                         {
-                            _logger.LogError($"Validation error: {error.ErrorMessage}");
+                            _logger.LogError($"  Error: {error.ErrorMessage}");
                         }
                     }
                 }
-                ViewBag.Role = model.Role;
-                return View(model);
-            }
-
-            // Extra server-side validation: if Birthday is provided, ensure age >= 18
-            if (model.Birthday.HasValue && model.Birthday.Value > DateTime.Today.AddYears(-18))
-            {
-                ModelState.AddModelError("Birthday", "User must be at least 18 years old.");
                 ViewBag.Role = model.Role;
                 return View(model);
             }
@@ -281,33 +281,174 @@ namespace DoableFinal.Controllers
                 return View(model);
             }
 
+            // Extra server-side validation: if Birthday is provided, ensure age >= 18
+            if (model.Birthday.HasValue && model.Birthday.Value > DateTime.Today.AddYears(-18))
+            {
+                ModelState.AddModelError("Birthday", "User must be at least 18 years old.");
+                ViewBag.Role = model.Role;
+                return View(model);
+            }
+
             try
             {
-                // Defensive server-side validation for mobile/tin/pag-ibig
+                // STRICT backend validation for all required fields based on role
+                bool isEmployeeRole = model.Role == "Employee" || model.Role == "Project Manager" || model.Role == "Admin";
+                bool isClientRole = model.Role == "Client";
+
                 var phoneAttr = new DoableFinal.Validation.PhonePHAttribute();
                 var tinAttr = new DoableFinal.Validation.TinAttribute();
                 var pagIbigAttr = new DoableFinal.Validation.PagIbigAttribute();
 
-                if (!string.IsNullOrEmpty(model.MobileNumber) && !phoneAttr.IsValid(model.MobileNumber))
+                // Validate required fields for Employee/Project Manager/Admin
+                if (isEmployeeRole)
                 {
-                    ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits).");
+                    // Validate that required fields are provided
+                    if (string.IsNullOrWhiteSpace(model.ResidentialAddress))
+                    {
+                        ModelState.AddModelError("ResidentialAddress", "Residential Address is required for Employees and Project Managers.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    // Trim and validate Mobile Number
+                    var trimmedMobile = model.MobileNumber?.Trim();
+                    if (string.IsNullOrWhiteSpace(trimmedMobile))
+                    {
+                        ModelState.AddModelError("MobileNumber", "Mobile Number is required.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    if (!model.Birthday.HasValue)
+                    {
+                        ModelState.AddModelError("Birthday", "Birthday is required for Employees and Project Managers.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    // Trim and validate TIN Number
+                    var trimmedTin = model.TinNumber?.Trim();
+                    if (string.IsNullOrWhiteSpace(trimmedTin))
+                    {
+                        ModelState.AddModelError("TinNumber", "TIN Number is required.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    // Trim and validate Pag-IBIG
+                    var trimmedPagIbig = model.PagIbigAccount?.Trim();
+                    if (string.IsNullOrWhiteSpace(trimmedPagIbig))
+                    {
+                        ModelState.AddModelError("PagIbigAccount", "Pag-IBIG Account is required.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.Position))
+                    {
+                        ModelState.AddModelError("Position", "Position is required for Employees and Project Managers.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    // Validate format of required fields
+                    if (!phoneAttr.IsValid(trimmedMobile))
+                    {
+                        ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits).");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    if (!tinAttr.IsValid(trimmedTin))
+                    {
+                        ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    if (!pagIbigAttr.IsValid(trimmedPagIbig))
+                    {
+                        ModelState.AddModelError("PagIbigAccount", "Invalid Pag-IBIG MID. Expected 12 numeric digits.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+                }
+
+                // Validate required fields for Client
+                if (isClientRole)
+                {
+                    if (string.IsNullOrWhiteSpace(model.CompanyName))
+                    {
+                        ModelState.AddModelError("CompanyName", "Company Name is required for Clients.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.CompanyAddress))
+                    {
+                        ModelState.AddModelError("CompanyAddress", "Company Address is required for Clients.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.CompanyType))
+                    {
+                        ModelState.AddModelError("CompanyType", "Company Type is required for Clients.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.Designation))
+                    {
+                        ModelState.AddModelError("Designation", "Designation is required for Clients.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    // Trim and validate Mobile Number
+                    var trimmedMobile = model.MobileNumber?.Trim();
+                    if (string.IsNullOrWhiteSpace(trimmedMobile))
+                    {
+                        ModelState.AddModelError("MobileNumber", "Mobile Number is required.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    // Trim and validate TIN Number
+                    var trimmedTin = model.TinNumber?.Trim();
+                    if (string.IsNullOrWhiteSpace(trimmedTin))
+                    {
+                        ModelState.AddModelError("TinNumber", "TIN Number is required.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    // Validate format of required fields
+                    if (!phoneAttr.IsValid(trimmedMobile))
+                    {
+                        ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits).");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+
+                    if (!tinAttr.IsValid(trimmedTin))
+                    {
+                        ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
+                        ViewBag.Role = model.Role;
+                        return View(model);
+                    }
+                }
+
+                // Check for existing email BEFORE creating user
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("Email", "This email is already registered.");
                     ViewBag.Role = model.Role;
                     return View(model);
                 }
 
-                if (!string.IsNullOrEmpty(model.TinNumber) && !tinAttr.IsValid(model.TinNumber))
-                {
-                    ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
-                    ViewBag.Role = model.Role;
-                    return View(model);
-                }
-
-                if (!string.IsNullOrEmpty(model.PagIbigAccount) && !pagIbigAttr.IsValid(model.PagIbigAccount))
-                {
-                    ModelState.AddModelError("PagIbigAccount", "Invalid Pag-IBIG MID. Expected 12 numeric digits.");
-                    ViewBag.Role = model.Role;
-                    return View(model);
-                }
+                // All validations passed - create the user
                 var user = new ApplicationUser
                 {
                     UserName = model.Email,
@@ -321,7 +462,7 @@ namespace DoableFinal.Controllers
                 };
 
                 // Set role-specific fields
-                if (model.Role == "Employee" || model.Role == "Project Manager" || model.Role == "Admin")
+                if (isEmployeeRole)
                 {
                     user.ResidentialAddress = model.ResidentialAddress;
                     user.MobileNumber = model.MobileNumber;
@@ -331,7 +472,7 @@ namespace DoableFinal.Controllers
                     user.Position = model.Position;
                     user.EmailNotificationsEnabled = model.EmailNotificationsEnabled;
                 }
-                else if (model.Role == "Client")
+                else if (isClientRole)
                 {
                     user.CompanyName = model.CompanyName;
                     user.CompanyAddress = model.CompanyAddress;
@@ -340,15 +481,6 @@ namespace DoableFinal.Controllers
                     user.MobileNumber = model.MobileNumber;
                     user.TinNumber = model.TinNumber;
                     user.EmailNotificationsEnabled = model.EmailNotificationsEnabled;
-                }
-
-                // Check for existing email
-                var existingUser = await _userManager.FindByEmailAsync(model.Email);
-                if (existingUser != null)
-                {
-                    ModelState.AddModelError("Email", "This email is already registered.");
-                    ViewBag.Role = model.Role;
-                    return View(model);
                 }
 
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -591,6 +723,12 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
+            if (task.IsArchived || task.Project.IsArchived)
+            {
+                TempData["Error"] = "Cannot approve a task that is archived or belongs to an archived project.";
+                return RedirectToAction(nameof(Tasks));
+            }
+
             if (string.IsNullOrEmpty(task.ProofFilePath))
             {
                 TempData["Error"] = "No proof file has been submitted for this task.";
@@ -715,6 +853,7 @@ namespace DoableFinal.Controllers
                 ResidentialAddress = user.ResidentialAddress ?? string.Empty,
                 Birthday = user.Birthday,
                 PagIbigAccount = user.PagIbigAccount ?? string.Empty,
+                MobileNumber = user.MobileNumber ?? string.Empty,
                 Position = user.Position ?? string.Empty,
 
                 IsActive = user.IsActive,
@@ -730,29 +869,105 @@ namespace DoableFinal.Controllers
         {
             if (ModelState.IsValid)
             {
-                var phoneAttr = new DoableFinal.Validation.PhonePHAttribute();
-                var tinAttr = new DoableFinal.Validation.TinAttribute();
-                var pagIbigAttr = new DoableFinal.Validation.PagIbigAttribute();
-
-                if (!string.IsNullOrWhiteSpace(model.MobileNumber) && !phoneAttr.IsValid(model.MobileNumber))
-                {
-                    ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits). ");
-                    return View(model);
-                }
-                if (!string.IsNullOrWhiteSpace(model.TinNumber) && !tinAttr.IsValid(model.TinNumber))
-                {
-                    ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
-                    return View(model);
-                }
-                if (!string.IsNullOrWhiteSpace(model.PagIbigAccount) && !pagIbigAttr.IsValid(model.PagIbigAccount))
-                {
-                    ModelState.AddModelError("PagIbigAccount", "Invalid Pag-IBIG MID. Expected 12 numeric digits.");
-                    return View(model);
-                }
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null)
                 {
                     return NotFound();
+                }
+
+                var phoneAttr = new DoableFinal.Validation.PhonePHAttribute();
+                var tinAttr = new DoableFinal.Validation.TinAttribute();
+                var pagIbigAttr = new DoableFinal.Validation.PagIbigAttribute();
+
+                bool isEmployeeRole = user.Role == "Employee" || user.Role == "Project Manager" || user.Role == "Admin";
+                bool isClientRole = user.Role == "Client";
+
+                // Validate required fields for Employee/Project Manager/Admin
+                if (isEmployeeRole)
+                {
+                    if (string.IsNullOrWhiteSpace(model.ResidentialAddress))
+                    {
+                        ModelState.AddModelError("ResidentialAddress", "Residential Address is required.");
+                        return View(model);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.MobileNumber))
+                    {
+                        ModelState.AddModelError("MobileNumber", "Mobile Number is required.");
+                        return View(model);
+                    }
+
+                    if (!model.Birthday.HasValue)
+                    {
+                        ModelState.AddModelError("Birthday", "Birthday is required.");
+                        return View(model);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.TinNumber))
+                    {
+                        ModelState.AddModelError("TinNumber", "TIN Number is required.");
+                        return View(model);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.PagIbigAccount))
+                    {
+                        ModelState.AddModelError("PagIbigAccount", "Pag-IBIG Account is required.");
+                        return View(model);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.Position))
+                    {
+                        ModelState.AddModelError("Position", "Position is required.");
+                        return View(model);
+                    }
+
+                    // Validate format of required fields
+                    if (!phoneAttr.IsValid(model.MobileNumber))
+                    {
+                        ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits).");
+                        return View(model);
+                    }
+
+                    if (!tinAttr.IsValid(model.TinNumber))
+                    {
+                        ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
+                        return View(model);
+                    }
+
+                    if (!pagIbigAttr.IsValid(model.PagIbigAccount))
+                    {
+                        ModelState.AddModelError("PagIbigAccount", "Invalid Pag-IBIG MID. Expected 12 numeric digits.");
+                        return View(model);
+                    }
+                }
+
+                // Validate required fields for Client
+                if (isClientRole)
+                {
+                    if (string.IsNullOrWhiteSpace(model.MobileNumber))
+                    {
+                        ModelState.AddModelError("MobileNumber", "Mobile Number is required.");
+                        return View(model);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.TinNumber))
+                    {
+                        ModelState.AddModelError("TinNumber", "TIN Number is required.");
+                        return View(model);
+                    }
+
+                    // Validate format of required fields
+                    if (!phoneAttr.IsValid(model.MobileNumber))
+                    {
+                        ModelState.AddModelError("MobileNumber", "Invalid Philippine mobile number. Expected format: 09XXXXXXXXX (11 digits).");
+                        return View(model);
+                    }
+
+                    if (!tinAttr.IsValid(model.TinNumber))
+                    {
+                        ModelState.AddModelError("TinNumber", "Invalid TIN. Expected: XXX-XXX-XXX or XXX-XXX-XXX-XXX.");
+                        return View(model);
+                    }
                 }
 
                 user.FirstName = model.FirstName;
@@ -764,6 +979,7 @@ namespace DoableFinal.Controllers
                 user.Birthday = model.Birthday;
                 user.PagIbigAccount = model.PagIbigAccount;
                 user.Position = model.Position;
+                user.MobileNumber = model.MobileNumber;
 
                 user.IsActive = model.IsActive;
                 user.IsArchived = model.IsArchived;
@@ -961,6 +1177,12 @@ namespace DoableFinal.Controllers
 
 
 
+            if (project.IsArchived)
+            {
+                TempData["ErrorMessage"] = "Cannot edit an archived project. Reopen the project to make changes.";
+                return RedirectToAction(nameof(ProjectDetails), new { id });
+            }
+
             var model = new EditProjectViewModel
             {
                 Id = project.Id,
@@ -991,6 +1213,12 @@ namespace DoableFinal.Controllers
                 if (project == null)
                 {
                     return NotFound();
+                }
+
+                if (project.IsArchived)
+                {
+                    TempData["ErrorMessage"] = "Cannot edit an archived project. Please unarchive the project to make changes.";
+                    return RedirectToAction(nameof(ProjectDetails), new { id = project.Id });
                 }
 
                 // Validate start date is not in the past
@@ -1109,6 +1337,8 @@ namespace DoableFinal.Controllers
             // Unarchive the project
             project.IsArchived = false;
             project.ArchivedAt = null;
+            // Reopen the project
+            project.Status = "In Progress";
             project.UpdatedAt = DateTime.UtcNow;
 
             // Unarchive all tasks in the project
@@ -1124,7 +1354,18 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been unarchived by admin");
 
-            TempData["ProjectMessage"] = "Project has been unarchived successfully.";
+            TempData["ProjectMessage"] = "Project has been reopened and unarchived.";
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    success = true,
+                    status = project.Status,
+                    isArchived = project.IsArchived
+                });
+            }
+
             return RedirectToAction(nameof(ArchivedProjects));
         }
 
@@ -1180,17 +1421,40 @@ namespace DoableFinal.Controllers
                 return RedirectToAction(nameof(ProjectDetails), new { id });
             }
 
-            // Update project status
+            // Update project status and archive project
             var oldStatus = project.Status;
             project.Status = "Completed";
+            project.IsArchived = true;
+            project.ArchivedAt = DateTime.UtcNow;
             project.UpdatedAt = DateTime.UtcNow;
+
+            // Archive project tasks
+            foreach (var task in project.Tasks)
+            {
+                task.IsArchived = true;
+                task.ArchivedAt = DateTime.UtcNow;
+                task.UpdatedAt = DateTime.UtcNow;
+            }
 
             await _context.SaveChangesAsync();
 
             // Notify relevant parties
             await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been marked as completed");
 
-            TempData["ProjectMessage"] = "Project has been marked as completed.";
+            TempData["ProjectMessage"] = "Project has been marked as completed and archived.";
+
+            // Return JSON for AJAX
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    success = true,
+                    status = project.Status,
+                    isArchived = project.IsArchived,
+                    archivedAt = project.ArchivedAt?.ToString("o")
+                });
+            }
+
             return RedirectToAction(nameof(ProjectDetails), new { id });
         }
 
@@ -1207,6 +1471,12 @@ namespace DoableFinal.Controllers
             if (task == null)
             {
                 return NotFound();
+            }
+
+            if (task.IsArchived || task.Project.IsArchived)
+            {
+                TempData["ErrorMessage"] = "Cannot edit an archived task or a task under an archived project.";
+                return RedirectToAction(nameof(TaskDetails), new { id = task.Id });
             }
 
             var model = new EditTaskViewModel
@@ -1368,10 +1638,16 @@ namespace DoableFinal.Controllers
                 .Include(t => t.Attachments)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
-            if (task == null)
+                if (task == null)
             {
                 return NotFound();
             }
+
+                if (task.IsArchived || task.Project.IsArchived)
+                {
+                    TempData["ErrorMessage"] = "Cannot edit an archived task or a task under an archived project.";
+                    return RedirectToAction(nameof(TaskDetails), new { id = task.Id });
+                }
 
             return View(task);
         }
@@ -1587,6 +1863,12 @@ namespace DoableFinal.Controllers
                 return await PrepareCreateTaskViewModel(model);
             }
 
+            if (project.IsArchived)
+            {
+                ModelState.AddModelError(string.Empty, "Cannot create a task on an archived project.");
+                return await PrepareCreateTaskViewModel(model);
+            }
+
             // Validate task dates against project dates
             if (model.StartDate < project.StartDate)
             {
@@ -1747,6 +2029,8 @@ namespace DoableFinal.Controllers
                     new SelectListItem("Resolved", "Resolved"),
                     new SelectListItem("Closed", "Closed")
                 };
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Where(s => !string.IsNullOrWhiteSpace(s));
+                TempData["TicketMessage"] = "Status update failed: " + string.Join("; ", errors);
                 return View(model);
             }
 
@@ -1792,6 +2076,54 @@ namespace DoableFinal.Controllers
 
             TempData["TicketMessage"] = "Ticket status updated successfully.";
             return RedirectToAction(nameof(Tickets));
+        }
+
+        // Simplified POST handler to support button-based status updates from the TicketDetails view
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateTicketStatus(int Id, string CurrentStatus)
+        {
+            var ticket = await _context.Tickets.FindAsync(Id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            var oldStatus = ticket.Status;
+            ticket.Status = CurrentStatus;
+            ticket.UpdatedAt = DateTime.UtcNow;
+            if (ticket.Status == "Resolved")
+            {
+                ticket.ResolvedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            if (oldStatus != ticket.Status)
+            {
+                var recipients = new List<string>();
+                if (!string.IsNullOrEmpty(ticket.CreatedById)) recipients.Add(ticket.CreatedById);
+                if (!string.IsNullOrEmpty(ticket.AssignedToId)) recipients.Add(ticket.AssignedToId);
+                    foreach (var userId in recipients.Distinct())
+                    {
+                        // Use the public ticket details route by default. Client JS or views will remap accordingly.
+                        var notification = new Notification
+                        {
+                            UserId = userId,
+                            Title = "Ticket Status Updated",
+                            Message = $"Ticket '{ticket.Title}' status changed from {oldStatus} to {ticket.Status}.",
+                            Link = $"/Ticket/Details/{ticket.Id}",
+                            CreatedAt = DateTime.UtcNow,
+                            IsRead = false,
+                            Type = NotificationType.General
+                        };
+                        _context.Notifications.Add(notification);
+                    }
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["TicketMessage"] = "Ticket status updated successfully.";
+            return RedirectToAction("TicketDetails", new { id = Id });
         }
 
         public async Task<IActionResult> TicketDetails(int id)
@@ -1975,15 +2307,18 @@ namespace DoableFinal.Controllers
                 return Challenge();
             }
 
-            // Create uploads directory if it doesn't exist
-          
+            // Create uploads directory if it doesn't exist, and save file to disk
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "tickets", ticketId.ToString());
+            Directory.CreateDirectory(uploadsFolder);
 
-            // Generate a unique filename
+            // Generate a unique filename and write the file to disk
             var fileName = Path.GetFileName(file.FileName);
             var uniqueFileName = $"{DateTime.Now.Ticks}_{fileName}";
-
-
-           
+            var savedFilePath = Path.Combine(uploadsFolder, uniqueFileName);
+            using (var stream = System.IO.File.Create(savedFilePath))
+            {
+                await file.CopyToAsync(stream);
+            }
 
             var attachment = new TicketAttachment
             {
@@ -2002,15 +2337,171 @@ namespace DoableFinal.Controllers
             // Notify the ticket creator if they're not the one uploading
             if (ticket.CreatedById != currentUser.Id)
             {
+                // Use the public Ticket/Details route in the notification so clients can view the ticket
                 await _notificationService.CreateNotification(
                     ticket.CreatedById,
                     "New Attachment on Your Ticket",
                     $"An admin has added an attachment to your ticket: {ticket.Title}",
-                    $"/Admin/TicketDetails/{ticketId}"
+                    $"/Ticket/Details/{ticketId}"
                 );
             }
 
             return RedirectToAction(nameof(TicketDetails), new { id = ticketId });
+        }
+
+        // ===== HOMEPAGE CMS MANAGEMENT =====
+        
+        [HttpGet]
+        public async Task<IActionResult> ManageHomePage()
+        {
+            var sections = await _homePageService.GetAllSectionsAsync();
+            return View(sections);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditHomePageSection(int id)
+        {
+            var section = await _context.HomePageSections.FindAsync(id);
+            if (section == null)
+                return NotFound();
+
+            return View(section);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditHomePageSection(int id, string content)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized();
+
+            await _homePageService.UpdateSectionAsync(id, content, user.Id);
+            TempData["SuccessMessage"] = "Section updated successfully!";
+            return RedirectToAction(nameof(ManageHomePage));
+        }
+
+        // ===== ABOUT PAGE CMS MANAGEMENT =====
+        
+        [HttpGet]
+        public async Task<IActionResult> ManageAboutPage()
+        {
+            var sections = await _homePageService.GetAllSectionsAsync();
+            // Filter only About page sections
+            var aboutSections = sections.Where(s => s.SectionKey.StartsWith("about-")).ToList();
+            return View(aboutSections);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditAboutPageSection(int id)
+        {
+            var section = await _context.HomePageSections.FindAsync(id);
+            if (section == null)
+                return NotFound();
+            
+            // Verify it's an About section
+            if (!section.SectionKey.StartsWith("about-"))
+                return Unauthorized();
+
+            return View(section);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditAboutPageSection(int id, string content)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized();
+
+            var section = await _context.HomePageSections.FindAsync(id);
+            if (section == null || !section.SectionKey.StartsWith("about-"))
+                return Unauthorized();
+
+            await _homePageService.UpdateSectionAsync(id, content, user.Id);
+            TempData["SuccessMessage"] = "Section updated successfully!";
+            return RedirectToAction(nameof(ManageAboutPage));
+        }
+
+        // ===== SERVICES PAGE CMS MANAGEMENT =====
+        
+        [HttpGet]
+        public async Task<IActionResult> ManageServicesPage()
+        {
+            var sections = await _homePageService.GetAllSectionsAsync();
+            // Filter only Services page sections
+            var servicesSections = sections.Where(s => s.SectionKey.StartsWith("services-")).ToList();
+            return View(servicesSections);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditServicesPageSection(int id)
+        {
+            var section = await _context.HomePageSections.FindAsync(id);
+            if (section == null)
+                return NotFound();
+            
+            // Verify it's a Services section
+            if (!section.SectionKey.StartsWith("services-"))
+                return Unauthorized();
+
+            return View(section);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditServicesPageSection(int id, string content)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized();
+
+            var section = await _context.HomePageSections.FindAsync(id);
+            if (section == null || !section.SectionKey.StartsWith("services-"))
+                return Unauthorized();
+
+            await _homePageService.UpdateSectionAsync(id, content, user.Id);
+            TempData["SuccessMessage"] = "Section updated successfully!";
+            return RedirectToAction(nameof(ManageServicesPage));
+        }
+
+        public async Task<IActionResult> ManageContactPage()
+        {
+            var sections = await _homePageService.GetAllSectionsAsync();
+            // Filter only Contact page sections
+            var contactSections = sections.Where(s => s.SectionKey.StartsWith("contact-")).ToList();
+            return View(contactSections);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditContactPageSection(int id)
+        {
+            var section = await _context.HomePageSections.FindAsync(id);
+            if (section == null)
+                return NotFound();
+            
+            // Verify it's a Contact section
+            if (!section.SectionKey.StartsWith("contact-"))
+                return Unauthorized();
+
+            return View(section);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditContactPageSection(int id, string content)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized();
+
+            var section = await _context.HomePageSections.FindAsync(id);
+            if (section == null || !section.SectionKey.StartsWith("contact-"))
+                return Unauthorized();
+
+            await _homePageService.UpdateSectionAsync(id, content, user.Id);
+            TempData["SuccessMessage"] = "Section updated successfully!";
+            return RedirectToAction(nameof(ManageContactPage));
         }
     }
 }

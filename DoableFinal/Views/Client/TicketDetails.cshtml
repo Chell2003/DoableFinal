@@ -92,6 +92,7 @@
                 </div>
                 <div class="card-body">
                     <form asp-action="AddTicketComment" method="post" class="mb-4">
+                        @Html.AntiForgeryToken()
                         <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
                         <div class="mb-3">
                             <label for="comment" class="form-label">Add a comment</label>
@@ -131,6 +132,7 @@
                                                             <i class="fas fa-edit"></i>
                                                         </button>
                                                         <form asp-action="RemoveTicketComment" method="post" class="d-inline">
+                                                            @Html.AntiForgeryToken()
                                                             <input type="hidden" name="commentId" value="@comment.Id" />
                                                             <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this comment?')">
                                                                 <i class="fas fa-trash"></i>
@@ -144,6 +146,7 @@
                                             </div>
                                             <div class="comment-edit-form-@comment.Id" style="display: none;">
                                                 <form asp-action="EditTicketComment" method="post">
+                                                    @Html.AntiForgeryToken()
                                                     <input type="hidden" name="commentId" value="@comment.Id" />
                                                     <div class="mb-2">
                                                         <textarea name="comment" class="form-control" rows="3" required>@comment.CommentText</textarea>
@@ -211,6 +214,41 @@
                                 <p class="mb-0">Status Updated to @Model.Ticket.Status</p>
                                 <small class="text-muted">@(Model.Ticket.UpdatedAt?.ToString(dateTimeFormat) ?? "-")</small>
                             </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Attachments -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <i class="fas fa-paperclip me-1"></i>
+                    Attachments
+                </div>
+                <div class="card-body">
+
+                    <div class="attachments-list">
+                        @if (Model.Attachments != null && Model.Attachments.Any())
+                        {
+                            foreach (var attachment in Model.Attachments)
+                            {
+                                <div class="attachment-item d-flex align-items-center justify-content-between border-bottom py-2">
+                                    <div>
+                                        <i class="bi bi-paperclip"></i>
+                                        <a href="@attachment.FilePath" target="_blank">@attachment.FileName</a>
+                                        <br />
+                                        <small class="text-muted">
+                                            @($"Uploaded by {attachment.UploadedBy?.FirstName} {attachment.UploadedBy?.LastName}")
+                                            <br />
+                                            @attachment.UploadedAt.ToString("MMM dd, yyyy HH:mm")
+                                        </small>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">No attachments available.</p>
                         }
                     </div>
                 </div>

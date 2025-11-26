@@ -27,15 +27,33 @@
                         Project Information
                     </div>
                     <div>
-                        <a asp-action="EditProject" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
-                            <i class="fas fa-edit"></i> Edit Project
-                        </a>
+                            @if (!Model.IsArchived)
+                            {
+                                <a asp-action="EditProject" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-edit"></i> Edit Project
+                                </a>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary btn-sm" disabled title="This project is archived and read-only">
+                                    <i class="fas fa-edit"></i> Edit Project
+                                </button>
+                            }
                         @if (!Model.IsArchived && Model.Status != "In Progress")
                         {
                             <form asp-action="ArchiveProject" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to archive this project?');">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-warning btn-sm">
                                     <i class="fas fa-archive"></i> Archive Project
+                                </button>
+                            </form>
+                        }
+                        @if (Model.IsArchived)
+                        {
+                            <form asp-action="UnarchiveProject" asp-route-id="@Model.Id" method="post" class="d-inline" onsubmit="return confirm('Reopen this project?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-folder-open"></i> Reopen Project
                                 </button>
                             </form>
                         }
@@ -209,9 +227,12 @@
                                 <tr>
                                     <td>
                                         @($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")
-                                        <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                            <i class="bi bi-envelope"></i>
-                                        </a>
+                                        @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
+                                        {
+                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        }
                                     </td>
                                     <td>Project Manager</td>
                                 </tr>
@@ -219,9 +240,7 @@
                                 <tr>
                                     <td>
                                         @($"{Model.Client.FirstName} {Model.Client.LastName}")
-                                        <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.Client.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                            <i class="bi bi-envelope"></i>
-                                        </a>
+                                        @* Client message button removed: only Project Manager should be a message recipient *@
                                     </td>
                                     <td>Client</td>
                                 </tr>
@@ -231,9 +250,7 @@
                                     <tr>
                                         <td>
                                             @($"{member.User.FirstName} {member.User.LastName}")
-                                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                                <i class="bi bi-envelope"></i>
-                                            </a>
+                                            @* Message button removed for team members: only Project Manager should be a message recipient *@
                                         </td>
                                         <td>@member.Role</td>
                                     </tr>

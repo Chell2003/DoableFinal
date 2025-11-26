@@ -1,171 +1,141 @@
-@model DoableFinal.ViewModels.ContentPageViewModel
 @{
     ViewData["Title"] = "About Us";
+    
+    // Extract sections from ViewBag - using CMS database content
+    var sections = ViewBag.Sections as List<DoableFinal.Models.HomePageSection> ?? new List<DoableFinal.Models.HomePageSection>();
+    
+    var heroTitle = sections?.FirstOrDefault(s => s.SectionKey == "about-hero-title")?.Content ?? "About Doable";
+    var heroBody = sections?.FirstOrDefault(s => s.SectionKey == "about-hero-body")?.Content ?? "We're committed to excellence";
+    
+    var storyTitle = sections?.FirstOrDefault(s => s.SectionKey == "about-story-title")?.Content ?? "Our Story";
+    var storyIntro = sections?.FirstOrDefault(s => s.SectionKey == "about-story-intro")?.Content ?? "";
+    var storyContent = sections?.FirstOrDefault(s => s.SectionKey == "about-story-content")?.Content ?? "";
+    
+    var missionTitle = sections?.FirstOrDefault(s => s.SectionKey == "about-mission-title")?.Content ?? "Our Mission";
+    var missionContent = sections?.FirstOrDefault(s => s.SectionKey == "about-mission-content")?.Content ?? "";
+    
+    var valuesTitle = sections?.FirstOrDefault(s => s.SectionKey == "about-values-title")?.Content ?? "Our Core Values";
+    
+    var value1Title = sections?.FirstOrDefault(s => s.SectionKey == "about-value-1-title")?.Content ?? "Innovation";
+    var value1Body = sections?.FirstOrDefault(s => s.SectionKey == "about-value-1-body")?.Content ?? "";
+    
+    var value2Title = sections?.FirstOrDefault(s => s.SectionKey == "about-value-2-title")?.Content ?? "Collaboration";
+    var value2Body = sections?.FirstOrDefault(s => s.SectionKey == "about-value-2-body")?.Content ?? "";
+    
+    var value3Title = sections?.FirstOrDefault(s => s.SectionKey == "about-value-3-title")?.Content ?? "Integrity";
+    var value3Body = sections?.FirstOrDefault(s => s.SectionKey == "about-value-3-body")?.Content ?? "";
 }
 
-@if (Model != null)
+<!-- Edit About Content Button -->
+@if (User.IsInRole("Admin") || User.IsInRole("ProjectManager"))
 {
-    <section class="bg-light py-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    @Html.Raw(Model.TitleHtml)
-                    @Html.Raw(Model.BodyHtml)
-                </div>
-                <div class="col-lg-6">
-                    @if (!string.IsNullOrEmpty(Model.ImagePath))
-                    {
-                        <img src="@(Model.ImagePath)" alt="About" class="img-fluid" />
-                    }
-                    else
-                    {
-                        <img src="~/images/logo-combined1.png" alt="About Us" class="img-fluid" />
-                    }
-                </div>
+    <div class="alert alert-info mb-4">
+        <a href="@Url.Action("ManageAboutPage", "Admin")" class="btn btn-primary btn-sm">
+            <i class="bi bi-pencil-square"></i> Edit About Content
+        </a>
+    </div>
+}
+
+<!-- Hero Section -->
+<section class="hero-section py-5 bg-primary" style="color: white;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 mb-4 fw-bold">@Html.Raw(heroTitle)</h1>
+                <p class="lead">@Html.Raw(heroBody)</p>
             </div>
         </div>
-    </section>
-}
-else
-{
-    <!-- About Hero Section -->
-    <section class="bg-light py-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <h1 class="display-4 fw-bold mb-4">About Us</h1>
-                    <p class="lead">We're dedicated to revolutionizing project management through innovative solutions and exceptional service.</p>
-                </div>
-                <div class="col-lg-6">
-                    <img src="~/images/logo-combined1.png" alt="About Us" class="img-fluid">
-                </div>
-            </div>
-        </div>
-    </section>
-}
+    </div>
+</section>
 
 <!-- Our Story Section -->
 <section class="py-5">
     <div class="container">
         <div class="row">
-            <div class="col-lg-8 mx-auto">
-    <h2 class="text-center mb-4">Our Story</h2>
-    <p class="lead text-center mb-5">
-        What started as a freelance project has grown into a nationwide software company helping auto repair shops thrive through technology.
-    </p>
-    <p>
-        It all began as a freelance project when a shop in Quezon City approached us, looking for a system to help manage their business. That small project became the foundation of something much larger.
-    </p>
-    <p>
-        In 2017, the software was redesigned to serve general auto repair shops and was originally named <strong>Auto Shop Office</strong>, inspired by the idea of creating an “office suite” built specifically for shop operations.
-    </p>
-    <p>
-        To reach more users, a website was launched and online ads were run. A partnership was formed, and together we registered our first business name, <strong>HENNIK Automotive Software Solutions</strong>, with the DTI.
-    </p>
-    <p>
-        Our very first client placed their trust in us, and through continuous feedback, we refined the system and expanded our user base. Growth was steady as we personally visited shops, conducted demos, and learned directly from our customers.
-    </p>
-    <p>
-        As more features were added and more clients came onboard, the workload increased. Eventually, one partner moved on, but development continued — leading to a major breakthrough when a leading auto repair franchise adopted the system.
-    </p>
-    <p>
-        This success inspired the next chapter. The business was officially registered with the SEC under a new name: <strong>Qonnec Software Solutions, Inc.</strong> As the product evolved into a more data-driven and intelligent platform, it was rebranded as <strong>Autometrik</strong>.
-    </p>
-    <p>
-        Today, Autometrik powers around <strong>200 auto repair shops</strong> across Luzon, Visayas, and Mindanao. Qonnec continues to grow, innovate, and stay true to its mission — helping automotive businesses become more efficient and connected through technology.
-    </p>
-</div>
-
+            <div class="col-lg-10 mx-auto">
+                <div class="mb-5">
+                    <h2 class="mb-4">@Html.Raw(storyTitle)</h2>
+                    @if (!string.IsNullOrEmpty(storyIntro?.ToString()))
+                    {
+                        <p class="lead mb-4">@Html.Raw(storyIntro)</p>
+                    }
+                    <div class="story-content">
+                        @Html.Raw(storyContent)
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- Our Mission Section -->
-<section class="bg-light py-5">
+<!-- Mission Section -->
+<section class="py-5" style="background-color: #f8f9fa;">
     <div class="container">
         <div class="row">
-            <div class="col-lg-8 mx-auto text-center">
-                <h2 class="mb-4">Our Mission</h2>
-                <p class="lead">
-                    To empower automotive businesses with innovative tools that simplify operations, enhance efficiency, and drive growth.
-                </p>
-                <p>
-                    We believe that technology should make running a business easier, not harder. Our mission is to provide intelligent, data-driven software solutions that help auto repair shops streamline their workflow, connect their teams, and deliver exceptional customer experiences.
-                </p>
+            <div class="col-lg-10 mx-auto">
+                <h2 class="mb-4">@Html.Raw(missionTitle)</h2>
+                <div class="mission-content p-4" style="background-color: white; border-left: 4px solid #ff4f19ff; border-radius: 4px;">
+                    @Html.Raw(missionContent)
+                </div>
             </div>
-
         </div>
     </div>
 </section>
 
-<!-- Our Values Section -->
+<!-- Core Values Section -->
 <section class="py-5">
     <div class="container">
-        <h2 class="text-center mb-5">Our Values</h2>
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body text-center p-4">
-                <i class="bi bi-lightbulb display-4 text-primary mb-3"></i>
-                <h3 class="h5">Innovation</h3>
-                <p>We constantly push boundaries to create smarter, data-driven software that helps auto repair shops work more efficiently.</p>
+        <div class="row mb-5">
+            <div class="col-lg-10 mx-auto">
+                <h2 class="text-center mb-4">@Html.Raw(valuesTitle)</h2>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body text-center p-4">
-                <i class="bi bi-people display-4 text-primary mb-3"></i>
-                <h3 class="h5">Collaboration</h3>
-                <p>We work closely with our clients and partners, valuing their feedback to continuously improve and evolve our solutions.</p>
+        <div class="row g-4">
+            <!-- Value 1 -->
+            <div class="col-lg-4">
+                <div class="card h-100 shadow-sm border-0 hover-lift" style="transition: transform 0.3s;">
+                    <div class="card-body text-center p-4">
+                        <h3 class="card-title mb-3" style="color: #ff4f19ff;">@Html.Raw(value1Title)</h3>
+                        <p class="card-text">@Html.Raw(value1Body)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Value 2 -->
+            <div class="col-lg-4">
+                <div class="card h-100 shadow-sm border-0 hover-lift" style="transition: transform 0.3s;">
+                    <div class="card-body text-center p-4">
+                        <h3 class="card-title mb-3" style="color: #ff4f19ff;">@Html.Raw(value2Title)</h3>
+                        <p class="card-text">@Html.Raw(value2Body)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Value 3 -->
+            <div class="col-lg-4">
+                <div class="card h-100 shadow-sm border-0 hover-lift" style="transition: transform 0.3s;">
+                    <div class="card-body text-center p-4">
+                        <h3 class="card-title mb-3" style="color: #ff4f19ff;">@Html.Raw(value3Title)</h3>
+                        <p class="card-text">@Html.Raw(value3Body)</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body text-center p-4">
-                <i class="bi bi-shield-check display-4 text-primary mb-3"></i>
-                <h3 class="h5">Integrity</h3>
-                <p>We build lasting relationships through honesty, accountability, and transparency in everything we do.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
     </div>
 </section>
 
-<!-- Team Section -->
-<!-- <section class="bg-light py-5">
-    <div class="container">
-        <h2 class="text-center mb-5">Our Team</h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm">
-                    <img src="~/images/team/ceo.jpg" class="card-img-top" alt="CEO">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">John Doe</h5>
-                        <p class="card-text text-muted">CEO & Founder</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm">
-                    <img src="~/images/team/cto.jpg" class="card-img-top" alt="CTO">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Jane Smith</h5>
-                        <p class="card-text text-muted">Chief Technology Officer</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm">
-                    <img src="~/images/team/coo.jpg" class="card-img-top" alt="COO">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Mike Johnson</h5>
-                        <p class="card-text text-muted">Chief Operations Officer</p>
-                    </div>
-                </div>
-            </div>
-        </div> -->
- 
+<style>
+    .hover-lift:hover {
+        transform: translateY(-5px);
+    }
+    
+    .story-content p {
+        margin-bottom: 1.5rem;
+        line-height: 1.8;
+    }
+    
+    .mission-content p {
+        margin-bottom: 1rem;
+        line-height: 1.8;
+    }
+</style>

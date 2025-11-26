@@ -2,7 +2,23 @@
 
 @{
     ViewData["Title"] = "Messages";
+
+    if (User.IsInRole("Admin"))
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+    else if (User.IsInRole("Client"))
+    {
+        Layout = "~/Views/Shared/_ClientLayout.cshtml";
+    }
+    else
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml"; // or Layout = null
+    }
 }
+
+<!-- Role-based Navbar -->
+
 
 <div class="container-fluid">
     <div class="row">        <!-- Message List Sidebar -->
@@ -11,9 +27,11 @@
                 <div class="card-header bg-white">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h5 class="card-title mb-0">Conversations</h5>
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newMessageModal">
-                            <i class="bi bi-plus-lg"></i> New Message
-                        </button>
+                        <div>
+                            <button id="btnNewMessage" type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                                <i class="bi bi-plus-lg"></i> New
+                            </button>
+                        </div>
                     </div>
                     @* Project filter dropdown for Clients and Project Managers *@
                     @if (ViewBag.Projects != null && ViewBag.Projects.Count > 0)
@@ -36,18 +54,18 @@
                         </div>
                     }
                 </div>
-                <div class="card-body p-0">                            <div class="list-group list-group-flush" style="height: calc(100vh - 250px); overflow-y: auto;">
-                                @{
-                                    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                                }
+                    <div class="card-body p-0">                            
+                    <div class="list-group list-group-flush" style="height: calc(100vh - 250px); overflow-y: auto;">
+                                @{ var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value; }
 
                                 @if (ViewBag.UsersWithMessages != null)
                                 {
                                     foreach (var conv in ViewBag.UsersWithMessages)
                                     {
                                         <div class="conversation-item p-3 border-bottom @(conv.UnreadCount > 0 ? "bg-light" : "")" 
-                                             style="cursor: pointer;" 
-                                             onclick="loadConversation('@conv.UserId')">
+                                            data-userid="@conv.UserId"
+                                            style="cursor: pointer;" 
+                                            onclick="loadConversation('@conv.UserId')">
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-circle me-3">
                                                     @(conv.User.FirstName[0] + conv.User.LastName[0])
@@ -71,7 +89,8 @@
                                 
                                 @foreach (var user in ViewBag.UsersWithoutMessages)
                                 {
-                                    <div class="conversation-item p-3 border-bottom" 
+                                     <div class="conversation-item p-3 border-bottom" 
+                                         data-userid="@user.Id"
                                          style="cursor: pointer;" 
                                          onclick="loadConversation('@user.Id')">
                                         <div class="d-flex align-items-center">
@@ -94,73 +113,76 @@
         <!-- Message Content Area -->
         <div class="col-md-8">
             <div class="card shadow-sm">
-                <div class="card-body p-0">
-                    <div id="conversationContent" class="d-flex flex-column" style="height: calc(100vh - 250px);">
-                        <div class="text-center py-5 text-muted">
-                            <i class="bi bi-chat-dots display-1"></i>
-                            <p class="mt-3">Select a conversation to view messages</p>
-                        </div>
-                    </div>
+            <div class="card-body p-0">
+                <!-- Make this area full viewport height -->
+                <div id="conversationContent" class="d-flex flex-column" style="height: calc(100vh - 250px); overflow: visible;">
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-chat-dots display-1"></i>
+                    <p class="mt-3">Select a conversation to view messages</p>
                 </div>
+                </div>
+            </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- New Message Modal -->
-<div class="modal fade" id="newMessageModal" tabindex="-1">
-    <div class="modal-dialog">
+<div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">New Message</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="newMessageModalLabel">New Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form asp-action="SendMessage" method="post" class="needs-validation" novalidate>
-                    <div class="mb-3">
-                        <label for="receiverId" class="form-label">To:</label>
-                        <select name="receiverId" id="receiverId" class="form-select" required>
-                            <option value="">Select recipient...</option>                            @if (ViewBag.UsersWithoutMessages != null)
-                            {
-                                foreach (var user in ViewBag.UsersWithoutMessages)
-                                {
-                                    <option value="@user.Id">@user.FirstName @user.LastName</option>
+                <form id="newMessageForm" class="needs-validation" novalidate>
+                    <div class="mb-2">
+                        <label for="receiverId" class="form-label small">To</label>
+                        <select id="receiverId" name="receiverId" class="form-select form-select-sm" required>
+                            <option value="">Select recipient...</option>
+                            @* Combine users from both lists; avoid duplicates *@
+                            @{ 
+                                var renderedUserIds = new HashSet<string>();
+                                if (ViewBag.UsersWithMessages != null) {
+                                    foreach (var conv in ViewBag.UsersWithMessages) {
+                                        if (renderedUserIds.Add(conv.User.Id)) {
+                                            <option value="@conv.User.Id">@conv.User.FirstName @conv.User.LastName</option>
+                                        }
+                                    }
                                 }
-                            }
-                            @if (ViewBag.UsersWithMessages != null)
-                            {
-                                foreach (var conv in ViewBag.UsersWithMessages)
-                                {
-                                    <option value="@conv.UserId">@conv.User.FirstName @conv.User.LastName</option>
+                                if (ViewBag.UsersWithoutMessages != null) {
+                                    foreach (var u in ViewBag.UsersWithoutMessages) {
+                                        if (renderedUserIds.Add(u.Id)) {
+                                            <option value="@u.Id">@u.FirstName @u.LastName</option>
+                                        }
+                                    }
                                 }
                             }
                         </select>
-                        <div class="invalid-feedback">Please select a recipient.</div>
                     </div>
-                    <div class="mb-3">
-                        <label for="projectId" class="form-label">Project (Optional):</label>
-                        <select name="projectId" id="projectId" class="form-select">
-                            <option value="">Select project...</option>
-                            @* Initially show projects related to the current user. This will be replaced dynamically when recipient changes. *@
-                            @foreach (var project in ViewBag.Projects)
+                    <div class="mb-2">
+                        <label for="projectId" class="form-label small">Project (optional)</label>
+                        <select id="projectId" name="projectId" class="form-select form-select-sm">
+                            <option value="">Optional: Select project...</option>
+                            @if (ViewBag.Projects != null)
                             {
-                                <option value="@project.Id">@project.Name</option>
+                                foreach (var project in ViewBag.Projects)
+                                {
+                                    <option value="@project.Id">@project.Name</option>
+                                }
                             }
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label for="content" class="form-label">Message:</label>
-                        <textarea name="content" id="content" class="form-control" rows="4" required 
-                                placeholder="Type your message here..."></textarea>
-                        <div class="invalid-feedback">Please enter a message.</div>
-                    </div>
-                    <div class="text-end">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send me-1"></i> Send Message
-                        </button>
+                    <div class="mb-2">
+                        <label for="messageContent" class="form-label small">Message</label>
+                        <textarea id="messageContent" name="content" class="form-control" rows="3" required></textarea>
                     </div>
                 </form>
+            </div>
+            <div class="modal-footer">
+                <button id="btnSendNew" type="button" class="btn btn-primary">Send</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -183,10 +205,17 @@
             })
         })()
 
-        let currentUserId = null;
+        // Authentication user id (current signed-in user)
+        const authUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+        // The other party in the currently opened conversation
+        let currentConversationUserId = null;
 
         function loadConversation(userId) {
-            currentUserId = userId;
+            currentConversationUserId = userId;
+            // Highlight the active conversation item
+            document.querySelectorAll('.conversation-item').forEach(it => it.classList.remove('active'));
+            const activeItem = document.querySelector(`.conversation-item[data-userid="${userId}"]`);
+            if (activeItem) activeItem.classList.add('active');
             const content = document.getElementById('conversationContent');
             content.innerHTML = `
                 <div class="conversation-header p-3 border-bottom">
@@ -210,23 +239,29 @@
                 .then(data => {
                     const messages = data.messages;
                     const messagesHtml = messages.map(message => `
-                        <div class="message-bubble ${message.senderId === currentUserId ? 'message-sent' : 'message-received'}">
+                        <div class="message-bubble ${message.senderId === authUserId ? 'message-sent' : 'message-received'}">
                             ${message.projectId ? `
-                                <div class="small text-${message.senderId === currentUserId ? 'light' : 'muted'} mb-1">
+                                <div class="small text-${message.senderId === authUserId ? 'light' : 'muted'} mb-1">
                                     <i class="bi bi-folder me-1"></i>${message.projectName || 'Project'}
                                 </div>
                             ` : ''}
                             <div class="message-content">${message.content}</div>
-                            <div class="small text-${message.senderId === currentUserId ? 'light' : 'muted'} mt-1">
+                            <div class="small text-${message.senderId === authUserId ? 'light' : 'muted'} mt-1">
                                 ${message.createdAt}
                             </div>
                         </div>
                     `).join('');
 
                     const content = document.getElementById('conversationContent');
+                    const recipientElem = document.querySelector(`.conversation-item[data-userid="${userId}"]`);
+                    const recipientName = recipientElem ? (recipientElem.querySelector('h6') ? recipientElem.querySelector('h6').innerText : 'Conversation') : 'Conversation';
                     content.innerHTML = `
-                        <div class="conversation-header p-3 border-bottom">
-                            <h5 class="mb-0">Conversation</h5>
+                        <div class="conversation-header p-3 border-bottom d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-3">${recipientName.split(' ').map(n => n[0]).slice(0,2).join('')}</div>
+                                <h5 class="mb-0">${recipientName}</h5>
+                            </div>
+                            
                         </div>
                         <div class="conversation-messages p-3 flex-grow-1 d-flex flex-column" style="overflow-y: auto; width: 100%;">
                             ${messagesHtml}
@@ -299,13 +334,15 @@
 
         // Auto-refresh conversation every 10 seconds
         setInterval(() => {
-            if (currentUserId) {
-                refreshConversation(currentUserId);
+            if (currentConversationUserId) {
+                refreshConversation(currentConversationUserId);
             }
         }, 10000);
 
         // Update project dropdown to only show projects shared between current user and selected recipient
-        document.getElementById('receiverId').addEventListener('change', function (e) {
+        var receiverElement = document.getElementById('receiverId');
+        if (receiverElement) {
+            receiverElement.addEventListener('change', function (e) {
             const recipientId = e.target.value;
             const projectSelect = document.getElementById('projectId');
 
@@ -344,13 +381,81 @@
                 .catch(err => {
                     console.error('Failed to load shared projects', err);
                 });
-        });
+            });
+        }
 
         // Filter messages by project
         function filterByProject() {
             const projectId = document.getElementById('projectFilter').value;
             const url = projectId ? `/Message/Index?projectId=${projectId}` : '/Message/Index';
             window.location.href = url;
+        }
+
+        // Open user profile (best effort URL, may vary by app routes)
+        function openRecipientProfile(userId) {
+            if (!userId) return;
+            // Try common profile routes, fallback to a query param route
+            const possiblePaths = [`/User/Profile/${userId}`, `/Profile?userId=${userId}`, `/Account/Profile?userId=${userId}`];
+            // Navigate to the first path (server should handle routing or return valid page)
+            window.location.href = possiblePaths[0];
+        }
+
+        // Send new message from modal
+        const btnSendNew = document.getElementById('btnSendNew');
+        if (btnSendNew) {
+            btnSendNew.addEventListener('click', async function () {
+                const form = document.getElementById('newMessageForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+                const formData = new FormData(form);
+                try {
+                    const response = await fetch('/Message/SendMessage', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams(formData)
+                    });
+
+                    if (response.ok) {
+                        // close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('newMessageModal'));
+                        if (modal) modal.hide();
+                        // reset and mark invalid cleared
+                        form.reset();
+                        form.classList.remove('was-validated');
+                        // open the conversation with the selected recipient
+                        const rid = formData.get('receiverId');
+                        if (rid) {
+                            loadConversation(rid);
+                        }
+                    } else {
+                        console.error('Failed to send new message');
+                    }
+                } catch (err) {
+                    console.error('Error sending new message:', err);
+                }
+            });
+        }
+
+        // Prefill new message modal with currently selected conversation recipient
+        const btnNewMessageElem = document.getElementById('btnNewMessage');
+        if (btnNewMessageElem) {
+            btnNewMessageElem.addEventListener('click', function () {
+                const receiverSelect = document.getElementById('receiverId');
+                if (receiverSelect) {
+                    if (currentConversationUserId) {
+                        receiverSelect.value = currentConversationUserId;
+                        // trigger change event to update projects
+                        const event = new Event('change');
+                        receiverSelect.dispatchEvent(event);
+                    } else {
+                        receiverSelect.value = '';
+                    }
+                }
+            });
         }
     </script>
 
@@ -384,18 +489,36 @@
             flex-direction: column;
         }
 
+        .conversation-header .avatar-circle {
+            width: 44px;
+            height: 44px;
+            font-size: 1rem;
+        }
+
+        .conversation-messages {
+            padding-right: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .conversation-input textarea {
+            resize: none;
+        }
+
         .message-sent {
             background-color: #0d6efd;
             color: white;
-            margin-right: auto;
-            border-bottom-left-radius: 5px;
-            align-self: flex-start;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+            align-self: flex-end;
         }
 
         .message-received {
             background-color: #f8f9fa;
-            border-bottom-right-radius: 5px;
-            align-self: flex-end;
+            color: #212529;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            align-self: flex-start;
         }
     </style>
 }

@@ -1,6 +1,45 @@
 @model DoableFinal.ViewModels.ContactViewModel
 @{
     ViewData["Title"] = "Contact Us";
+    var sections = ViewBag.Sections as List<DoableFinal.Models.HomePageSection> ?? new List<DoableFinal.Models.HomePageSection>();
+    
+    // Hero section
+    var heroTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-title")?.Content ?? "<h1 class=\"display-4 fw-bold mb-4\">Contact Us</h1>";
+    var heroBody = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-body")?.Content ?? "<p class=\"lead\">Get in touch with our team. We're here to help!</p>";
+    var heroImage = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-image")?.Content ?? "~/images/logo-combined1.png";
+    var heroTitleHasTag = !string.IsNullOrWhiteSpace(heroTitle) && heroTitle.TrimStart().StartsWith("<");
+    var heroBodyHasTag = !string.IsNullOrWhiteSpace(heroBody) && heroBody.TrimStart().StartsWith("<");
+    
+    // Contact form section
+    var formTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-form-title")?.Content ?? "Send us a Message";
+    
+    // Contact information cards
+    var addressTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-address-title")?.Content ?? "Address";
+    var addressContent = sections.FirstOrDefault(s => s.SectionKey == "contact-address-content")?.Content ?? "123 Business Street<br>New York, NY 10001<br>United States";
+    
+    var phoneTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-phone-title")?.Content ?? "Phone";
+    var phoneContent = sections.FirstOrDefault(s => s.SectionKey == "contact-phone-content")?.Content ?? "+1 (555) 123-4567<br>+1 (555) 987-6543";
+    
+    var emailTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-email-title")?.Content ?? "Email";
+    var emailContent = sections.FirstOrDefault(s => s.SectionKey == "contact-email-content")?.Content ?? "support@doable.com<br>sales@doable.com";
+    
+    // FAQ section
+    var faqTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-faq-title")?.Content ?? "Frequently Asked Questions";
+    var faq1Question = sections.FirstOrDefault(s => s.SectionKey == "contact-faq1-question")?.Content ?? "How do I get started with Doable?";
+    var faq1Answer = sections.FirstOrDefault(s => s.SectionKey == "contact-faq1-answer")?.Content ?? "Getting started is easy! Simply create an account, choose your plan, and you can begin managing your projects right away. Our intuitive interface will guide you through the setup process.";
+    
+    var faq2Question = sections.FirstOrDefault(s => s.SectionKey == "contact-faq2-question")?.Content ?? "Can I upgrade or downgrade my plan?";
+    var faq2Answer = sections.FirstOrDefault(s => s.SectionKey == "contact-faq2-answer")?.Content ?? "Yes, you can change your plan at any time. Simply go to your account settings and select the new plan you'd like to switch to. Changes will be reflected in your next billing cycle.";
+    
+    var faq3Question = sections.FirstOrDefault(s => s.SectionKey == "contact-faq3-question")?.Content ?? "What payment methods do you accept?";
+    var faq3Answer = sections.FirstOrDefault(s => s.SectionKey == "contact-faq3-answer")?.Content ?? "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and bank transfers for annual plans. All payments are processed securely through our payment partners.";
+}
+
+@if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+{
+    <div class="alert alert-info mb-0">
+        <a asp-controller="Admin" asp-action="ManageContactPage" class="btn btn-sm btn-primary">Edit Contact Content</a>
+    </div>
 }
 
 @{
@@ -12,8 +51,22 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
-                    @Html.Raw(contentPage.TitleHtml)
-                    @Html.Raw(contentPage.BodyHtml)
+                    @if (heroTitleHasTag)
+                    {
+                        @Html.Raw(heroTitle)
+                    }
+                    else
+                    {
+                        <h1 class="display-4 fw-bold mb-4">@Html.Raw(heroTitle)</h1>
+                    }
+                    @if (heroBodyHasTag)
+                    {
+                        @Html.Raw(heroBody)
+                    }
+                    else
+                    {
+                        <p class="lead">@Html.Raw(heroBody)</p>
+                    }
                 </div>
                 <div class="col-lg-6">
                     @if (!string.IsNullOrEmpty(contentPage.ImagePath))
@@ -22,7 +75,7 @@
                     }
                     else
                     {
-                        <img src="~/images/logo-combined1.png" alt="Contact Us" class="img-fluid" />
+                        <img src="@heroImage" alt="Contact Us" class="img-fluid" />
                     }
                 </div>
             </div>
@@ -36,16 +89,17 @@ else
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6">
-                    <h1 class="display-4 fw-bold mb-4">Contact Us</h1>
-                    <p class="lead">Get in touch with our team. We're here to help!</p>
+                    @Html.Raw(heroTitle)
+                    @Html.Raw(heroBody)
                 </div>
                 <div class="col-lg-6">
-                    <img src="~/images/logo-combined1.png" alt="Contact Us" class="img-fluid">
+                    <img src="@heroImage" alt="Contact Us" class="img-fluid">
                 </div>
             </div>
         </div>
     </section>
 }
+ 
 
 <!-- Contact Form Section -->
 <section class="py-5">
@@ -54,9 +108,10 @@ else
             <div class="col-lg-8 mx-auto">
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
-                        <h2 class="text-center mb-4">Send us a Message</h2>
+                        <h2 class="text-center mb-4">@Html.Raw(formTitle)</h2>
                         <form asp-action="Contact" method="post">
                             <div asp-validation-summary="ModelOnly" class="text-danger mb-4"></div>
+                    
                             
                             <div class="mb-3">
                                 <label asp-for="Name" class="form-label"></label>
@@ -101,8 +156,8 @@ else
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body p-4 text-center">
                         <i class="bi bi-geo-alt display-4 text-primary mb-3"></i>
-                        <h3 class="h5">Address</h3>
-                        <p class="mb-0">123 Business Street<br>New York, NY 10001<br>United States</p>
+                        <h3 class="h5">@Html.Raw(addressTitle)</h3>
+                        <p class="mb-0">@Html.Raw(addressContent)</p>
                     </div>
                 </div>
             </div>
@@ -110,8 +165,8 @@ else
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body p-4 text-center">
                         <i class="bi bi-telephone display-4 text-primary mb-3"></i>
-                        <h3 class="h5">Phone</h3>
-                        <p class="mb-0">+1 (555) 123-4567<br>+1 (555) 987-6543</p>
+                        <h3 class="h5">@Html.Raw(phoneTitle)</h3>
+                        <p class="mb-0">@Html.Raw(phoneContent)</p>
                     </div>
                 </div>
             </div>
@@ -119,8 +174,8 @@ else
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body p-4 text-center">
                         <i class="bi bi-envelope display-4 text-primary mb-3"></i>
-                        <h3 class="h5">Email</h3>
-                        <p class="mb-0">support@doable.com<br>sales@doable.com</p>
+                        <h3 class="h5">@Html.Raw(emailTitle)</h3>
+                        <p class="mb-0">@Html.Raw(emailContent)</p>
                     </div>
                 </div>
             </div>
@@ -131,43 +186,43 @@ else
 <!-- FAQ Section -->
 <section class="py-5">
     <div class="container">
-        <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+        <h2 class="text-center mb-5">@Html.Raw(faqTitle)</h2>
         <div class="row">
             <div class="col-lg-8 mx-auto">
                 <div class="accordion" id="faqAccordion">
                     <div class="accordion-item border-0 shadow-sm mb-3">
                         <h3 class="accordion-header">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                How do I get started with Doable?
+                                @Html.Raw(faq1Question)
                             </button>
                         </h3>
                         <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Getting started is easy! Simply create an account, choose your plan, and you can begin managing your projects right away. Our intuitive interface will guide you through the setup process.
+                                @Html.Raw(faq1Answer)
                             </div>
                         </div>
                     </div>
                     <div class="accordion-item border-0 shadow-sm mb-3">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                Can I upgrade or downgrade my plan?
+                                @Html.Raw(faq2Question)
                             </button>
                         </h3>
                         <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Yes, you can change your plan at any time. Simply go to your account settings and select the new plan you'd like to switch to. Changes will be reflected in your next billing cycle.
+                                @Html.Raw(faq2Answer)
                             </div>
                         </div>
                     </div>
                     <div class="accordion-item border-0 shadow-sm mb-3">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                What payment methods do you accept?
+                                @Html.Raw(faq3Question)
                             </button>
                         </h3>
                         <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and bank transfers for annual plans. All payments are processed securely through our payment partners.
+                                @Html.Raw(faq3Answer)
                             </div>
                         </div>
                     </div>

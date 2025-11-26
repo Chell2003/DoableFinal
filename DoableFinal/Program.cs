@@ -35,6 +35,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // Register the TimelineAdjustmentService
 builder.Services.AddScoped<TimelineAdjustmentService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<HomePageService>();
 // Register ContentService for reading editable home pages
 builder.Services.AddSingleton<ContentService>();
 

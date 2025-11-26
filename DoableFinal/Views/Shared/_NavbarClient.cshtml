@@ -1,0 +1,25 @@
+@{
+    var isClient = User.IsInRole("Client");
+}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <div class="container-fluid">
+        <span class="navbar-brand">
+            <i class="bi bi-person-badge"></i> Client Portal
+        </span>
+        <div class="navbar-nav ms-auto">
+            @if (isClient)
+            {
+                <a class="nav-link" asp-controller="Client" asp-action="Index" title="Dashboard">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+                <a class="nav-link" asp-controller="Client" asp-action="Projects" title="My Projects">
+                    <i class="bi bi-folder"></i> My Projects
+                </a>
+                <a class="nav-link" asp-controller="Ticket" asp-action="Index" title="Support Tickets">
+                    <i class="bi bi-ticket-detailed"></i> Support
+                </a>
+            }
+        </div>
+    </div>
+</nav>

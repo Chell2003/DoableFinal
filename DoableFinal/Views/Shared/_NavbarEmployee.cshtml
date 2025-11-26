@@ -1,0 +1,25 @@
+@{
+    var isEmployee = User.IsInRole("Employee");
+}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <div class="container-fluid">
+        <span class="navbar-brand">
+            <i class="bi bi-briefcase"></i> Employee Portal
+        </span>
+        <div class="navbar-nav ms-auto">
+            @if (isEmployee)
+            {
+                <a class="nav-link" asp-controller="Employee" asp-action="Index" title="Dashboard">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+                <a class="nav-link" asp-controller="Employee" asp-action="Projects" title="Projects">
+                    <i class="bi bi-folder"></i> Projects
+                </a>
+                <a class="nav-link" asp-controller="Employee" asp-action="Notifications" title="Notifications">
+                    <i class="bi bi-bell"></i> Notifications
+                </a>
+            }
+        </div>
+    </div>
+</nav>

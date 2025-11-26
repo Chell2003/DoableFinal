@@ -415,7 +415,7 @@ namespace DoableFinal.Controllers
                 return Challenge();
             }
 
-            var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tickets");
+            var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tickets", ticketId.ToString());
             Directory.CreateDirectory(uploadsFolder);
 
             var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
@@ -430,7 +430,7 @@ namespace DoableFinal.Controllers
             {
                 TicketId = ticketId,
                 FileName = file.FileName,
-                FilePath = $"/uploads/tickets/{uniqueFileName}",
+                FilePath = $"/uploads/tickets/{ticketId}/{uniqueFileName}",
                 FileType = file.ContentType,
                 FileSize = file.Length,
                 UploadedById = currentUser.Id,
@@ -440,6 +440,11 @@ namespace DoableFinal.Controllers
             _context.TicketAttachments.Add(attachment);
             await _context.SaveChangesAsync();
 
+            // If the uploader is a client, redirect back to the Client-specific TicketDetails action
+            if (await _userManager.IsInRoleAsync(currentUser, "Client"))
+            {
+                return RedirectToAction("TicketDetails", "Client", new { id = ticketId });
+            }
             return RedirectToAction(nameof(Details), new { id = ticketId });
         }        [HttpPost]
         [ValidateAntiForgeryToken]

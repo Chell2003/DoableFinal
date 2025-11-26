@@ -145,6 +145,7 @@ namespace DoableFinal.Controllers
                 ResidentialAddress = user.ResidentialAddress ?? string.Empty,
                 Birthday = user.Birthday,
                 PagIbigAccount = user.PagIbigAccount ?? string.Empty,
+                MobileNumber = user.MobileNumber ?? string.Empty,
                 Position = user.Position ?? string.Empty,
 
                 IsActive = user.IsActive,
@@ -201,6 +202,7 @@ namespace DoableFinal.Controllers
             user.Birthday = model.Birthday;
             user.PagIbigAccount = model.PagIbigAccount;
             user.Position = model.Position;
+            user.MobileNumber = model.MobileNumber;
 
             user.IsActive = model.IsActive;
             user.IsArchived = model.IsArchived;

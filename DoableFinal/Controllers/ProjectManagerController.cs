@@ -145,8 +145,8 @@ namespace DoableFinal.Controllers
         }
 
                 [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CompleteProject(int id)
+                [ValidateAntiForgeryToken]
+                public async Task<IActionResult> CompleteProject(int id)
         {
             var project = await _context.Projects
                 .Include(p => p.Tasks)
@@ -175,9 +175,20 @@ namespace DoableFinal.Controllers
                 return RedirectToAction(nameof(ProjectDetails), new { id });
             }
 
-            // Update project status
+            // Update project status and archive project
             project.Status = "Completed";
+            project.IsArchived = true;
+            project.ArchivedAt = DateTime.UtcNow;
             project.UpdatedAt = DateTime.UtcNow;
+
+            // Archive all tasks in the project
+            foreach (var task in project.Tasks)
+            {
+                task.IsArchived = true;
+                task.ArchivedAt = DateTime.UtcNow;
+                task.UpdatedAt = DateTime.UtcNow;
+            }
+
             await _context.SaveChangesAsync();
 
             // Notify relevant parties (if you have a notification service)
@@ -186,7 +197,20 @@ namespace DoableFinal.Controllers
                 await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been marked as completed");
             }
 
-            TempData["ProjectMessage"] = "Project has been marked as completed.";
+            TempData["ProjectMessage"] = "Project has been marked as completed and archived.";
+
+            // If AJAX request, return JSON to update UI dynamically
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    success = true,
+                    status = project.Status,
+                    isArchived = project.IsArchived,
+                    archivedAt = project.ArchivedAt?.ToString("o")
+                });
+            }
+
             return RedirectToAction(nameof(ProjectDetails), new { id });
         }
 
@@ -329,6 +353,13 @@ namespace DoableFinal.Controllers
             if (project == null)
             {
                 ModelState.AddModelError("ProjectId", "Invalid project selected");
+                return await PrepareCreateTaskViewModel(model);
+            }
+
+            // Prevent creating tasks on archived projects
+            if (project.IsArchived)
+            {
+                ModelState.AddModelError(string.Empty, "Cannot create a task on an archived project.");
                 return await PrepareCreateTaskViewModel(model);
             }
 
@@ -506,6 +537,12 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
+            if (task.IsArchived || task.Project.IsArchived)
+            {
+                TempData["ErrorMessage"] = "Cannot change approval status of a task that is archived or belongs to an archived project.";
+                return RedirectToAction("TaskDetails", new { id });
+            }
+
             // Verify the Project Manager is authorized for this task
             if (task.Project.ProjectManagerId != User.FindFirstValue(ClaimTypes.NameIdentifier))
             {
@@ -619,6 +656,12 @@ namespace DoableFinal.Controllers
             if (task == null)
             {
                 return NotFound();
+            }
+
+            if (task.IsArchived || task.Project.IsArchived)
+            {
+                TempData["ErrorMessage"] = "Cannot approve a task that is archived or belongs to an archived project.";
+                return RedirectToAction("TaskDetails", new { id = taskId });
             }
 
             var user = await _userManager.GetUserAsync(User);
@@ -829,6 +872,7 @@ namespace DoableFinal.Controllers
                 EmailNotificationsEnabled = user.EmailNotificationsEnabled,
 
                 ResidentialAddress = user.ResidentialAddress ?? string.Empty,
+                MobileNumber = user.MobileNumber ?? string.Empty,
                 Birthday = user.Birthday,
                 PagIbigAccount = user.PagIbigAccount ?? string.Empty,
                 Position = user.Position ?? string.Empty,
@@ -885,6 +929,7 @@ namespace DoableFinal.Controllers
             user.PagIbigAccount = model.PagIbigAccount;
             user.Position = model.Position;
             user.TinNumber = model.TinNumber;
+            user.MobileNumber = model.MobileNumber;
 
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
@@ -1073,9 +1118,10 @@ namespace DoableFinal.Controllers
                 return Forbid();
             }
 
-            // Unarchive the project
+            // Unarchive the project and set it to In Progress
             project.IsArchived = false;
             project.ArchivedAt = null;
+            project.Status = "In Progress";
             project.UpdatedAt = DateTime.UtcNow;
 
             // Unarchive all tasks in the project
@@ -1091,7 +1137,18 @@ namespace DoableFinal.Controllers
             // Notify relevant parties
             await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been unarchived");
 
-            TempData["ProjectMessage"] = "Project has been unarchived successfully.";
+            TempData["ProjectMessage"] = "Project has been reopened and unarchived.";
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    success = true,
+                    status = project.Status,
+                    isArchived = project.IsArchived
+                });
+            }
+
             return RedirectToAction(nameof(ArchivedProjects));
         }
 
@@ -1170,6 +1227,12 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
+            if (task.IsArchived || task.Project.IsArchived)
+            {
+                TempData["ErrorMessage"] = "Cannot edit an archived task or a task from an archived project.";
+                return RedirectToAction(nameof(TaskDetails), new { id = task.Id });
+            }
+
             var model = new EditTaskViewModel
             {
                 Id = task.Id,
@@ -1241,6 +1304,12 @@ namespace DoableFinal.Controllers
                 if (task == null)
                 {
                     return NotFound();
+                }
+
+                if (task.IsArchived || task.Project.IsArchived)
+                {
+                    TempData["ErrorMessage"] = "Cannot edit an archived task or a task under an archived project.";
+                    return RedirectToAction(nameof(TaskDetails), new { id = task.Id });
                 }
 
                 // Validate task dates against project dates

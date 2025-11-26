@@ -37,7 +37,13 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Project Manager:</div>
-                        <div class="col-md-9">@($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")</div>
+                        <div class="col-md-9">
+                            @($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")
+                            @* Show a message button to the Project Manager only on the Client view *@
+                            <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message PM" class="btn btn-sm btn-outline-secondary ms-2">
+                                <i class="bi bi-envelope"></i>
+                            </a>
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Status:</div>
@@ -109,49 +115,6 @@
             <span id="project-start" class="d-none">@Model.StartDate.ToString("yyyy-MM-dd")</span>
             <span id="project-end" class="d-none">@Model.EndDate?.ToString("yyyy-MM-dd")</span>
 
-            <!-- Project Team -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-users me-1"></i>
-                    Project Team
-                </div>
-                <div class="card-body">
-                    @if (ViewBag.ProjectTeam != null && ViewBag.ProjectTeam.Count > 0)
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Role</th>
-                                        <th>Tasks</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var member in ViewBag.ProjectTeam)
-                                    {
-                                        <tr>
-                                            <td>
-                                                @member.FirstName @member.LastName
-                                                <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                                    <i class="bi bi-envelope"></i>
-                                                </a>
-                                            </td>
-                                            <td>@member.Role</td>
-                                            <td>@(ViewBag.MemberTaskCounts != null && ViewBag.MemberTaskCounts.ContainsKey(member.Id) ? ViewBag.MemberTaskCounts[member.Id] : 0)</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted mb-0">No team members found.</p>
-                    }
-                </div>
-            </div>
-
             <!-- Project Tasks -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -206,6 +169,47 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+        <!-- Project Team -->
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    Project Team
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.ProjectTeam != null && ViewBag.ProjectTeam.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Tasks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var member in ViewBag.ProjectTeam)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @member.FirstName @member.LastName
+                                            </td>
+                                            <td>@member.Role</td>
+                                            <td>@(ViewBag.MemberTaskCounts != null && ViewBag.MemberTaskCounts.ContainsKey(member.Id) ? ViewBag.MemberTaskCounts[member.Id] : 0)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No team members found.</p>
+                    }
                 </div>
             </div>
         </div>

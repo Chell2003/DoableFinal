@@ -14,40 +14,57 @@ public class HomeController : Controller
     private readonly ApplicationDbContext _context;
     private readonly NotificationService _notificationService;
     private readonly ContentService _contentService;
+    private readonly HomePageService _homePageService;
 
-    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, NotificationService notificationService, ContentService contentService)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, NotificationService notificationService, ContentService contentService, HomePageService homePageService)
     {
         _logger = logger;
         _context = context;
         _notificationService = notificationService;
         _contentService = contentService;
+        _homePageService = homePageService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         if (User.Identity?.IsAuthenticated == true)
         {
             return RedirectToAction("Index", "Dashboard");
         }
 
+        var sections = await _homePageService.GetAllSectionsAsync();
+        ViewBag.Sections = sections;
+        
         var page = _contentService?.GetPage("Index");
         return View(page);
     }
 
-    public IActionResult About()
+    public async Task<IActionResult> About()
     {
+        var sections = await _homePageService.GetAllSectionsAsync();
+        ViewBag.Sections = sections;
+        
+        // Debug: Log section count
+        _logger.LogInformation($"About page loaded with {sections?.Count ?? 0} sections");
+        
         var page = _contentService?.GetPage("About");
         return View(page);
     }
 
-    public IActionResult Services()
+    public async Task<IActionResult> Services()
     {
+        var sections = await _homePageService.GetAllSectionsAsync();
+        ViewBag.Sections = sections;
+        
         var page = _contentService?.GetPage("Services");
         return View(page);
     }
 
-    public IActionResult Contact()
+    public async Task<IActionResult> Contact()
     {
+        var sections = await _homePageService.GetAllSectionsAsync();
+        ViewBag.Sections = sections;
+        
         var page = _contentService?.GetPage("Contact");
         ViewBag.ContentPage = page;
         return View(new ContactViewModel());

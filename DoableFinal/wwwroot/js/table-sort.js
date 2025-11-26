@@ -194,7 +194,7 @@
         var prev = document.createElement('button');
         prev.className = 'btn btn-sm btn-outline-secondary me-1 table-page-prev';
         prev.type = 'button';
-        prev.innerText = 'Previous';
+        prev.innerText = 'Prev';
 
         var next = document.createElement('button');
         next.className = 'btn btn-sm btn-outline-secondary ms-1 table-page-next';
@@ -204,9 +204,10 @@
         var info = document.createElement('span');
         info.className = 'table-page-info ms-2';
 
+        // Put the page info between the Prev and Next buttons (Prev [Page X of Y] Next)
         right.appendChild(prev);
-        right.appendChild(next);
         right.appendChild(info);
+        right.appendChild(next);
 
         wrapper.appendChild(left);
         wrapper.appendChild(right);
@@ -251,10 +252,12 @@
         var page = table._currentPage || 0;
 
         if (pageSize === 0) {
-            // show all
+            // show all => present page as 1 of 1
             rows.forEach(function (r) { r.style.display = ''; });
+            var totalPages = 1;
+            table._currentPage = 0;
             if (table._pagination) {
-                table._pagination.info.innerText = 'Showing all ' + rows.length + ' rows';
+                table._pagination.info.innerText = 'Page ' + (table._currentPage + 1) + ' of ' + totalPages;
             }
             return;
         }
@@ -272,7 +275,7 @@
         });
 
         if (table._pagination) {
-            table._pagination.info.innerText = 'Page ' + (page + 1) + ' of ' + totalPages + ' — showing ' + Math.min(pageSize, rows.length - start) + ' of ' + rows.length + ' rows';
+            table._pagination.info.innerText = 'Page ' + (page + 1) + ' of ' + totalPages;
         }
     }
 

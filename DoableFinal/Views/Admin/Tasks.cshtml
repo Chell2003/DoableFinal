@@ -144,11 +144,11 @@
                                            class="btn btn-sm btn-outline-primary" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a asp-action="EditTask" asp-route-id="@task.Id" 
-                                           class="btn btn-sm btn-outline-secondary" title="Edit Task">
+                                                     <a asp-action="EditTask" asp-route-id="@task.Id" 
+                                                         class="btn btn-sm btn-outline-secondary @(task.IsArchived || task.Project.IsArchived ? "disabled" : "")" title="Edit Task" aria-disabled="@(task.IsArchived || task.Project.IsArchived ? "true" : "false")" tabindex="@(task.IsArchived || task.Project.IsArchived ? "-1" : "0")">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        @if (!string.IsNullOrEmpty(task.ProofFilePath) && !task.IsConfirmed && task.Status != "Completed")
+                                        @if (!string.IsNullOrEmpty(task.ProofFilePath) && !task.IsConfirmed && task.Status != "Completed" && !task.IsArchived && !task.Project.IsArchived)
                                         {
                                             <form asp-action="ApproveTaskProof" method="post" class="d-inline">
                                                 <input type="hidden" name="taskId" value="@task.Id" />

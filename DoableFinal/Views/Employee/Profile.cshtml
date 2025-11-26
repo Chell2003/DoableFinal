@@ -27,7 +27,7 @@
                     <h5 class="card-title mb-0">Personal Information</h5>
                 </div>
                 <div class="card-body">
-                    <form asp-action="UpdateProfile" method="post">
+                    <form asp-action="Profile" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="row mb-3">
@@ -46,6 +46,12 @@
                         <div class="mb-3">
                             <label asp-for="Email" class="form-label"></label>
                             <input asp-for="Email" class="form-control" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="MobileNumber" class="form-label"></label>
+                            <input asp-for="MobileNumber" class="form-control" placeholder="09XXXXXXXXX" />
+                            <span asp-validation-for="MobileNumber" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">

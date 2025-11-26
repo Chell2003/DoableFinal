@@ -49,7 +49,7 @@
                             </p>
                             <p><strong>Start Date:</strong> @Model.StartDate.ToString(dateFormat)</p>
                             
-                            @if (Model.Status != "Completed" || !Model.IsConfirmed)
+                            @if ((Model.Status != "Completed" || !Model.IsConfirmed) && !Model.IsArchived && !Model.Project.IsArchived)
                             {
                                 <div class="mt-4">
                                     <h6>Submit Proof of Completion</h6>
@@ -57,15 +57,15 @@
                                         <input type="hidden" name="taskId" value="@Model.Id" />
                                         <div class="mb-3">
                                             <label for="proofFile" class="form-label">Proof File (Optional)</label>
-                                            <input type="file" class="form-control" id="proofFile" name="proofFile" @(Model.Status == "Pending Approval" || Model.Status == "Completed" ? "disabled" : "") />
+                                            <input type="file" class="form-control" id="proofFile" name="proofFile" @(Model.Status == "Pending Approval" || Model.Status == "Completed" || Model.IsArchived || Model.Project.IsArchived ? "disabled" : "") />
                                             <small class="text-muted">Upload file as proof of task completion (optional)</small>
                                         </div>
                                         <div class="mb-3">
                                             <label for="remarks" class="form-label">Remarks</label>
-                                            <textarea class="form-control" id="remarks" name="remarks" rows="3" required @(Model.Status == "Pending Approval" || Model.Status == "Completed" ? "disabled" : "")></textarea>
+                                            <textarea class="form-control" id="remarks" name="remarks" rows="3" required @(Model.Status == "Pending Approval" || Model.Status == "Completed" || Model.IsArchived || Model.Project.IsArchived ? "disabled" : "")></textarea>
                                             <small class="text-muted">Please provide details about the task completion</small>
                                         </div>
-                                        <button type="submit" class="btn btn-primary" @(Model.Status == "Pending Approval" || Model.Status == "Completed" ? "disabled" : "")>Submit for Approval</button>
+                                        <button type="submit" class="btn btn-primary" @(Model.Status == "Pending Approval" || Model.Status == "Completed" || Model.IsArchived || Model.Project.IsArchived ? "disabled" : "")>Submit for Approval</button>
                                     </form>
                                 </div>
                             }

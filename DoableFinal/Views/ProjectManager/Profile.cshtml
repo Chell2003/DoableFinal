@@ -46,6 +46,12 @@
                         </div>
 
                         <div class="mb-3">
+                            <label asp-for="MobileNumber" class="form-label"></label>
+                            <input asp-for="MobileNumber" class="form-control" placeholder="09XXXXXXXXX" />
+                            <span asp-validation-for="MobileNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
                             <label asp-for="Role" class="form-label"></label>
                             <input asp-for="Role" class="form-control" readonly />
                         </div>

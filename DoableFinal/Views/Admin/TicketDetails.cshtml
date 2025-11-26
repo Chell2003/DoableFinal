@@ -108,7 +108,8 @@
                     <!-- Actions -->
                     <div class="mb-4">
                         <h5>Actions</h5>
-                        <form asp-action="EditTicket" asp-controller="Admin" method="post" class="d-inline">
+                        <form asp-action="UpdateTicketStatus" asp-controller="Admin" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
                             <input type="hidden" name="Id" value="@Model.Ticket.Id" />
                             <input type="hidden" name="Title" value="@Model.Ticket.Title" />
                             <div class="btn-group">
@@ -117,6 +118,7 @@
                                 <button type="submit" name="CurrentStatus" value="Resolved" class="btn btn-outline-success">Resolved</button>
                                 <button type="submit" name="CurrentStatus" value="Closed" class="btn btn-outline-secondary">Closed</button>
                             </div>
+                                        @Html.AntiForgeryToken()
                         </form>
                     </div>
 
@@ -124,6 +126,7 @@
                     <div class="mb-4">
                         <h5>Comments</h5>
                         <form asp-action="AddTicketComment" asp-controller="Admin" method="post" class="mb-3">
+                            @Html.AntiForgeryToken()
                             <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
                             <div class="mb-3">
                                 <textarea name="commentText" class="form-control" rows="3" placeholder="Add a comment..."></textarea>
@@ -172,6 +175,7 @@
                     </form>
 
                     <div class="attachments-list">
+                                    @Html.AntiForgeryToken()
                         @foreach (var attachment in Model.Attachments)
                         {
                             <div class="attachment-item d-flex align-items-center justify-content-between border-bottom py-2">
