@@ -250,7 +250,13 @@
                                     <tr>
                                         <td>
                                             @($"{member.User.FirstName} {member.User.LastName}")
-                                            @* Message button removed for team members: only Project Manager should be a message recipient *@
+                                            @* Show message button for team members (employees) only; don't show for Client users *@
+                                            @if (member.User != null && member.User.Id != ViewBag.CurrentUserId && member.User.Role != "Client")
+                                            {
+                                                <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
+                                                    <i class="bi bi-chat-left-text"></i>
+                                                </a>
+                                            }
                                         </td>
                                         <td>@member.Role</td>
                                     </tr>

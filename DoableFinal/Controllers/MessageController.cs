@@ -89,8 +89,11 @@ namespace DoableFinal.Controllers
                 foreach (var proj in projectsForUsers)
                 {
                     if (!string.IsNullOrEmpty(proj.ProjectManagerId)) relevantUserIds.Add(proj.ProjectManagerId);
-                    // Include the project client so employees can message the client for projects they're on
-                    if (!string.IsNullOrEmpty(proj.ClientId)) relevantUserIds.Add(proj.ClientId);
+                    // Include the project client only if the current user is allowed to message clients (Project Manager and Admin)
+                    if (!string.IsNullOrEmpty(proj.ClientId) && (await _userManager.IsInRoleAsync(currentUser, "ProjectManager") || await _userManager.IsInRoleAsync(currentUser, "Admin")))
+                    {
+                        relevantUserIds.Add(proj.ClientId);
+                    }
                     // For Clients: only include the Project Manager from the team
                     // For others: include all team members
                     if (await _userManager.IsInRoleAsync(currentUser, "Client"))
@@ -167,6 +170,7 @@ namespace DoableFinal.Controllers
             // Only include users that are in the filtered project(s) to avoid showing conversations with users outside the project
             var usersWithMessages = messages
                 .GroupBy(m => m.SenderId == currentUser.Id ? m.ReceiverId : m.SenderId)
+                .Where(g => g.Key != currentUser.Id) // exclude conversations that are only with self
                 .Select(g =>
                 {
                     var userId = g.Key;
@@ -280,8 +284,8 @@ namespace DoableFinal.Controllers
                 {
                     if (!string.IsNullOrEmpty(proj.ProjectManagerId)) 
                         allowedRecipientIds.Add(proj.ProjectManagerId);
-                    if (!string.IsNullOrEmpty(proj.ClientId)) 
-                        allowedRecipientIds.Add(proj.ClientId);
+                    // Employees should NOT be allowed to message the project client
+                    // (Do not add proj.ClientId for employees)
                     var teamUserIds = await _context.ProjectTeams
                         .Where(pt => pt.ProjectId == proj.Id)
                         .Select(pt => pt.UserId)
@@ -295,6 +299,17 @@ namespace DoableFinal.Controllers
                 // Admins can message anyone except themselves
                 var allUsers = await _userManager.Users.Select(u => u.Id).ToListAsync();
                 allowedRecipientIds = new HashSet<string>(allUsers);
+            }
+
+            // Disallow messaging self and enforce role restrictions
+            if (receiver.Id == currentUser.Id)
+            {
+                return BadRequest("Cannot send message to yourself");
+            }
+            // Employees cannot message clients
+            if (await _userManager.IsInRoleAsync(currentUser, "Employee") && receiver.Role == "Client")
+            {
+                return BadRequest("Employees are not allowed to message clients");
             }
 
             // Check if recipient is in allowed list

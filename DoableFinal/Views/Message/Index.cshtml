@@ -56,12 +56,16 @@
                 </div>
                     <div class="card-body p-0">                            
                     <div class="list-group list-group-flush" style="height: calc(100vh - 250px); overflow-y: auto;">
-                                @{ var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value; }
+                                @{ var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value; var isEmployee = User.IsInRole("Employee"); }
 
                                 @if (ViewBag.UsersWithMessages != null)
                                 {
                                     foreach (var conv in ViewBag.UsersWithMessages)
                                     {
+                                        if (conv == null) continue;
+                                        if (conv.UserId == currentUserId) continue; // don't show conversation with self
+                                        if (conv.User == null) continue;
+                                        if (isEmployee && conv.User.Role == "Client") continue; // employees should not see clients
                                         <div class="conversation-item p-3 border-bottom @(conv.UnreadCount > 0 ? "bg-light" : "")" 
                                             data-userid="@conv.UserId"
                                             style="cursor: pointer;" 
@@ -87,9 +91,11 @@
                                         </div>
                                     }                                }
                                 
-                                @foreach (var user in ViewBag.UsersWithoutMessages)
+                                  @foreach (var user in ViewBag.UsersWithoutMessages)
                                 {
-                                     <div class="conversation-item p-3 border-bottom" 
+                                      @if (user.Id == currentUserId) { continue; }
+                                      @if (isEmployee && user.Role == "Client") { continue; }
+                                      <div class="conversation-item p-3 border-bottom" 
                                          data-userid="@user.Id"
                                          style="cursor: pointer;" 
                                          onclick="loadConversation('@user.Id')">
@@ -146,6 +152,10 @@
                                 var renderedUserIds = new HashSet<string>();
                                 if (ViewBag.UsersWithMessages != null) {
                                     foreach (var conv in ViewBag.UsersWithMessages) {
+                                        if (conv == null) continue;
+                                        if (conv.UserId == currentUserId) continue;
+                                        if (conv.User == null) continue;
+                                        if (isEmployee && conv.User.Role == "Client") continue; // employees shouldn't message clients
                                         if (renderedUserIds.Add(conv.User.Id)) {
                                             <option value="@conv.User.Id">@conv.User.FirstName @conv.User.LastName</option>
                                         }
@@ -153,6 +163,8 @@
                                 }
                                 if (ViewBag.UsersWithoutMessages != null) {
                                     foreach (var u in ViewBag.UsersWithoutMessages) {
+                                        if (u.Id == currentUserId) continue;
+                                        if (isEmployee && u.Role == "Client") continue;
                                         if (renderedUserIds.Add(u.Id)) {
                                             <option value="@u.Id">@u.FirstName @u.LastName</option>
                                         }
