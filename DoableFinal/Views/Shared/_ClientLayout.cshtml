@@ -108,6 +108,7 @@
                         <ul class="navbar-nav">
                             @if (User.IsInRole("Client"))
                             {
+                                @await Html.PartialAsync("_MessagesBadge")
                                 @await Html.PartialAsync("_NotificationsBadge")
                             }
                         </ul>

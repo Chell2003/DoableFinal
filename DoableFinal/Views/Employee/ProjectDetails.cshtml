@@ -37,8 +37,8 @@
                             @* Allow messaging the Project Manager, but only if the current user isn't the PM themself *@
                             @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
                             {
-                                <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message PM" class="btn btn-sm btn-outline-secondary ms-2">
-                                    <i class="bi bi-envelope"></i>
+                                    <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message PM" class="btn btn-sm btn-outline-secondary ms-2">
+                                <i class="bi bi-chat-left-text"></i>
                                 </a>
                             }
                         </div>
@@ -192,7 +192,7 @@
                                         @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
                                         {
                                             <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
-                                                <i class="bi bi-envelope"></i>
+                                                <i class="bi bi-chat-left-text"></i>
                                             </a>
                                         }
                                     </td>

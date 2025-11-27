@@ -278,6 +278,7 @@
                         <ul class="navbar-nav">
                             @if (User.Identity?.IsAuthenticated == true)
                             {
+                                @await Html.PartialAsync("_MessagesBadge")
                                 @await Html.PartialAsync("_NotificationsBadgeAll")
                             }
                         </ul>

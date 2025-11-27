@@ -1,0 +1,23 @@
+@using Microsoft.EntityFrameworkCore
+@inject DoableFinal.Data.ApplicationDbContext DbContext
+@{
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var unreadCount = 0;
+    if (!string.IsNullOrEmpty(userId))
+    {
+        unreadCount = await DbContext.Messages.CountAsync(m => m.ReceiverId == userId && !m.IsRead);
+    }
+}
+
+<li class="nav-item ms-2">
+    <a asp-controller="Message" asp-action="Index" class="nav-link position-relative">
+        <i class="bi bi-chat-left-text fs-5"></i>
+        @if (unreadCount > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                @unreadCount
+                <span class="visually-hidden">unread messages</span>
+            </span>
+        }
+    </a>
+</li>
