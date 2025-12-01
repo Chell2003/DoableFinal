@@ -20,6 +20,7 @@ The following sections are editable on the homepage:
 #### Hero Section
 - `hero-title` - Main heading (default: "QONNEC")
 - `hero-body` - Hero paragraph with mission statement
+- `hero-image` - Optional hero image uploaded via the admin CMS (added as `ImagePath` property)
 
 #### Features Section
 - `feature-1-title` - Task Management heading
@@ -44,7 +45,7 @@ The following sections are editable on the homepage:
 2. **Edit a Section**
    - Click the "Edit Homepage Content" button
    - Click "Edit" on any section you want to modify
-   - Edit the HTML content in the text area
+   - Edit the HTML content in the text area and optionally upload an image (if the section supports it)
    - Preview the changes below
    - Click "Save Changes"
 
@@ -75,7 +76,7 @@ The following sections are editable on the homepage:
 3. **Controller**: `Controllers/AdminController.cs`
    - `ManageHomePage()` - List all sections
    - `EditHomePageSection(id)` - Edit form GET
-   - `EditHomePageSection(id, content)` - Save changes POST
+   - `EditHomePageSection(id, content, IFormFile imageFile)` - Save changes POST; accepts optional `imageFile` to upload and set `ImagePath`
 
 4. **Views**:
    - `Views/Admin/ManageHomePage.cshtml` - List sections

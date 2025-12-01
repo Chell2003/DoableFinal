@@ -28,13 +28,21 @@
                                 <th>Last Updated</th>
                                 <th>Actions</th>
                             </tr>
-                        </thead>
+                                        
                         <tbody>
                             @foreach (var item in Model.OrderBy(s => s.SectionOrder))
                             {
                                 <tr>
                                     <td>
-                                        <strong>@item.DisplayName</strong>
+                                        <div class="d-flex align-items-center">
+                                            @if (!string.IsNullOrEmpty(item.ImagePath))
+                                            {
+                                                <img src="@item.ImagePath" alt="thumb" class="me-3" style="width:60px; height:60px; object-fit:cover; border-radius:4px;" />
+                                            }
+                                            <div>
+                                                <strong>@item.DisplayName</strong>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>
                                         <code>@item.SectionKey</code>

@@ -6,7 +6,7 @@
     // Hero section
     var heroTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-title")?.Content ?? "<h1 class=\"display-4 fw-bold mb-4\">Contact Us</h1>";
     var heroBody = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-body")?.Content ?? "<p class=\"lead\">Get in touch with our team. We're here to help!</p>";
-    var heroImage = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-image")?.Content ?? "~/images/logo-combined1.png";
+    var heroImage = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-image")?.ImagePath;
     var heroTitleHasTag = !string.IsNullOrWhiteSpace(heroTitle) && heroTitle.TrimStart().StartsWith("<");
     var heroBodyHasTag = !string.IsNullOrWhiteSpace(heroBody) && heroBody.TrimStart().StartsWith("<");
     
@@ -71,7 +71,10 @@
                 <div class="col-lg-6">
                     @if (!string.IsNullOrEmpty(contentPage.ImagePath))
                     {
-                        <img src="@(contentPage.ImagePath)" alt="Contact" class="img-fluid" />
+                        @if (!string.IsNullOrEmpty(contentPage.ImagePath))
+                        {
+                            <img src="@(contentPage.ImagePath)" alt="Contact" class="img-fluid" />
+                        }
                     }
                     else
                     {

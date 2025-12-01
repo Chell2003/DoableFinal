@@ -21,6 +21,8 @@ namespace DoableFinal.Models
 
         public string? IconClass { get; set; } // e.g., "bi bi-kanban" for feature sections
 
+        public string? ImagePath { get; set; }
+
         public int? SectionOrder { get; set; } // For ordering features
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

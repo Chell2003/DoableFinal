@@ -36,6 +36,25 @@ namespace DoableFinal.Controllers
             _logger = logger;
         }
 
+        // Define the list of keys that are expected to accept images
+        private static readonly HashSet<string> _imageSectionKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "hero-image",
+            "about-image",
+            "services-hero-image",
+            "contact-hero-image",
+            "feature-image",
+            "team-member-image",
+            "testimonial-image"
+        };
+
+        private static readonly HashSet<string> _contentImageKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Index",
+            "Contact",
+            "Services"
+        };
+
         public async Task<IActionResult> Notifications()
         {
             var currentUser = await _userManager.GetUserAsync(User);
@@ -2243,7 +2262,8 @@ namespace DoableFinal.Controllers
             SaveContentPages(pages);
 
             TempData["ContentMessage"] = "Content saved successfully.";
-            return RedirectToAction(nameof(ContentMS));
+            if (!string.IsNullOrEmpty(page.ImagePath)) TempData["ImagePath"] = page.ImagePath;
+            return RedirectToAction(nameof(EditContent), new { key = key });
         }
 
         [HttpPost]
@@ -2365,20 +2385,46 @@ namespace DoableFinal.Controllers
             if (section == null)
                 return NotFound();
 
+            // Determine if the section allows image upload
+            ViewBag.ImageUploadAllowed = _imageSectionKeys.Contains(section.SectionKey ?? string.Empty);
+            // If an ImagePath was just saved, show it immediately even if the db has not been refreshed yet
+            if (!string.IsNullOrEmpty(Convert.ToString(TempData["ImagePath"])) && string.IsNullOrEmpty(section.ImagePath))
+            {
+                section.ImagePath = Convert.ToString(TempData["ImagePath"]);
+            }
             return View(section);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditHomePageSection(int id, string content)
+        public async Task<IActionResult> EditHomePageSection(int id, string content, IFormFile? imageFile)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
                 return Unauthorized();
 
-            await _homePageService.UpdateSectionAsync(id, content, user.Id);
+            string? imagePath = null;
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                var section = await _context.HomePageSections.FindAsync(id);
+                if (section != null)
+                {
+                    var key = section.SectionKey ?? "home";
+                    var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "home", key);
+                    Directory.CreateDirectory(uploadDir);
+                    var fileName = $"{DateTime.UtcNow.Ticks}_{Path.GetFileName(imageFile.FileName)}";
+                    var filePath = Path.Combine(uploadDir, fileName);
+                    using (var stream = System.IO.File.Create(filePath))
+                    {
+                        await imageFile.CopyToAsync(stream);
+                    }
+                    imagePath = $"/uploads/home/{key}/{fileName}";
+                }
+            }
+            await _homePageService.UpdateSectionAsync(id, content, user.Id, imagePath);
             TempData["SuccessMessage"] = "Section updated successfully!";
-            return RedirectToAction(nameof(ManageHomePage));
+            if (!string.IsNullOrEmpty(imagePath)) TempData["ImagePath"] = imagePath;
+            return RedirectToAction(nameof(EditHomePageSection), new { id });
         }
 
         // ===== ABOUT PAGE CMS MANAGEMENT =====
@@ -2403,12 +2449,17 @@ namespace DoableFinal.Controllers
             if (!section.SectionKey.StartsWith("about-"))
                 return Unauthorized();
 
+            ViewBag.ImageUploadAllowed = _imageSectionKeys.Contains(section.SectionKey ?? string.Empty);
+            if (!string.IsNullOrEmpty(Convert.ToString(TempData["ImagePath"])) && string.IsNullOrEmpty(section.ImagePath))
+            {
+                section.ImagePath = Convert.ToString(TempData["ImagePath"]);
+            }
             return View(section);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditAboutPageSection(int id, string content)
+        public async Task<IActionResult> EditAboutPageSection(int id, string content, IFormFile? imageFile)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -2418,9 +2469,27 @@ namespace DoableFinal.Controllers
             if (section == null || !section.SectionKey.StartsWith("about-"))
                 return Unauthorized();
 
-            await _homePageService.UpdateSectionAsync(id, content, user.Id);
+            string? imagePath = null;
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                if (section != null)
+                {
+                    var key = section.SectionKey ?? "about";
+                    var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "home", key);
+                    Directory.CreateDirectory(uploadDir);
+                    var fileName = $"{DateTime.UtcNow.Ticks}_{Path.GetFileName(imageFile.FileName)}";
+                    var filePath = Path.Combine(uploadDir, fileName);
+                    using (var stream = System.IO.File.Create(filePath))
+                    {
+                        await imageFile.CopyToAsync(stream);
+                    }
+                    imagePath = $"/uploads/home/{key}/{fileName}";
+                }
+            }
+            await _homePageService.UpdateSectionAsync(id, content, user.Id, imagePath);
             TempData["SuccessMessage"] = "Section updated successfully!";
-            return RedirectToAction(nameof(ManageAboutPage));
+            if (!string.IsNullOrEmpty(imagePath)) TempData["ImagePath"] = imagePath;
+            return RedirectToAction(nameof(EditAboutPageSection), new { id });
         }
 
         // ===== SERVICES PAGE CMS MANAGEMENT =====
@@ -2445,12 +2514,17 @@ namespace DoableFinal.Controllers
             if (!section.SectionKey.StartsWith("services-"))
                 return Unauthorized();
 
+            ViewBag.ImageUploadAllowed = _imageSectionKeys.Contains(section.SectionKey ?? string.Empty);
+            if (!string.IsNullOrEmpty(Convert.ToString(TempData["ImagePath"])) && string.IsNullOrEmpty(section.ImagePath))
+            {
+                section.ImagePath = Convert.ToString(TempData["ImagePath"]);
+            }
             return View(section);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditServicesPageSection(int id, string content)
+        public async Task<IActionResult> EditServicesPageSection(int id, string content, IFormFile? imageFile)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -2460,9 +2534,27 @@ namespace DoableFinal.Controllers
             if (section == null || !section.SectionKey.StartsWith("services-"))
                 return Unauthorized();
 
-            await _homePageService.UpdateSectionAsync(id, content, user.Id);
+            string? imagePath = null;
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                if (section != null)
+                {
+                    var key = section.SectionKey ?? "services";
+                    var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "home", key);
+                    Directory.CreateDirectory(uploadDir);
+                    var fileName = $"{DateTime.UtcNow.Ticks}_{Path.GetFileName(imageFile.FileName)}";
+                    var filePath = Path.Combine(uploadDir, fileName);
+                    using (var stream = System.IO.File.Create(filePath))
+                    {
+                        await imageFile.CopyToAsync(stream);
+                    }
+                    imagePath = $"/uploads/home/{key}/{fileName}";
+                }
+            }
+            await _homePageService.UpdateSectionAsync(id, content, user.Id, imagePath);
             TempData["SuccessMessage"] = "Section updated successfully!";
-            return RedirectToAction(nameof(ManageServicesPage));
+            if (!string.IsNullOrEmpty(imagePath)) TempData["ImagePath"] = imagePath;
+            return RedirectToAction(nameof(EditServicesPageSection), new { id });
         }
 
         public async Task<IActionResult> ManageContactPage()
@@ -2484,12 +2576,17 @@ namespace DoableFinal.Controllers
             if (!section.SectionKey.StartsWith("contact-"))
                 return Unauthorized();
 
+            ViewBag.ImageUploadAllowed = _imageSectionKeys.Contains(section.SectionKey ?? string.Empty);
+            if (!string.IsNullOrEmpty(Convert.ToString(TempData["ImagePath"])) && string.IsNullOrEmpty(section.ImagePath))
+            {
+                section.ImagePath = Convert.ToString(TempData["ImagePath"]);
+            }
             return View(section);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditContactPageSection(int id, string content)
+        public async Task<IActionResult> EditContactPageSection(int id, string content, IFormFile? imageFile)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -2499,9 +2596,27 @@ namespace DoableFinal.Controllers
             if (section == null || !section.SectionKey.StartsWith("contact-"))
                 return Unauthorized();
 
-            await _homePageService.UpdateSectionAsync(id, content, user.Id);
+            string? imagePath = null;
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                if (section != null)
+                {
+                    var key = section.SectionKey ?? "contact";
+                    var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "home", key);
+                    Directory.CreateDirectory(uploadDir);
+                    var fileName = $"{DateTime.UtcNow.Ticks}_{Path.GetFileName(imageFile.FileName)}";
+                    var filePath = Path.Combine(uploadDir, fileName);
+                    using (var stream = System.IO.File.Create(filePath))
+                    {
+                        await imageFile.CopyToAsync(stream);
+                    }
+                    imagePath = $"/uploads/home/{key}/{fileName}";
+                }
+            }
+            await _homePageService.UpdateSectionAsync(id, content, user.Id, imagePath);
             TempData["SuccessMessage"] = "Section updated successfully!";
-            return RedirectToAction(nameof(ManageContactPage));
+            if (!string.IsNullOrEmpty(imagePath)) TempData["ImagePath"] = imagePath;
+            return RedirectToAction(nameof(EditContactPageSection), new { id });
         }
     }
 }

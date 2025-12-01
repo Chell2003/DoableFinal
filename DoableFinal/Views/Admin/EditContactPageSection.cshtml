@@ -10,8 +10,12 @@
             <i class="bi bi-envelope me-1"></i>
             @Model.DisplayName
         </div>
-        <div class="card-body">
-            <form asp-action="EditContactPageSection" asp-route-id="@Model.Id" method="post">
+            <div class="card-body">
+                @if (TempData["ImagePath"] != null)
+                {
+                    <div class="alert alert-success">Image saved Copy the directory and paste it to the textarea : @TempData["ImagePath"]</div>
+                }
+            <form asp-action="EditContactPageSection" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
 
                 <div class="mb-3">
@@ -26,9 +30,24 @@
 
                 <div class="mb-3">
                     <label for="content" class="form-label">Content (HTML Allowed)</label>
-                    <textarea class="form-control" id="content" name="content" rows="10">@Model.Content</textarea>
+                    <textarea class="form-control small-textarea" id="content" name="content" rows="2">@Model.Content</textarea>
                     <small class="form-text text-muted">You can use HTML tags like &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;, &lt;br&gt;, etc.</small>
                 </div>
+
+                @if (!string.IsNullOrEmpty(Model.SectionKey) && Model.SectionKey.ToLower().Contains("image"))
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Current Image (if any)</label>
+                        @if (!string.IsNullOrEmpty(Model.ImagePath))
+                        {
+                            <div class="mb-2">
+                                <img src="@Model.ImagePath" alt="section image" class="img-fluid" style="max-width:300px; height:auto;" />
+                            </div>
+                        }
+                        <label class="form-label">Upload Image (optional)</label>
+                        <input type="file" name="imageFile" class="form-control" />
+                    </div>
+                }
 
                 <div class="mb-3">
                     <a href="javascript:history.back()" class="btn btn-secondary">Cancel</a>

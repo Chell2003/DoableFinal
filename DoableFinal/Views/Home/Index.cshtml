@@ -5,6 +5,7 @@
     
     var heroTitle = sections.FirstOrDefault(s => s.SectionKey == "hero-title")?.Content ?? "<h1 class=\"display-4 fw-bold mb-4\">QONNEC</h1>";
     var heroBody = sections.FirstOrDefault(s => s.SectionKey == "hero-body")?.Content ?? "<p class=\"lead mb-4\">Streamline your projects, collaborate with your team, and achieve better results with our comprehensive project management solution.</p>";
+    var heroImagePath = sections.FirstOrDefault(s => s.SectionKey == "hero-image")?.ImagePath;
     
     var feature1Title = sections.FirstOrDefault(s => s.SectionKey == "feature-1-title")?.Content ?? "Task Management";
     var feature1Body = sections.FirstOrDefault(s => s.SectionKey == "feature-1-body")?.Content ?? "Organize and track tasks with our intuitive Kanban board system.";
@@ -33,6 +34,12 @@
             <div class="col-lg-8">
                 @Html.Raw(heroTitle)
                 @Html.Raw(heroBody)
+                @if (!string.IsNullOrEmpty(heroImagePath))
+                {
+                    <div class="mt-3">
+                        <img src="@heroImagePath" class="img-fluid rounded" alt="Hero Image" />
+                    </div>
+                }
                 <div class="d-flex gap-3 justify-content-center">
                     <a asp-controller="Account" asp-action="Register" class="btn btn-light btn-lg">Get Started</a>
                     <a href="#features" class="btn btn-outline-light btn-lg">Learn More</a>

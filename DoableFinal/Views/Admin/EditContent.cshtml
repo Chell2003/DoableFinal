@@ -18,26 +18,33 @@
                 <input type="hidden" name="key" value="@Model.Key" />
 
                 <div class="mb-3">
+                    @if (TempData["ImagePath"] != null)
+                    {
+                        <div class="alert alert-success">Image saved: @TempData["ImagePath"]</div>
+                    }
                     <label class="form-label">Title (HTML allowed)</label>
-                    <textarea name="titleHtml" class="form-control" rows="3">@Model.TitleHtml</textarea>
+                    <textarea name="titleHtml" class="form-control small-textarea" rows="3">@Model.TitleHtml</textarea>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Body (HTML allowed)</label>
-                    <textarea name="bodyHtml" class="form-control" rows="10">@Model.BodyHtml</textarea>
+                    <textarea name="bodyHtml" class="form-control small-textarea" rows="3">@Model.BodyHtml</textarea>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Current Image</label>
-                    @if (!string.IsNullOrEmpty(Model.ImagePath))
-                    {
-                        <div class="mb-2">
-                            <img src="@Model.ImagePath" alt="image" style="max-width:300px; height:auto;" />
-                        </div>
-                    }
-                    <label class="form-label">Replace Image (optional)</label>
-                    <input type="file" name="imageFile" class="form-control" />
-                </div>
+                @if (Model.Key == "Index" || !string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Current Image</label>
+                        @if (!string.IsNullOrEmpty(Model.ImagePath))
+                        {
+                            <div class="mb-2">
+                                <img src="@Model.ImagePath" alt="image" style="max-width:300px; height:auto;" />
+                            </div>
+                        }
+                        <label class="form-label">Replace Image (optional)</label>
+                        <input type="file" name="imageFile" class="form-control" />
+                    </div>
+                }
 
                 <button type="submit" class="btn btn-primary">Save</button>
                 <a asp-action="ContentMS" class="btn btn-secondary ms-2">Cancel</a>

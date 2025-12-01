@@ -46,3 +46,11 @@ button.accept-policy {
   white-space: nowrap;
   line-height: 60px;
 }
+
+/* Small textareas for admin CMS editors */
+.small-textarea {
+  height: 80px; /* ~4-5 rows */
+  min-height: 60px;
+  max-height: 240px;
+  resize: vertical;
+}

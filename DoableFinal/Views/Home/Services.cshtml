@@ -5,7 +5,7 @@
     
     var heroTitle = sections.FirstOrDefault(s => s.SectionKey == "services-hero-title")?.Content ?? "<h1 class=\"display-4 fw-bold mb-4\">Our Services</h1>";
     var heroBody = sections.FirstOrDefault(s => s.SectionKey == "services-hero-body")?.Content ?? "<p class=\"lead\">Comprehensive project management solutions tailored to your needs.</p>";
-    var heroImage = sections.FirstOrDefault(s => s.SectionKey == "services-hero-image")?.Content ?? "/images/logo-combined1.png";
+    var heroImage = sections.FirstOrDefault(s => s.SectionKey == "services-hero-image")?.ImagePath;
     
     var coreTitle = sections.FirstOrDefault(s => s.SectionKey == "services-core-title")?.Content ?? "Core Services";
     
@@ -76,7 +76,10 @@
                 @Html.Raw(heroBody)
             </div>
             <div class="col-lg-6 text-center">
-                <img src="@heroImage" alt="Our Services" class="img-fluid">
+                @if (!string.IsNullOrEmpty(heroImage))
+                {
+                    <img src="@heroImage" alt="Our Services" class="img-fluid">
+                }
             </div>
         </div>
     </div>
