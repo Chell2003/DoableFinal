@@ -13,31 +13,29 @@
     }
     else
     {
-        Layout = "~/Views/Shared/_Layout.cshtml"; // or Layout = null
+        Layout = "~/Views/Shared/_Layout.cshtml";
     }
 }
 
-<!-- Role-based Navbar -->
-
-
-<div class="container-fluid">
-    <div class="row">        <!-- Message List Sidebar -->
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="card-title mb-0">Conversations</h5>
-                        <div>
-                            <button id="btnNewMessage" type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newMessageModal">
-                                <i class="bi bi-plus-lg"></i> New
-                            </button>
-                        </div>
+<div class="container-fluid px-4 py-3">
+    <div class="row g-3">
+        <!-- Message List Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-white border-0 pt-4 pb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold mb-0">
+                            <i class="bi bi-chat-dots-fill text-primary me-2"></i>Messages
+                        </h4>
+                        <button id="btnNewMessage" type="button" class="btn btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                            <i class="bi bi-plus-lg me-1"></i> New
+                        </button>
                     </div>
-                    @* Project filter dropdown for Clients and Project Managers *@
+                    
                     @if (ViewBag.Projects != null && ViewBag.Projects.Count > 0)
                     {
                         <div class="mb-2">
-                            <select id="projectFilter" class="form-select form-select-sm" onchange="filterByProject()">
+                            <select id="projectFilter" class="form-select rounded-pill" onchange="filterByProject()">
                                 <option value="">All Projects</option>
                                 @foreach (var project in ViewBag.Projects)
                                 {
@@ -54,100 +52,117 @@
                         </div>
                     }
                 </div>
-                    <div class="card-body p-0">                            
-                    <div class="list-group list-group-flush" style="height: calc(100vh - 250px); overflow-y: auto;">
-                                @{ var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value; var isEmployee = User.IsInRole("Employee"); }
+                
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush conversation-list" style="height: calc(100vh - 280px); overflow-y: auto;">
+                        @{ 
+                            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value; 
+                            var isEmployee = User.IsInRole("Employee"); 
+                        }
 
-                                @if (ViewBag.UsersWithMessages != null)
-                                {
-                                    foreach (var conv in ViewBag.UsersWithMessages)
-                                    {
-                                        if (conv == null) continue;
-                                        if (conv.UserId == currentUserId) continue; // don't show conversation with self
-                                        if (conv.User == null) continue;
-                                        if (isEmployee && conv.User.Role == "Client") continue; // employees should not see clients
-                                        <div class="conversation-item p-3 border-bottom @(conv.UnreadCount > 0 ? "bg-light" : "")" 
-                                            data-userid="@conv.UserId"
-                                            style="cursor: pointer;" 
-                                            onclick="loadConversation('@conv.UserId')">
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-circle me-3">
-                                                    <i class="bi bi-person-fill"></i>
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <h6 class="mb-0">@conv.User.FirstName @conv.User.LastName (@conv.User.Role)</h6>
-                                                        <small class="text-muted">@conv.LastMessage.CreatedAt.ToString("MMM dd")</small>
-                                                    </div>
-                                                    <p class="mb-0 text-truncate" style="max-width: 200px;">
-                                                        @(conv.LastMessage.SenderId == currentUserId ? "You: " : "")@conv.LastMessage.Content
-                                                    </p>
-                                                </div>
-                                                @if (conv.UnreadCount > 0)
-                                                {
-                                                    <span class="badge bg-primary rounded-pill ms-2">@conv.UnreadCount</span>
-                                                }
-                                            </div>
-                                        </div>
-                                    }                                }
+                        @if (ViewBag.UsersWithMessages != null)
+                        {
+                            foreach (var conv in ViewBag.UsersWithMessages)
+                            {
+                                if (conv == null) continue;
+                                if (conv.UserId == currentUserId) continue;
+                                if (conv.User == null) continue;
+                                if (isEmployee && conv.User.Role == "Client") continue;
                                 
-                                  @foreach (var user in ViewBag.UsersWithoutMessages)
-                                {
-                                      @if (user.Id == currentUserId) { continue; }
-                                      @if (isEmployee && user.Role == "Client") { continue; }
-                                      <div class="conversation-item p-3 border-bottom" 
-                                         data-userid="@user.Id"
-                                         style="cursor: pointer;" 
-                                         onclick="loadConversation('@user.Id')">
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar-circle me-3">
-                                                <i class="bi bi-person-fill"></i>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-0">@user.FirstName @user.LastName (@user.Role)</h6>
-                                                </div>
-                                                <p class="mb-0 text-muted">No messages yet</p>
-                                            </div>
+                                <div class="conversation-item px-3 py-3 border-bottom position-relative @(conv.UnreadCount > 0 ? "unread-item" : "")" 
+                                    data-userid="@conv.UserId"
+                                    style="cursor: pointer; transition: all 0.2s ease;" 
+                                    onclick="loadConversation('@conv.UserId')">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="avatar-circle flex-shrink-0">
+                                            <span class="avatar-initials">@conv.User.FirstName.Substring(0,1)@conv.User.LastName.Substring(0,1)</span>
                                         </div>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <h6 class="mb-0 fw-semibold text-truncate">@conv.User.FirstName @conv.User.LastName</h6>
+                                                <small class="text-muted flex-shrink-0 ms-2">@conv.LastMessage.CreatedAt.ToString("MMM dd")</small>
+                                            </div>
+                                            <span class="badge bg-light text-secondary mb-1" style="font-size: 0.7rem;">@conv.User.Role</span>
+                                            <p class="mb-0 text-truncate text-muted small" style="max-width: 100%;">
+                                                @if(conv.LastMessage.SenderId == currentUserId) 
+                                                { 
+                                                    <span class="text-primary fw-medium">You: </span>
+                                                }
+                                                @conv.LastMessage.Content
+                                            </p>
+                                        </div>
+                                        @if (conv.UnreadCount > 0)
+                                        {
+                                            <span class="badge bg-primary rounded-circle position-absolute" style="top: 12px; right: 12px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">@conv.UnreadCount</span>
+                                        }
                                     </div>
-                                }                            </div>
+                                </div>
+                            }
+                        }
+                        
+                        @foreach (var user in ViewBag.UsersWithoutMessages)
+                        {
+                            @if (user.Id == currentUserId) { continue; }
+                            @if (isEmployee && user.Role == "Client") { continue; }
+                            
+                            <div class="conversation-item px-3 py-3 border-bottom" 
+                                data-userid="@user.Id"
+                                style="cursor: pointer; transition: all 0.2s ease;" 
+                                onclick="loadConversation('@user.Id')">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="avatar-circle flex-shrink-0">
+                                        <span class="avatar-initials">@user.FirstName.Substring(0,1)@user.LastName.Substring(0,1)</span>
+                                    </div>
+                                    <div class="flex-grow-1 min-w-0">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <h6 class="mb-0 fw-semibold text-truncate">@user.FirstName @user.LastName</h6>
+                                        </div>
+                                        <span class="badge bg-light text-secondary mb-1" style="font-size: 0.7rem;">@user.Role</span>
+                                        <p class="mb-0 text-muted small fst-italic">No messages yet</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Message Content Area -->
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-            <div class="card-body p-0">
-                <!-- Make this area full viewport height -->
-                <div id="conversationContent" class="d-flex flex-column" style="height: calc(100vh - 250px); overflow: visible;">
-                <div class="text-center py-5 text-muted">
-                    <i class="bi bi-chat-dots display-1"></i>
-                    <p class="mt-3">Select a conversation to view messages</p>
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-body p-0">
+                    <div id="conversationContent" class="d-flex flex-column" style="height: calc(100vh - 200px); overflow: visible;">
+                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+                            <div class="empty-state-icon mb-3">
+                                <i class="bi bi-chat-dots" style="font-size: 4rem; opacity: 0.3;"></i>
+                            </div>
+                            <h5 class="fw-semibold mb-2">No conversation selected</h5>
+                            <p class="text-center">Choose a conversation from the list to start messaging</p>
+                        </div>
+                    </div>
                 </div>
-                </div>
-            </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- New Message Modal -->
+<!-- Enhanced New Message Modal -->
 <div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-md modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="newMessageModalLabel">New Message</h5>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="newMessageModalLabel">
+                    <i class="bi bi-send-fill text-primary me-2"></i>New Message
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body pt-2">
                 <form id="newMessageForm" class="needs-validation" novalidate>
-                    <div class="mb-2">
-                        <label for="receiverId" class="form-label small">To</label>
-                        <select id="receiverId" name="receiverId" class="form-select form-select-sm" required>
+                    <div class="mb-3">
+                        <label for="receiverId" class="form-label fw-semibold small text-muted">Recipient</label>
+                        <select id="receiverId" name="receiverId" class="form-select rounded-pill" required>
                             <option value="">Select recipient...</option>
-                            @* Combine users from both lists; avoid duplicates *@
                             @{ 
                                 var renderedUserIds = new HashSet<string>();
                                 if (ViewBag.UsersWithMessages != null) {
@@ -155,7 +170,7 @@
                                         if (conv == null) continue;
                                         if (conv.UserId == currentUserId) continue;
                                         if (conv.User == null) continue;
-                                        if (isEmployee && conv.User.Role == "Client") continue; // employees shouldn't message clients
+                                        if (isEmployee && conv.User.Role == "Client") continue;
                                         if (renderedUserIds.Add(conv.User.Id)) {
                                             <option value="@conv.User.Id">@conv.User.FirstName @conv.User.LastName (@conv.User.Role)</option>
                                         }
@@ -173,10 +188,10 @@
                             }
                         </select>
                     </div>
-                    <div class="mb-2">
-                        <label for="projectId" class="form-label small">Project (optional)</label>
-                        <select id="projectId" name="projectId" class="form-select form-select-sm">
-                            <option value="">Optional: Select project...</option>
+                    <div class="mb-3">
+                        <label for="projectId" class="form-label fw-semibold small text-muted">Project <span class="text-muted fw-normal">(optional)</span></label>
+                        <select id="projectId" name="projectId" class="form-select rounded-pill">
+                            <option value="">Select project...</option>
                             @if (ViewBag.Projects != null)
                             {
                                 foreach (var project in ViewBag.Projects)
@@ -186,15 +201,17 @@
                             }
                         </select>
                     </div>
-                    <div class="mb-2">
-                        <label for="messageContent" class="form-label small">Message</label>
-                        <textarea id="messageContent" name="content" class="form-control" rows="3" required></textarea>
+                    <div class="mb-3">
+                        <label for="messageContent" class="form-label fw-semibold small text-muted">Message</label>
+                        <textarea id="messageContent" name="content" class="form-control rounded-3" rows="4" placeholder="Type your message here..." required style="resize: none;"></textarea>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button id="btnSendNew" type="button" class="btn btn-primary">Send</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button id="btnSendNew" type="button" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-send-fill me-1"></i> Send
+                </button>
             </div>
         </div>
     </div>
@@ -202,7 +219,6 @@
 
 @section Scripts {
     <script>
-        // Form validation
         (function () {
             'use strict'
             var forms = document.querySelectorAll('.needs-validation')
@@ -217,28 +233,23 @@
             })
         })()
 
-        // Authentication user id (current signed-in user)
         const authUserIdRaw = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
         const authUserId = (authUserIdRaw || '').trim();
-        // The other party in the currently opened conversation
         let currentConversationUserId = null;
 
         function loadConversation(userId) {
             currentConversationUserId = userId;
-            // Highlight the active conversation item
             document.querySelectorAll('.conversation-item').forEach(it => it.classList.remove('active'));
             const activeItem = document.querySelector(`.conversation-item[data-userid="${userId}"]`);
             if (activeItem) activeItem.classList.add('active');
             const content = document.getElementById('conversationContent');
             content.innerHTML = `
-                <div class="conversation-header p-3 border-bottom">
-                    <h5 class="mb-0">Loading conversation...</h5>
-                </div>
-                <div class="conversation-messages p-3 flex-grow-1" style="overflow-y: auto;">
-                    <div class="text-center py-5 text-muted">
-                        <div class="spinner-border" role="status">
+                <div class="conversation-header p-4 border-bottom bg-light">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
+                        <h6 class="mb-0 text-muted">Loading conversation...</h6>
                     </div>
                 </div>
             `;
@@ -253,19 +264,16 @@
                     const messages = data.messages;
                     const messagesHtml = messages.map(message => {
                         const isSent = message.senderId === authUserId;
-                        console.debug('message', message.senderId, 'auth', authUserId, 'isSent', isSent);
                         return `
-                            <div class="d-flex ${isSent ? 'justify-content-end' : 'justify-content-start'}">
-                                <div class="message-bubble ${isSent ? 'message-sent text-end' : 'message-received text-start'}">
+                            <div class="message-wrapper ${isSent ? 'message-wrapper-sent' : 'message-wrapper-received'}">
+                                <div class="message-bubble ${isSent ? 'message-sent' : 'message-received'}">
                                     ${message.projectId ? `
-                                        <div class="small text-${isSent ? 'light' : 'muted'} mb-1">
-                                            <i class="bi bi-folder me-1"></i>${message.projectName || 'Project'}
+                                        <div class="message-project-tag">
+                                            <i class="bi bi-folder-fill me-1"></i>${message.projectName || 'Project'}
                                         </div>
                                     ` : ''}
                                     <div class="message-content">${message.content}</div>
-                                    <div class="small text-${isSent ? 'light' : 'muted'} mt-1">
-                                        ${message.createdAt}
-                                    </div>
+                                    <div class="message-time">${message.createdAt}</div>
                                 </div>
                             </div>
                         `;
@@ -274,36 +282,39 @@
                     const content = document.getElementById('conversationContent');
                     const recipientElem = document.querySelector(`.conversation-item[data-userid="${userId}"]`);
                     const recipientName = recipientElem ? (recipientElem.querySelector('h6') ? recipientElem.querySelector('h6').innerText : 'Conversation') : 'Conversation';
+                    
                     content.innerHTML = `
-                                <div class="conversation-header p-3 border-bottom d-flex align-items-center justify-content-between">
+                        <div class="conversation-header p-3 border-bottom bg-white">
                             <div class="d-flex align-items-center">
-                                <div class="avatar-circle me-3"><i class="bi bi-person-fill"></i></div>
-                                <h5 class="mb-0">${recipientName}</h5>
+                                <div class="avatar-circle-header me-3">
+                                    <span class="avatar-initials">${recipientName.split(' ').map(n => n[0]).join('').substring(0,2)}</span>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0 fw-semibold">${recipientName}</h5>
+                                    <small class="text-success"><i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> Online</small>
+                                </div>
                             </div>
-                            
                         </div>
-                        <div class="conversation-messages p-3 flex-grow-1 d-flex flex-column" style="overflow-y: auto; width: 100%;">
-                            ${messagesHtml}
+                        <div class="conversation-messages p-4" style="overflow-y: auto; flex: 1; background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);">
+                            ${messagesHtml || '<div class="text-center text-muted py-5"><i>No messages yet. Start the conversation!</i></div>'}
                         </div>
-                        <div class="conversation-input p-3 border-top">
+                        <div class="conversation-input p-3 border-top bg-white">
                             <form id="messageForm" class="needs-validation" novalidate>
                                 <input type="hidden" name="receiverId" value="${userId}" />
                                 <div class="input-group">
-                                    <textarea name="content" class="form-control" rows="1" 
-                                            placeholder="Type a message..." required></textarea>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-send"></i>
+                                    <textarea name="content" class="form-control border-0 shadow-none" rows="1" 
+                                            placeholder="Type your message..." required style="resize: none; background: #f8f9fa; border-radius: 24px; padding: 12px 20px;"></textarea>
+                                    <button type="submit" class="btn btn-primary rounded-circle ms-2" style="width: 48px; height: 48px; padding: 0;">
+                                        <i class="bi bi-send-fill"></i>
                                     </button>
                                 </div>
                             </form>
                         </div>
                     `;
 
-                    // Scroll to bottom
                     const messagesContainer = content.querySelector('.conversation-messages');
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-                    // Add form submission handler
                     const form = document.getElementById('messageForm');
                     form.addEventListener('submit', async function (event) {
                         event.preventDefault();
@@ -328,8 +339,6 @@
                                 form.reset();
                                 form.classList.remove('was-validated');
                                 refreshConversation(userId);
-                            } else {
-                                console.error('Failed to send message');
                             }
                         } catch (error) {
                             console.error('Error sending message:', error);
@@ -338,88 +347,49 @@
                 })
                 .catch(error => {
                     console.error('Error loading conversation:', error);
-                    content.innerHTML = `
-                        <div class="conversation-header p-3 border-bottom">
-                            <h5 class="mb-0">Error</h5>
-                        </div>
-                        <div class="conversation-messages p-3 flex-grow-1">
-                            <div class="alert alert-danger">
-                                Failed to load conversation. Please try again.
-                            </div>
-                        </div>
-                    `;
                 });
         }
 
-        // Auto-refresh conversation every 10 seconds
         setInterval(() => {
             if (currentConversationUserId) {
                 refreshConversation(currentConversationUserId);
             }
         }, 10000);
 
-        // Update project dropdown to only show projects shared between current user and selected recipient
         var receiverElement = document.getElementById('receiverId');
         if (receiverElement) {
             receiverElement.addEventListener('change', function (e) {
-            const recipientId = e.target.value;
-            const projectSelect = document.getElementById('projectId');
+                const recipientId = e.target.value;
+                const projectSelect = document.getElementById('projectId');
 
-            // Reset to default if no recipient
-            if (!recipientId) {
-                projectSelect.innerHTML = '<option value="">Select project...</option>';
-                @* Re-populate with initial projects from server-side ViewBag *@
-                var initialOptions = `@Html.Raw(Json.Serialize(ViewBag.Projects ?? new List<object>()))`;
-                try {
-                    var opts = JSON.parse(initialOptions);
-                    opts.forEach(function(p) {
-                        const opt = document.createElement('option');
-                        opt.value = p.Id;
-                        opt.text = p.Name;
-                        projectSelect.appendChild(opt);
-                    });
-                } catch (err) {
-                    // fallback: do nothing
-                }
-                return;
-            }
-
-            fetch(`/Message/GetSharedProjects?recipientId=${recipientId}`)
-                .then(r => r.json())
-                .then(data => {
+                if (!recipientId) {
                     projectSelect.innerHTML = '<option value="">Select project...</option>';
-                    if (Array.isArray(data) && data.length > 0) {
-                        data.forEach(function (p) {
-                            const opt = document.createElement('option');
-                            opt.value = p.id || p.Id || '';
-                            opt.text = p.name || p.Name || '';
-                            projectSelect.appendChild(opt);
-                        });
-                    }
-                })
-                .catch(err => {
-                    console.error('Failed to load shared projects', err);
-                });
+                    return;
+                }
+
+                fetch(`/Message/GetSharedProjects?recipientId=${recipientId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        projectSelect.innerHTML = '<option value="">Select project...</option>';
+                        if (Array.isArray(data) && data.length > 0) {
+                            data.forEach(function (p) {
+                                const opt = document.createElement('option');
+                                opt.value = p.id || p.Id || '';
+                                opt.text = p.name || p.Name || '';
+                                projectSelect.appendChild(opt);
+                            });
+                        }
+                    })
+                    .catch(err => console.error('Failed to load shared projects', err));
             });
         }
 
-        // Filter messages by project
         function filterByProject() {
             const projectId = document.getElementById('projectFilter').value;
             const url = projectId ? `/Message/Index?projectId=${projectId}` : '/Message/Index';
             window.location.href = url;
         }
 
-        // Open user profile (best effort URL, may vary by app routes)
-        function openRecipientProfile(userId) {
-            if (!userId) return;
-            // Try common profile routes, fallback to a query param route
-            const possiblePaths = [`/User/Profile/${userId}`, `/Profile?userId=${userId}`, `/Account/Profile?userId=${userId}`];
-            // Navigate to the first path (server should handle routing or return valid page)
-            window.location.href = possiblePaths[0];
-        }
-
-        // Send new message from modal
         const btnSendNew = document.getElementById('btnSendNew');
         if (btnSendNew) {
             btnSendNew.addEventListener('click', async function () {
@@ -439,19 +409,14 @@
                     });
 
                     if (response.ok) {
-                        // close modal
                         const modal = bootstrap.Modal.getInstance(document.getElementById('newMessageModal'));
                         if (modal) modal.hide();
-                        // reset and mark invalid cleared
                         form.reset();
                         form.classList.remove('was-validated');
-                        // open the conversation with the selected recipient
                         const rid = formData.get('receiverId');
                         if (rid) {
                             loadConversation(rid);
                         }
-                    } else {
-                        console.error('Failed to send new message');
                     }
                 } catch (err) {
                     console.error('Error sending new message:', err);
@@ -459,7 +424,6 @@
             });
         }
 
-        // Prefill new message modal with currently selected conversation recipient
         const btnNewMessageElem = document.getElementById('btnNewMessage');
         if (btnNewMessageElem) {
             btnNewMessageElem.addEventListener('click', function () {
@@ -467,9 +431,7 @@
                 if (receiverSelect) {
                     if (currentConversationUserId) {
                         receiverSelect.value = currentConversationUserId;
-                        // trigger change event to update projects
-                        const event = new Event('change');
-                        receiverSelect.dispatchEvent(event);
+                        receiverSelect.dispatchEvent(new Event('change'));
                     } else {
                         receiverSelect.value = '';
                     }
@@ -479,87 +441,241 @@
     </script>
 
     <style>
+        /* Modern Avatar Styling */
         .avatar-circle {
-            width: 40px;
-            height: 40px;
-            background-color: #0d6efd;
-            color: white;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
-        .avatar-circle i {
-            font-size: 1.1rem;
-            line-height: 1;
+
+        .avatar-circle-header {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .avatar-initials {
+            text-transform: uppercase;
+        }
+
+        /* Enhanced Conversation List */
+        .conversation-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .conversation-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .conversation-list::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 3px;
+        }
+
+        .conversation-list::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        .conversation-item {
+            transition: all 0.2s ease;
         }
 
         .conversation-item:hover {
             background-color: #f8f9fa;
+            transform: translateX(2px);
         }
 
         .conversation-item.active {
-            background-color: #e9ecef;
+            background: linear-gradient(to right, #e3f2fd 0%, #f8f9fa 100%);
+            border-left: 3px solid #0d6efd;
+        }
+
+        .conversation-item.unread-item {
+            background-color: #f0f7ff;
+        }
+
+        /* Modern Message Bubbles */
+        .conversation-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message-wrapper {
+            display: flex;
+            width: 100%;
+        }
+
+        .message-wrapper-sent {
+            justify-content: flex-end;
+        }
+
+        .message-wrapper-received {
+            justify-content: flex-start;
         }
 
         .message-bubble {
-            max-width: 75%;
-            padding: 10px 15px;
-            border-radius: 15px;
-            margin-bottom: 10px;
-            display: inline-flex;
-            flex-direction: column;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            max-width: 65%;
+            padding: 10px 16px;
+            border-radius: 18px;
+            position: relative;
+            animation: messageSlideIn 0.3s ease;
         }
 
-        .conversation-header .avatar-circle {
-            width: 44px;
-            height: 44px;
-            font-size: 1rem;
-        }
-
-        .conversation-messages {
-            padding-right: 10px;
-            display: flex;
-            flex-direction: column;
-            padding-bottom: 8px;
-            gap: 6px;
-        }
-
-        .conversation-input textarea {
-            resize: none;
+        @@keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message-sent {
-            background-color: #0d6efd;
-            color: #ffffff;
-            margin-left: auto;
-            border-bottom-right-radius: 5px;
-            align-self: flex-end;
-            border-top-right-radius: 15px;
-            border-top-left-radius: 15px;
-            padding-right: 12px;
-            padding-left: 12px;
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
         }
 
         .message-received {
-            background-color: #f1f3f5;
+            background: #f1f3f5;
             color: #212529;
-            margin-right: auto;
-            border-bottom-left-radius: 5px;
-            align-self: flex-start;
-            border-top-left-radius: 15px;
-            border-top-right-radius: 15px;
-            padding-right: 12px;
-            padding-left: 12px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
-        .message-bubble .message-content { font-size: 14px; }
-        .message-bubble .small { opacity: 0.8; font-size: 12px; }
-        .message-sent .small { color: rgba(255,255,255,0.9); }
-        .message-received .small { color: rgba(0,0,0,0.55); }
+        .message-content {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            margin-top: 4px;
+            opacity: 0.75;
+        }
+
+        .message-sent .message-time {
+            text-align: right;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .message-received .message-time {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .message-project-tag {
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+            padding: 2px 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .message-sent .message-project-tag {
+            background: rgba(255, 255, 255, 0.25);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .message-received .message-project-tag {
+            background: rgba(0, 0, 0, 0.05);
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        /* Enhanced Input Area */
+        .conversation-input textarea {
+            transition: all 0.2s ease;
+        }
+
+        .conversation-input textarea:focus {
+            background: #fff !important;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1) !important;
+        }
+
+        /* Card Enhancements */
+        .card {
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08) !important;
+        }
+
+        /* Button Enhancements */
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0a58ca 0%, #084298 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+        }
+
+        /* Modal Enhancements */
+        .modal-content {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 768px) {
+            .message-bubble {
+                max-width: 85%;
+            }
+
+            .col-lg-4, .col-lg-8 {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
+
+        /* Empty State */
+        .empty-state-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @@keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Badge Enhancements */
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        /* Smooth Scrolling */
+        .conversation-messages {
+            scroll-behavior: smooth;
+        }
     </style>
 }
