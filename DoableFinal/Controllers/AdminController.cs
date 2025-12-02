@@ -36,6 +36,39 @@ namespace DoableFinal.Controllers
             _logger = logger;
         }
 
+        // Map display role names to the actual identity role (seeded roles)
+        private string NormalizeToIdentityRole(string role)
+        {
+            if (string.IsNullOrEmpty(role)) return role;
+            if (role == "Project Manager" || role == "ProjectManager") return "ProjectManager";
+            return role;
+        }
+
+        private async Task<List<ApplicationUser>> GetUsersInRoleVariantsAsync(string role)
+        {
+            var normalized = NormalizeToIdentityRole(role);
+            var users = new List<ApplicationUser>();
+            var inIdentityRole = await _userManager.GetUsersInRoleAsync(normalized);
+            users.AddRange(inIdentityRole);
+            // if display role differs (with space), attempt retrieving users by that identity role too
+            if (normalized != role)
+            {
+                try
+                {
+                    var other = await _userManager.GetUsersInRoleAsync(role);
+                    foreach (var u in other)
+                    {
+                        if (!users.Any(x => x.Id == u.Id)) users.Add(u);
+                    }
+                }
+                catch
+                {
+                    // ignore if such identity role doesn't exist
+                }
+            }
+            return users.Distinct().ToList();
+        }
+
         // Define the list of keys that are expected to accept images
         private static readonly HashSet<string> _imageSectionKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -507,7 +540,7 @@ namespace DoableFinal.Controllers
                 {
                     try
                     {
-                        await _userManager.AddToRoleAsync(user, model.Role);
+                        await _userManager.AddToRoleAsync(user, NormalizeToIdentityRole(model.Role));
                         TempData["UserManagementMessage"] = $"{model.Role} account created successfully.";
                         return RedirectToAction(nameof(Users));
                     }
@@ -572,7 +605,7 @@ namespace DoableFinal.Controllers
             var clients = (await _userManager.GetUsersInRoleAsync("Client"))
                 .Where(u => !u.IsArchived)
                 .ToList();
-            var projectManagers = (await _userManager.GetUsersInRoleAsync("Project Manager"))
+            var projectManagers = (await GetUsersInRoleVariantsAsync("Project Manager"))
                 .Where(u => !u.IsArchived)
                 .ToList();
 
@@ -667,7 +700,7 @@ namespace DoableFinal.Controllers
             var clients = (await _userManager.GetUsersInRoleAsync("Client"))
                 .Where(u => !u.IsArchived)
                 .ToList();
-            var projectManagers = (await _userManager.GetUsersInRoleAsync("Project Manager"))
+            var projectManagers = (await GetUsersInRoleVariantsAsync("Project Manager"))
                 .Where(u => !u.IsArchived)
                 .ToList();
 
@@ -1128,10 +1161,11 @@ namespace DoableFinal.Controllers
 
                 // Update user's role first
                 var currentRoles = await _userManager.GetRolesAsync(user);
-                if (!currentRoles.Contains(model.Role))
+                var normalizedRole = NormalizeToIdentityRole(model.Role);
+                if (!currentRoles.Contains(normalizedRole))
                 {
                     await _userManager.RemoveFromRolesAsync(user, currentRoles);
-                    await _userManager.AddToRoleAsync(user, model.Role);
+                    await _userManager.AddToRoleAsync(user, normalizedRole);
                 }
 
                 // Update user properties

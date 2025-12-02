@@ -50,6 +50,23 @@ namespace DoableFinal.Data
 
             // Seed Homepage Sections
             await SeedHomePageSections(dbContext);
+
+            // Fix up users where the custom Role string doesn't match the normalized identity role
+            try
+            {
+                var projectManagersByProperty = await dbContext.Users.Where(u => u.Role == "Project Manager").ToListAsync();
+                foreach (var pm in projectManagersByProperty)
+                {
+                    var rolesForUser = await userManager.GetRolesAsync(pm);
+                    if (!rolesForUser.Contains("ProjectManager"))
+                    {
+                        await userManager.AddToRoleAsync(pm, "ProjectManager");
+                    }
+                }
+            }
+            catch {
+                // Ignore any seeding-time errors — they're non-fatal
+            }
         }
 
         private static async Task SeedHomePageSections(ApplicationDbContext context)

@@ -14,11 +14,22 @@ namespace DoableFinal.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<MessageController> _logger;
 
-        public MessageController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public MessageController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, ILogger<MessageController> logger)
         {
             _context = context;
             _userManager = userManager;
+            _logger = logger;
+        }
+
+        private async Task<bool> IsProjectManagerAsync(ApplicationUser user)
+        {
+            if (user == null) return false;
+            if (await _userManager.IsInRoleAsync(user, "ProjectManager")) return true;
+            if (await _userManager.IsInRoleAsync(user, "Project Manager")) return true;
+            if (!string.IsNullOrEmpty(user.Role) && (user.Role == "ProjectManager" || user.Role == "Project Manager")) return true;
+            return false;
         }
 
         public async Task<IActionResult> Index(int? projectId = null)
@@ -42,7 +53,7 @@ namespace DoableFinal.Controllers
                     .OrderBy(p => p.Name)
                     .ToListAsync();
             }
-            else if (await _userManager.IsInRoleAsync(currentUser, "ProjectManager"))
+            else if (await IsProjectManagerAsync(currentUser))
             {
                 projects = await _context.Projects
                     .Where(p => p.ProjectManagerId == currentUser.Id && !p.IsArchived)
@@ -90,7 +101,7 @@ namespace DoableFinal.Controllers
                 {
                     if (!string.IsNullOrEmpty(proj.ProjectManagerId)) relevantUserIds.Add(proj.ProjectManagerId);
                     // Include the project client only if the current user is allowed to message clients (Project Manager and Admin)
-                    if (!string.IsNullOrEmpty(proj.ClientId) && (await _userManager.IsInRoleAsync(currentUser, "ProjectManager") || await _userManager.IsInRoleAsync(currentUser, "Admin")))
+                    if (!string.IsNullOrEmpty(proj.ClientId) && (await IsProjectManagerAsync(currentUser) || await _userManager.IsInRoleAsync(currentUser, "Admin")))
                     {
                         relevantUserIds.Add(proj.ClientId);
                     }
@@ -107,6 +118,15 @@ namespace DoableFinal.Controllers
                             .Select(pt => pt.UserId)
                             .ToListAsync();
                         foreach (var id in teamUserIds) relevantUserIds.Add(id);
+                    }
+                }
+                // Include admin users in conversation list for Project Managers and Employees
+                if (await IsProjectManagerAsync(currentUser) || await _userManager.IsInRoleAsync(currentUser, "Employee"))
+                {
+                    var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+                    foreach (var a in adminUsers)
+                    {
+                        relevantUserIds.Add(a.Id);
                     }
                 }
             }
@@ -138,7 +158,7 @@ namespace DoableFinal.Controllers
                     allUsersQuery = allUsersQuery.Where(u => false);
                 }
             }
-            else if (await _userManager.IsInRoleAsync(currentUser, "ProjectManager"))
+            else if (await IsProjectManagerAsync(currentUser))
             {
                 // ProjectManagers: Only show users currently on their projects (same as Client)
                 if (relevantUserIds.Any())
@@ -219,6 +239,7 @@ namespace DoableFinal.Controllers
             var receiver = await _userManager.FindByIdAsync(receiverId);
             if (receiver == null)
             {
+                _logger?.LogWarning("SendMessage: recipient not found. ReceiverId={ReceiverId}, SenderId={SenderId}", receiverId, currentUser?.Id);
                 return BadRequest("Recipient not found");
             }
 
@@ -230,7 +251,7 @@ namespace DoableFinal.Controllers
                     .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
                     .ToListAsync();
             }
-            else if (await _userManager.IsInRoleAsync(currentUser, "ProjectManager"))
+            else if (await IsProjectManagerAsync(currentUser))
             {
                 projects = await _context.Projects
                     .Where(p => p.ProjectManagerId == currentUser.Id && !p.IsArchived)
@@ -250,6 +271,12 @@ namespace DoableFinal.Controllers
                     .ToListAsync();
             }
 
+            // Diagnostic logging to help identify permission problems
+            var isPm = await IsProjectManagerAsync(currentUser);
+            var isEmployee = await _userManager.IsInRoleAsync(currentUser, "Employee");
+            var isAdmin = await _userManager.IsInRoleAsync(currentUser, "Admin");
+            _logger?.LogDebug("SendMessage: SenderId={SenderId}, IsPm={IsPm}, IsEmployee={IsEmployee}, IsAdmin={IsAdmin}, ProjectsFound={Count}", currentUser?.Id, isPm, isEmployee, isAdmin, projects.Count);
+
             // Build set of allowed recipient IDs based on role
             var allowedRecipientIds = new HashSet<string>();
             
@@ -262,7 +289,7 @@ namespace DoableFinal.Controllers
                         allowedRecipientIds.Add(proj.ProjectManagerId);
                 }
             }
-            else if (await _userManager.IsInRoleAsync(currentUser, "ProjectManager"))
+            else if (await IsProjectManagerAsync(currentUser))
             {
                 // ProjectManagers can message: clients and team members of their projects
                 foreach (var proj in projects)
@@ -276,6 +303,9 @@ namespace DoableFinal.Controllers
                     foreach (var id in teamUserIds) 
                         allowedRecipientIds.Add(id);
                 }
+                // Project managers may also message admins
+                var admins = await _userManager.GetUsersInRoleAsync("Admin");
+                foreach (var a in admins) allowedRecipientIds.Add(a.Id);
             }
             else if (await _userManager.IsInRoleAsync(currentUser, "Employee"))
             {
@@ -293,6 +323,9 @@ namespace DoableFinal.Controllers
                     foreach (var id in teamUserIds) 
                         allowedRecipientIds.Add(id);
                 }
+                // Employees can message Project Managers, other Employees, and Admins
+                var admins = await _userManager.GetUsersInRoleAsync("Admin");
+                foreach (var a in admins) allowedRecipientIds.Add(a.Id);
             }
             else if (await _userManager.IsInRoleAsync(currentUser, "Admin"))
             {
@@ -304,6 +337,7 @@ namespace DoableFinal.Controllers
             // Disallow messaging self and enforce role restrictions
             if (receiver.Id == currentUser.Id)
             {
+                _logger?.LogWarning("SendMessage blocked: sender attempted to message themselves. SenderId={SenderId}", currentUser.Id);
                 return BadRequest("Cannot send message to yourself");
             }
             // Employees cannot message clients
@@ -315,6 +349,8 @@ namespace DoableFinal.Controllers
             // Check if recipient is in allowed list
             if (!allowedRecipientIds.Contains(receiverId))
             {
+                _logger?.LogWarning("SendMessage blocked: recipient not in allowed list. SenderId={Sender}, ReceiverId={Receiver}, AllowedCount={Count}", currentUser.Id, receiverId, allowedRecipientIds.Count);
+                _logger?.LogDebug("Allowed recipients: {Recipients}", string.Join(',', allowedRecipientIds.Take(50)));
                 return BadRequest("You are not authorized to message this user");
             }
 

@@ -72,11 +72,11 @@
                                             onclick="loadConversation('@conv.UserId')">
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-circle me-3">
-                                                    @(conv.User.FirstName[0] + conv.User.LastName[0])
+                                                    <i class="bi bi-person-fill"></i>
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     <div class="d-flex justify-content-between align-items-center">
-                                                        <h6 class="mb-0">@conv.User.FirstName @conv.User.LastName</h6>
+                                                        <h6 class="mb-0">@conv.User.FirstName @conv.User.LastName (@conv.User.Role)</h6>
                                                         <small class="text-muted">@conv.LastMessage.CreatedAt.ToString("MMM dd")</small>
                                                     </div>
                                                     <p class="mb-0 text-truncate" style="max-width: 200px;">
@@ -101,11 +101,11 @@
                                          onclick="loadConversation('@user.Id')">
                                         <div class="d-flex align-items-center">
                                             <div class="avatar-circle me-3">
-                                                @(user.FirstName[0])
+                                                <i class="bi bi-person-fill"></i>
                                             </div>
                                             <div class="flex-grow-1">
                                                 <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-0">@user.FirstName @user.LastName</h6>
+                                                    <h6 class="mb-0">@user.FirstName @user.LastName (@user.Role)</h6>
                                                 </div>
                                                 <p class="mb-0 text-muted">No messages yet</p>
                                             </div>
@@ -157,7 +157,7 @@
                                         if (conv.User == null) continue;
                                         if (isEmployee && conv.User.Role == "Client") continue; // employees shouldn't message clients
                                         if (renderedUserIds.Add(conv.User.Id)) {
-                                            <option value="@conv.User.Id">@conv.User.FirstName @conv.User.LastName</option>
+                                            <option value="@conv.User.Id">@conv.User.FirstName @conv.User.LastName (@conv.User.Role)</option>
                                         }
                                     }
                                 }
@@ -166,7 +166,7 @@
                                         if (u.Id == currentUserId) continue;
                                         if (isEmployee && u.Role == "Client") continue;
                                         if (renderedUserIds.Add(u.Id)) {
-                                            <option value="@u.Id">@u.FirstName @u.LastName</option>
+                                            <option value="@u.Id">@u.FirstName @u.LastName (@u.Role)</option>
                                         }
                                     }
                                 }
@@ -268,9 +268,9 @@
                     const recipientElem = document.querySelector(`.conversation-item[data-userid="${userId}"]`);
                     const recipientName = recipientElem ? (recipientElem.querySelector('h6') ? recipientElem.querySelector('h6').innerText : 'Conversation') : 'Conversation';
                     content.innerHTML = `
-                        <div class="conversation-header p-3 border-bottom d-flex align-items-center justify-content-between">
+                                <div class="conversation-header p-3 border-bottom d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center">
-                                <div class="avatar-circle me-3">${recipientName.split(' ').map(n => n[0]).slice(0,2).join('')}</div>
+                                <div class="avatar-circle me-3"><i class="bi bi-person-fill"></i></div>
                                 <h5 class="mb-0">${recipientName}</h5>
                             </div>
                             
@@ -483,6 +483,10 @@
             justify-content: center;
             font-weight: bold;
         }
+        .avatar-circle i {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
 
         .conversation-item:hover {
             background-color: #f8f9fa;
@@ -505,6 +509,7 @@
             width: 44px;
             height: 44px;
             font-size: 1rem;
+        }
         }
 
         .conversation-messages {

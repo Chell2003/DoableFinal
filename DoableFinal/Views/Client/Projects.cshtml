@@ -187,6 +187,13 @@
                                     }
                                 </tbody>
                             </table>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div>
+                                    <button id="prevPage" class="btn btn-sm btn-outline-secondary" aria-label="Previous page" disabled>&lt;</button>
+                                    <button id="nextPage" class="btn btn-sm btn-outline-secondary ms-1" aria-label="Next page">&gt;</button>
+                                </div>
+                                <div class="text-muted small" id="paginationInfo">1 of 1</div>
+                            </div>
                         </div>
                     }
                     else
@@ -355,7 +362,7 @@
                 rows.hide();
                 rows.slice((current-1)*pageSize, current*pageSize).show();
 
-                $('#paginationInfo').text('Page ' + current + ' of ' + totalPages);
+                $('#paginationInfo').text(current + ' of ' + totalPages);
                 // render simple prev/next
                 $('#prevPage').prop('disabled', current <= 1);
                 $('#nextPage').prop('disabled', current >= totalPages);

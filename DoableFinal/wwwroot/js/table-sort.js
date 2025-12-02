@@ -194,12 +194,14 @@
         var prev = document.createElement('button');
         prev.className = 'btn btn-sm btn-outline-secondary me-1 table-page-prev';
         prev.type = 'button';
-        prev.innerText = 'Prev';
+        prev.innerText = '<';
+        prev.setAttribute('aria-label', 'Previous page');
 
         var next = document.createElement('button');
         next.className = 'btn btn-sm btn-outline-secondary ms-1 table-page-next';
         next.type = 'button';
-        next.innerText = 'Next';
+        next.innerText = '>';
+        next.setAttribute('aria-label', 'Next page');
 
         var info = document.createElement('span');
         info.className = 'table-page-info ms-2';
@@ -257,7 +259,7 @@
             var totalPages = 1;
             table._currentPage = 0;
             if (table._pagination) {
-                table._pagination.info.innerText = 'Page ' + (table._currentPage + 1) + ' of ' + totalPages;
+                table._pagination.info.innerText = (table._currentPage + 1) + ' of ' + totalPages;
             }
             return;
         }
@@ -275,7 +277,7 @@
         });
 
         if (table._pagination) {
-            table._pagination.info.innerText = 'Page ' + (page + 1) + ' of ' + totalPages;
+            table._pagination.info.innerText = (page + 1) + ' of ' + totalPages;
         }
     }
 
