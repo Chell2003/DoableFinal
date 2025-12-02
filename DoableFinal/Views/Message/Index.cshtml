@@ -218,7 +218,8 @@
         })()
 
         // Authentication user id (current signed-in user)
-        const authUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+        const authUserIdRaw = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+        const authUserId = (authUserIdRaw || '').trim();
         // The other party in the currently opened conversation
         let currentConversationUserId = null;
 
@@ -250,19 +251,25 @@
                 .then(response => response.json())
                 .then(data => {
                     const messages = data.messages;
-                    const messagesHtml = messages.map(message => `
-                        <div class="message-bubble ${message.senderId === authUserId ? 'message-sent' : 'message-received'}">
-                            ${message.projectId ? `
-                                <div class="small text-${message.senderId === authUserId ? 'light' : 'muted'} mb-1">
-                                    <i class="bi bi-folder me-1"></i>${message.projectName || 'Project'}
+                    const messagesHtml = messages.map(message => {
+                        const isSent = message.senderId === authUserId;
+                        console.debug('message', message.senderId, 'auth', authUserId, 'isSent', isSent);
+                        return `
+                            <div class="d-flex ${isSent ? 'justify-content-end' : 'justify-content-start'}">
+                                <div class="message-bubble ${isSent ? 'message-sent text-end' : 'message-received text-start'}">
+                                    ${message.projectId ? `
+                                        <div class="small text-${isSent ? 'light' : 'muted'} mb-1">
+                                            <i class="bi bi-folder me-1"></i>${message.projectName || 'Project'}
+                                        </div>
+                                    ` : ''}
+                                    <div class="message-content">${message.content}</div>
+                                    <div class="small text-${isSent ? 'light' : 'muted'} mt-1">
+                                        ${message.createdAt}
+                                    </div>
                                 </div>
-                            ` : ''}
-                            <div class="message-content">${message.content}</div>
-                            <div class="small text-${message.senderId === authUserId ? 'light' : 'muted'} mt-1">
-                                ${message.createdAt}
                             </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
 
                     const content = document.getElementById('conversationContent');
                     const recipientElem = document.querySelector(`.conversation-item[data-userid="${userId}"]`);
@@ -501,8 +508,11 @@
             padding: 10px 15px;
             border-radius: 15px;
             margin-bottom: 10px;
-            display: flex;
+            display: inline-flex;
             flex-direction: column;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
 
         .conversation-header .avatar-circle {
@@ -510,12 +520,13 @@
             height: 44px;
             font-size: 1rem;
         }
-        }
 
         .conversation-messages {
             padding-right: 10px;
             display: flex;
             flex-direction: column;
+            padding-bottom: 8px;
+            gap: 6px;
         }
 
         .conversation-input textarea {
@@ -524,18 +535,31 @@
 
         .message-sent {
             background-color: #0d6efd;
-            color: white;
+            color: #ffffff;
             margin-left: auto;
             border-bottom-right-radius: 5px;
             align-self: flex-end;
+            border-top-right-radius: 15px;
+            border-top-left-radius: 15px;
+            padding-right: 12px;
+            padding-left: 12px;
         }
 
         .message-received {
-            background-color: #f8f9fa;
+            background-color: #f1f3f5;
             color: #212529;
             margin-right: auto;
             border-bottom-left-radius: 5px;
             align-self: flex-start;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            padding-right: 12px;
+            padding-left: 12px;
         }
+
+        .message-bubble .message-content { font-size: 14px; }
+        .message-bubble .small { opacity: 0.8; font-size: 12px; }
+        .message-sent .small { color: rgba(255,255,255,0.9); }
+        .message-received .small { color: rgba(0,0,0,0.55); }
     </style>
 }
