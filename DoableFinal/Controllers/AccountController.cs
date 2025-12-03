@@ -296,7 +296,7 @@ namespace DoableFinal.Controllers
                 {
                     return RedirectToAction("Index", "Employee");
                 }
-                else if (await _userManager.IsInRoleAsync(user, "Project Manager"))
+                else if (await _userManager.IsInRoleAsync(user, "Project Manager") || await _userManager.IsInRoleAsync(user, "ProjectManager"))
                 {
                     return RedirectToAction("Index", "ProjectManager");
                 }

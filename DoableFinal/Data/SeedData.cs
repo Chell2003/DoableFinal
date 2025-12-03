@@ -13,7 +13,7 @@ namespace DoableFinal.Data
             var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
             // Create roles if they don't exist
-            string[] roles = { "Admin", "Employee", "Client", "ProjectManager" };
+            string[] roles = { "Admin", "Employee", "Client", "Project Manager" };
             foreach (var role in roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
@@ -58,9 +58,9 @@ namespace DoableFinal.Data
                 foreach (var pm in projectManagersByProperty)
                 {
                     var rolesForUser = await userManager.GetRolesAsync(pm);
-                    if (!rolesForUser.Contains("ProjectManager"))
+                    if (!rolesForUser.Contains("Project Manager") && !rolesForUser.Contains("ProjectManager"))
                     {
-                        await userManager.AddToRoleAsync(pm, "ProjectManager");
+                        await userManager.AddToRoleAsync(pm, "Project Manager");
                     }
                 }
             }

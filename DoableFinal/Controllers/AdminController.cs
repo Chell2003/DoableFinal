@@ -40,7 +40,7 @@ namespace DoableFinal.Controllers
         private string NormalizeToIdentityRole(string role)
         {
             if (string.IsNullOrEmpty(role)) return role;
-            if (role == "Project Manager" || role == "ProjectManager") return "ProjectManager";
+            if (role == "Project Manager" || role == "ProjectManager") return "Project Manager";
             return role;
         }
 

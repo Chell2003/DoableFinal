@@ -36,7 +36,7 @@ namespace DoableFinal.Controllers
         protected string GetCurrentRole()
         {
             return User.IsInRole("Admin") ? "Admin" :
-                   User.IsInRole("Project Manager") ? "Project Manager" :
+                   (User.IsInRole("Project Manager") || User.IsInRole("ProjectManager")) ? "Project Manager" :
                    User.IsInRole("Employee") ? "Employee" : "Client";
         }
 
