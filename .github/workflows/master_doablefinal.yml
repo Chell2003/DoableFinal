@@ -59,3 +59,14 @@ jobs:
           slot-name: 'Production'
           package: .
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F4B4476E7F6F44A2B93A14F1C64F7803 }}
+
+      - name: Configure DefaultConnection on App Service
+        if: ${{ secrets.AZURE_CREDENTIALS != '' && secrets.DB_CONNECTION_STRING != '' && secrets.AZURE_RESOURCE_GROUP != '' && secrets.AZURE_WEBAPP_NAME != '' }}
+        run: |
+          az webapp config connection-string set -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_WEBAPP_NAME }} \
+            --settings DefaultConnection="${{ secrets.DB_CONNECTION_STRING }}" --connection-string-type SQLAzure
+
+      - name: Restart App Service
+        if: ${{ secrets.AZURE_CREDENTIALS != '' && secrets.AZURE_RESOURCE_GROUP != '' && secrets.AZURE_WEBAPP_NAME != '' }}
+        run: |
+          az webapp restart -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_WEBAPP_NAME }}
