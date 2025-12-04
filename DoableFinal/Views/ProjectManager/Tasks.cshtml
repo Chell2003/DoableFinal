@@ -2,39 +2,114 @@
 
 @{
     ViewData["Title"] = "Tasks";
+    var query = Context.Request.Query["q"].ToString();
+    var statusFilter = Context.Request.Query["statusFilter"].ToString();
+    var fromDate = Context.Request.Query["fromDate"].ToString();
+    var toDate = Context.Request.Query["toDate"].ToString();
 }
 
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3">Tasks</h1>
-                    <p class="text-muted">View and manage all tasks for your projects.</p>
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Tasks</h1>
+            <p class="text-muted small mb-0">View and manage all tasks for your projects</p>
+        </div>
+        <div>
+            <a asp-action="CreateTask" class="btn btn-primary">
+                <i class="bi bi-plus-square"></i> Create Task
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters & Search</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3" role="search" aria-label="Task search and filter">
+                <div class="col-md-6">
+                    <label for="searchInput" class="form-label">Search</label>
+                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by title or project..." value="@query" aria-label="Search tasks" />
                 </div>
-                <a asp-action="CreateTask" class="btn btn-primary">
-                    <i class="bi bi-plus-square"></i> Create Task
-                </a>
-            </div>
+
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select id="statusFilter" name="statusFilter" class="form-select">
+                        <option value="">All statuses</option>
+                        @foreach (var s in (List<string>)ViewBag.AvailableStatuses)
+                        {
+                            if (statusFilter == s || ViewBag.StatusFilter == s)
+                            {
+                                <option value="@s" selected>@s</option>
+                            }
+                            else
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="applyBtn" class="form-label">&nbsp;</label>
+                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
+                        <i class="bi bi-search"></i> Apply Filters
+                    </button>
+                </div>
+
+                <div class="col-12">
+                    <hr class="my-2" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="fromDate" class="form-label"><i class="bi bi-calendar-event"></i> From Date</label>
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" aria-label="From date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="toDate" class="form-label"><i class="bi bi-calendar-event"></i> To Date</label>
+                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" aria-label="To date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="applyDateBtn" class="form-label">&nbsp;</label>
+                    <button id="applyDateBtn" class="btn btn-outline-primary w-100" type="submit">
+                        <i class="bi bi-calendar3"></i> Apply Date Range
+                    </button>
+                </div>
+
+                <div class="col-12 text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Tasks", "ProjectManager")">
+                        <i class="bi bi-x-circle"></i> Reset All Filters
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Title</th>
-                            <th>Project</th>
-                            <th>Assigned To</th>
-                            <th>Status</th>
-                            <th>Priority</th>
-                            <th>Due Date</th>
-                            <th>Actions</th>
+                            <th scope="col" style="width: 25%;">Title</th>
+                            <th scope="col" style="width: 18%;">Project</th>
+                            <th scope="col" style="width: 18%;">Status</th>
+                            <th scope="col" style="width: 12%;">Priority</th>
+                            <th scope="col" style="width: 12%;">Due Date</th>
+                            <th scope="col" class="text-end" style="width: 15%;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox"></i> No tasks found
+                                </td>
+                            </tr>
+                        }
                         @foreach (var task in Model)
                         {
                             <tr>

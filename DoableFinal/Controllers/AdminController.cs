@@ -105,13 +105,58 @@ namespace DoableFinal.Controllers
         }
 
         // List inquiries submitted via the contact form
-        public async Task<IActionResult> Inquiries()
+        public async Task<IActionResult> Inquiries(string? q = "", string? handledFilter = "", string? fromDate = "", string? toDate = "")
         {
-            var inquiries = await _context.Inquiries
+            var query = _context.Inquiries.AsQueryable();
+
+            // Search by email or name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(i => 
+                    i.Email.ToLower().Contains(searchTerm) ||
+                    i.Name.ToLower().Contains(searchTerm) ||
+                    i.Message.ToLower().Contains(searchTerm)
+                );
+            }
+
+            // Filter by handled status
+            if (!string.IsNullOrEmpty(handledFilter))
+            {
+                if (handledFilter == "handled")
+                    query = query.Where(i => i.IsHandled);
+                else if (handledFilter == "new")
+                    query = query.Where(i => !i.IsHandled);
+            }
+
+            // Date range filtering
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(i => i.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(i => i.CreatedAt.Date <= endDate.Date);
+            }
+
+            var inquiries = await query
                 .OrderByDescending(i => i.CreatedAt)
                 .ToListAsync();
 
+            ViewBag.SearchQuery = q;
+            ViewBag.HandledFilter = handledFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
             return View(inquiries);
+        }
+
+        public async Task<IActionResult> InquiryDetails(int id)
+        {
+            var inquiry = await _context.Inquiries.FindAsync(id);
+            if (inquiry == null) return NotFound();
+
+            return View(inquiry);
         }
 
         [HttpPost]
@@ -130,7 +175,7 @@ namespace DoableFinal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        public async Task<IActionResult> MarkNotificationAsRead(int id, string? returnUrl = null)
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
@@ -148,6 +193,12 @@ namespace DoableFinal.Controllers
 
             notification.IsRead = true;
             await _context.SaveChangesAsync();
+
+            // If returnUrl is provided, redirect to it; otherwise go back to notifications
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
 
             return RedirectToAction(nameof(Notifications));
         }
@@ -190,35 +241,93 @@ namespace DoableFinal.Controllers
         }
 
         // Consolidated User Management
-        public async Task<IActionResult> Users(string roleFilter = "")
+        public async Task<IActionResult> Users(string? q = "", string? roleFilter = "", string? fromDate = "", string? toDate = "")
         {
-            var users = await _context.Users
+            var query = _context.Users
                 .Where(u => !u.IsArchived)
+                .AsQueryable();
+
+            // Search by name or email
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(u => 
+                    u.FirstName.ToLower().Contains(searchTerm) ||
+                    u.LastName.ToLower().Contains(searchTerm) ||
+                    u.Email.ToLower().Contains(searchTerm)
+                );
+            }
+
+            // Filter by role
+            if (!string.IsNullOrEmpty(roleFilter))
+            {
+                query = query.Where(u => u.Role == roleFilter);
+            }
+
+            // Date range filtering
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(u => u.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(u => u.CreatedAt.Date <= endDate.Date);
+            }
+
+            var users = await query
                 .OrderByDescending(u => u.CreatedAt)
                 .ToListAsync();
 
-            if (!string.IsNullOrEmpty(roleFilter))
-            {
-                users = users.Where(u => u.Role == roleFilter).ToList();
-            }
-
+            ViewBag.SearchQuery = q;
             ViewBag.RoleFilter = roleFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
             return View(users);
         }
 
-        public async Task<IActionResult> ArchivedUsers(string roleFilter = "")
+        public async Task<IActionResult> ArchivedUsers(string? q = "", string? roleFilter = "", string? fromDate = "", string? toDate = "")
         {
-            var users = await _context.Users
+            var query = _context.Users
                 .Where(u => u.IsArchived)
+                .AsQueryable();
+
+            // Search by name or email
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(u => 
+                    u.FirstName.ToLower().Contains(searchTerm) ||
+                    u.LastName.ToLower().Contains(searchTerm) ||
+                    u.Email.ToLower().Contains(searchTerm)
+                );
+            }
+
+            // Filter by role
+            if (!string.IsNullOrEmpty(roleFilter))
+            {
+                query = query.Where(u => u.Role == roleFilter);
+            }
+
+            // Date range filtering on archived date
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(u => u.ArchivedAt.HasValue && u.ArchivedAt.Value.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(u => u.ArchivedAt.HasValue && u.ArchivedAt.Value.Date <= endDate.Date);
+            }
+
+            var users = await query
                 .OrderByDescending(u => u.ArchivedAt)
                 .ToListAsync();
 
-            if (!string.IsNullOrEmpty(roleFilter))
-            {
-                users = users.Where(u => u.Role == roleFilter).ToList();
-            }
-
+            ViewBag.SearchQuery = q;
             ViewBag.RoleFilter = roleFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
             return View(users);
         }
 
@@ -588,14 +697,53 @@ namespace DoableFinal.Controllers
         }
 
         // Project Management
-        public async Task<IActionResult> Projects()
+        public async Task<IActionResult> Projects(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
         {
-            var projects = await _context.Projects
+            var query = _context.Projects
                 .Include(p => p.Client)
                 .Include(p => p.ProjectManager)
                 .Where(p => !p.IsArchived)
+                .AsQueryable();
+
+            // Search by project name or client name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(p => 
+                    p.Name.ToLower().Contains(searchTerm) ||
+                    (p.Client != null && (
+                        p.Client.FirstName.ToLower().Contains(searchTerm) ||
+                        p.Client.LastName.ToLower().Contains(searchTerm)
+                    ))
+                );
+            }
+
+            // Filter by status
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                query = query.Where(p => p.Status == statusFilter);
+            }
+
+            // Date range filtering
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(p => p.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(p => p.CreatedAt.Date <= endDate.Date);
+            }
+
+            var projects = await query
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
+
+            ViewBag.SearchQuery = q;
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
+            ViewBag.AvailableStatuses = new List<string> { "Not Started", "In Progress", "On Hold", "Completed" };
             return View(projects);
         }
 
@@ -1362,15 +1510,45 @@ namespace DoableFinal.Controllers
             return RedirectToAction(nameof(Projects));
         }
 
-        public async Task<IActionResult> ArchivedProjects()
+        public async Task<IActionResult> ArchivedProjects(string? q = "", string? fromDate = "", string? toDate = "")
         {
-            var projects = await _context.Projects
+            var query = _context.Projects
                 .Include(p => p.Client)
                 .Include(p => p.ProjectManager)
                 .Where(p => p.IsArchived)
+                .AsQueryable();
+
+            // Search by project name or client name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(p => 
+                    p.Name.ToLower().Contains(searchTerm) ||
+                    (p.Client != null && (
+                        p.Client.FirstName.ToLower().Contains(searchTerm) ||
+                        p.Client.LastName.ToLower().Contains(searchTerm)
+                    ))
+                );
+            }
+
+            // Date range filtering on archived date
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(p => p.ArchivedAt.HasValue && p.ArchivedAt.Value.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(p => p.ArchivedAt.HasValue && p.ArchivedAt.Value.Date <= endDate.Date);
+            }
+
+            var projects = await query
                 .OrderByDescending(p => p.ArchivedAt)
                 .ToListAsync();
 
+            ViewBag.SearchQuery = q;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
             return View(projects);
         }
 
@@ -1670,16 +1848,43 @@ namespace DoableFinal.Controllers
             return RedirectToAction(nameof(Tasks));
         }
 
-        public async Task<IActionResult> ArchivedTasks()
+        public async Task<IActionResult> ArchivedTasks(string? q = "", string? fromDate = "", string? toDate = "")
         {
-            var tasks = await _context.Tasks
+            var query = _context.Tasks
                 .Include(t => t.Project)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
                 .Where(t => t.IsArchived)
+                .AsQueryable();
+
+            // Search by task title or project name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(t => 
+                    t.Title.ToLower().Contains(searchTerm) ||
+                    (t.Project != null && t.Project.Name.ToLower().Contains(searchTerm))
+                );
+            }
+
+            // Date range filtering on archived date
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(t => t.ArchivedAt.HasValue && t.ArchivedAt.Value.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(t => t.ArchivedAt.HasValue && t.ArchivedAt.Value.Date <= endDate.Date);
+            }
+
+            var tasks = await query
                 .OrderByDescending(t => t.ArchivedAt)
                 .ToListAsync();
 
+            ViewBag.SearchQuery = q;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
             return View(tasks);
         }        public async Task<IActionResult> TaskDetails(int id)
         {
@@ -2013,7 +2218,7 @@ namespace DoableFinal.Controllers
         }
 
         // --- Ticket management for Admins ---
-        public async Task<IActionResult> Tickets(string statusFilter = "")
+        public async Task<IActionResult> Tickets(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
         {
             var query = _context.Tickets
                 .Include(t => t.Project)
@@ -2023,9 +2228,33 @@ namespace DoableFinal.Controllers
                 .Where(t => t.Project == null || !t.Project.IsArchived)
                 .AsQueryable();
 
+            // Search by title or creator name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(t => 
+                    t.Title.ToLower().Contains(searchTerm) ||
+                    (t.CreatedBy != null && (
+                        t.CreatedBy.FirstName.ToLower().Contains(searchTerm) ||
+                        t.CreatedBy.LastName.ToLower().Contains(searchTerm)
+                    ))
+                );
+            }
+
             if (!string.IsNullOrEmpty(statusFilter))
             {
                 query = query.Where(t => t.Status == statusFilter);
+            }
+
+            // Date range filtering
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(t => t.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(t => t.CreatedAt.Date <= endDate.Date);
             }
 
             var tickets = await query
@@ -2034,6 +2263,9 @@ namespace DoableFinal.Controllers
                 .ToListAsync();
 
             ViewBag.StatusFilter = statusFilter;
+            ViewBag.SearchQuery = q;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
             ViewBag.AvailableStatuses = new List<string> { "Open", "In Progress", "Resolved", "Closed" };
             return View(tickets);
         }

@@ -101,7 +101,7 @@ namespace DoableFinal.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Projects()
+        public async Task<IActionResult> Projects(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser?.Id == null)
@@ -109,13 +109,45 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            var projects = await _context.Projects
+            var query = _context.Projects
                 .Include(p => p.ProjectManager)
                 .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
+                .AsQueryable();
+
+            // Search by project name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(searchTerm));
+            }
+
+            // Filter by status
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                query = query.Where(p => p.Status == statusFilter);
+            }
+
+            // Date range filtering
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(p => p.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(p => p.CreatedAt.Date <= endDate.Date);
+            }
+
+            var projects = await query
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
             ViewBag.ProjectProgress = await GetProjectProgress(projects);
+            ViewBag.SearchQuery = q;
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
+            ViewBag.AvailableStatuses = new List<string> { "Not Started", "In Progress", "On Hold", "Completed" };
 
             return View(projects);
         }
@@ -478,7 +510,7 @@ namespace DoableFinal.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        public async Task<IActionResult> MarkNotificationAsRead(int id, string? returnUrl = null)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var notification = await _context.Notifications
@@ -491,6 +523,12 @@ namespace DoableFinal.Controllers
 
             notification.IsRead = true;
             await _context.SaveChangesAsync();
+
+            // If returnUrl is provided, redirect to it; otherwise go back to notifications
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
 
             return RedirectToAction(nameof(Notifications));
         }
@@ -528,7 +566,7 @@ namespace DoableFinal.Controllers
             return counts;
         }
 
-        public async Task<IActionResult> Tickets()
+        public async Task<IActionResult> Tickets(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
@@ -536,14 +574,46 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            var tickets = await _context.Tickets
+            var query = _context.Tickets
                 .Include(t => t.CreatedBy)
                 .Include(t => t.AssignedTo)
                 .Where(t => t.CreatedById == currentUser.Id)
+                .AsQueryable();
+
+            // Search by title
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(t => t.Title.ToLower().Contains(searchTerm));
+            }
+
+            // Filter by status
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                query = query.Where(t => t.Status == statusFilter);
+            }
+
+            // Date range filtering
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(t => t.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(t => t.CreatedAt.Date <= endDate.Date);
+            }
+
+            var tickets = await query
                 .OrderByDescending(t => t.Priority == "Critical" ? 4 : t.Priority == "High" ? 3 : t.Priority == "Medium" ? 2 : t.Priority == "Low" ? 1 : 0)
                 .ThenByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
+            ViewBag.SearchQuery = q;
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
+            ViewBag.AvailableStatuses = new List<string> { "Open", "In Progress", "Resolved", "Closed" };
             return View(tickets);
         }
 

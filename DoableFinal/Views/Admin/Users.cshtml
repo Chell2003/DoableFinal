@@ -2,52 +2,104 @@
 
 @{
     ViewData["Title"] = "Users";
+    var query = Context.Request.Query["q"].ToString();
+    var roleFilter = ViewBag.RoleFilter;
+    var fromDate = Context.Request.Query["fromDate"].ToString();
+    var toDate = Context.Request.Query["toDate"].ToString();
 }
 
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3">Users</h1>
-                    <p class="text-muted">Manage all users in the system</p>
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Users</h1>
+            <p class="text-muted small mb-0">Manage all users in the system</p>
+        </div>
+        <div>
+            <a asp-action="CreateUser" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Add User
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters & Search</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3" role="search" aria-label="User search and filter">
+                <div class="col-md-6">
+                    <label for="searchInput" class="form-label">Search</label>
+                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by name or email..." value="@query" aria-label="Search users" />
                 </div>
-                <div class="btn-group">
-                    <a asp-action="CreateUser" class="btn btn-primary">
-                        <i class="bi bi-person-plus"></i> Add User
+
+                <div class="col-md-3">
+                    <label for="roleFilter" class="form-label">Role</label>
+                    <select id="roleFilter" name="roleFilter" class="form-select">
+                        <option value="">All roles</option>
+                        <option value="Admin" selected="@(roleFilter == "Admin" ? "selected" : null)">Admin</option>
+                        <option value="Project Manager" selected="@(roleFilter == "Project Manager" ? "selected" : null)">Project Manager</option>
+                        <option value="Employee" selected="@(roleFilter == "Employee" ? "selected" : null)">Employee</option>
+                        <option value="Client" selected="@(roleFilter == "Client" ? "selected" : null)">Client</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="applyBtn" class="form-label">&nbsp;</label>
+                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
+                        <i class="bi bi-search"></i> Apply Filters
+                    </button>
+                </div>
+
+                <div class="col-12">
+                    <hr class="my-2" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="fromDate" class="form-label"><i class="bi bi-calendar-event"></i> From Date</label>
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" aria-label="From date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="toDate" class="form-label"><i class="bi bi-calendar-event"></i> To Date</label>
+                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" aria-label="To date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="applyDateBtn" class="form-label">&nbsp;</label>
+                    <button id="applyDateBtn" class="btn btn-outline-primary w-100" type="submit">
+                        <i class="bi bi-calendar3"></i> Apply Date Range
+                    </button>
+                </div>
+
+                <div class="col-12 text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Users", "Admin")">
+                        <i class="bi bi-x-circle"></i> Reset Filters
                     </a>
                 </div>
-            </div>
-            <div class="mb-3">
-                <div class="btn-group" role="group">
-                    <a asp-action="Users" class="btn btn-outline-secondary @(ViewBag.RoleFilter == null ? "active" : "")">All</a>
-                    <a asp-action="Users" asp-route-roleFilter="Employee" class="btn btn-outline-secondary @(ViewBag.RoleFilter == "Employee" ? "active" : "")">Employees</a>
-                    <a asp-action="Users" asp-route-roleFilter="Project Manager" class="btn btn-outline-secondary @(ViewBag.RoleFilter == "Project Manager" ? "active" : "")">Project Managers</a>
-                    <a asp-action="Users" asp-route-roleFilter="Client" class="btn btn-outline-secondary @(ViewBag.RoleFilter == "Client" ? "active" : "")">Clients</a>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                            <th>Actions</th>
+                            <th scope="col" style="width: 20%;">Name</th>
+                            <th scope="col" style="width: 25%;">Email</th>
+                            <th scope="col" style="width: 15%;">Role</th>
+                            <th scope="col" style="width: 12%;">Status</th>
+                            <th scope="col" style="width: 12%;">Created At</th>
+                            <th scope="col" class="text-end" style="width: 16%;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var user in Model)
                         {
                             <tr>
-                                <td>@($"{user.FirstName} {user.LastName}")</td>
-                                <td>@user.Email</td>
+                                <td><strong>@($"{user.FirstName} {user.LastName}")</strong></td>
+                                <td><small>@user.Email</small></td>
                                 <td>
                                     <span class="badge bg-@(user.Role switch {
                                         "Admin" => "danger",
@@ -62,20 +114,20 @@
                                         @(user.IsActive ? "Active" : "Inactive")
                                     </span>
                                 </td>
-                                <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a asp-action="UserDetails" asp-route-id="@user.Id" class="btn btn-sm btn-outline-info">
+                                <td><small class="text-muted">@user.CreatedAt.ToString("MMM dd, yyyy")</small></td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-action="UserDetails" asp-route-id="@user.Id" class="btn btn-outline-info" title="View details">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a asp-action="EditUser" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary">
+                                        <a asp-action="EditUser" asp-route-id="@user.Id" class="btn btn-outline-primary" title="Edit user">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         @if (user.Role != "Admin")
                                         {
                                             <form asp-action="ArchiveUser" asp-route-userId="@user.Id" method="post" style="display: inline;">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-warning"
+                                                <button type="submit" class="btn btn-outline-warning" title="Archive user"
                                                         onclick="return confirm('Are you sure you want to archive this user?')">
                                                     <i class="bi bi-archive"></i>
                                                 </button>

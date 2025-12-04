@@ -53,7 +53,7 @@ namespace DoableFinal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        public async Task<IActionResult> MarkNotificationAsRead(int id, string? returnUrl = null)
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
@@ -71,6 +71,12 @@ namespace DoableFinal.Controllers
 
             notification.IsRead = true;
             await _context.SaveChangesAsync();
+
+            // If returnUrl is provided, redirect to it; otherwise go back to notifications
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
 
             return RedirectToAction(nameof(Notifications));
         }
@@ -121,7 +127,7 @@ namespace DoableFinal.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Tasks()
+        public async Task<IActionResult> Tasks(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser?.Id == null)
@@ -130,7 +136,7 @@ namespace DoableFinal.Controllers
             }
 
             // Fetch all tasks for projects managed by the current Project Manager
-            var tasks = await _context.Tasks
+            var query = _context.Tasks
                 .Include(t => t.Project)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
@@ -138,9 +144,44 @@ namespace DoableFinal.Controllers
                            t.Project.ProjectManagerId != null && 
                            t.Project.ProjectManagerId == currentUser.Id && 
                            !t.IsArchived)
+                .AsQueryable();
+
+            // Search by task title or project name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(t => 
+                    t.Title.ToLower().Contains(searchTerm) ||
+                    (t.Project != null && t.Project.Name.ToLower().Contains(searchTerm))
+                );
+            }
+
+            // Filter by status
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                query = query.Where(t => t.Status == statusFilter);
+            }
+
+            // Date range filtering
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(t => t.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(t => t.CreatedAt.Date <= endDate.Date);
+            }
+
+            var tasks = await query
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
+            ViewBag.SearchQuery = q;
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
+            ViewBag.AvailableStatuses = new List<string> { "Open", "In Progress", "Resolved", "Closed" };
             return View(tasks);
         }
 
@@ -782,7 +823,7 @@ namespace DoableFinal.Controllers
             return RedirectToAction(nameof(TaskDetails), new { id = taskId });
         }
 
-        public async Task<IActionResult> MyProjects()
+        public async Task<IActionResult> MyProjects(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser?.Id == null)
@@ -791,11 +832,44 @@ namespace DoableFinal.Controllers
             }
 
             // Fetch projects managed by the current Project Manager
-            var projects = await _context.Projects
+            var query = _context.Projects
                 .Include(p => p.Client)
                 .Include(p => p.ProjectManager)
                 .Include(p => p.Tasks.Where(t => !t.IsArchived))
                 .Where(p => p.ProjectManagerId == currentUser.Id && !p.IsArchived)
+                .AsQueryable();
+
+            // Search by project name or client name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(p => 
+                    p.Name.ToLower().Contains(searchTerm) ||
+                    (p.Client != null && (
+                        p.Client.FirstName.ToLower().Contains(searchTerm) ||
+                        p.Client.LastName.ToLower().Contains(searchTerm)
+                    ))
+                );
+            }
+
+            // Filter by status
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                query = query.Where(p => p.Status == statusFilter);
+            }
+
+            // Date range filtering
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(p => p.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(p => p.CreatedAt.Date <= endDate.Date);
+            }
+
+            var projects = await query
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -810,6 +884,11 @@ namespace DoableFinal.Controllers
                     : 0;
             }
             ViewBag.ProjectProgress = projectProgress;
+            ViewBag.SearchQuery = q;
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
+            ViewBag.AvailableStatuses = new List<string> { "Not Started", "In Progress", "On Hold", "Completed" };
 
             return View(projects);
         }
@@ -1078,7 +1157,7 @@ namespace DoableFinal.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ArchivedProjects()
+        public async Task<IActionResult> ArchivedProjects(string? q = "", string? fromDate = "", string? toDate = "")
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser?.Id == null)
@@ -1087,14 +1166,44 @@ namespace DoableFinal.Controllers
             }
 
             // Fetch archived projects managed by the current Project Manager
-            var projects = await _context.Projects
+            var query = _context.Projects
                 .Include(p => p.Client)
                 .Include(p => p.ProjectManager)
                 .Include(p => p.Tasks)
                 .Where(p => p.ProjectManagerId == currentUser.Id && p.IsArchived)
+                .AsQueryable();
+
+            // Search by project name or client name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(p => 
+                    p.Name.ToLower().Contains(searchTerm) ||
+                    (p.Client != null && (
+                        p.Client.FirstName.ToLower().Contains(searchTerm) ||
+                        p.Client.LastName.ToLower().Contains(searchTerm)
+                    ))
+                );
+            }
+
+            // Date range filtering on archived date
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(p => p.ArchivedAt.HasValue && p.ArchivedAt.Value.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(p => p.ArchivedAt.HasValue && p.ArchivedAt.Value.Date <= endDate.Date);
+            }
+
+            var projects = await query
                 .OrderByDescending(p => p.ArchivedAt)
                 .ToListAsync();
 
+            ViewBag.SearchQuery = q;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
             return View(projects);
         }
 
@@ -1153,7 +1262,7 @@ namespace DoableFinal.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ArchivedTasks()
+        public async Task<IActionResult> ArchivedTasks(string? q = "", string? fromDate = "", string? toDate = "")
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser?.Id == null)
@@ -1162,14 +1271,41 @@ namespace DoableFinal.Controllers
             }
 
             // Fetch archived tasks for projects managed by the current Project Manager
-            var tasks = await _context.Tasks
+            var query = _context.Tasks
                 .Include(t => t.Project)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
                 .Where(t => t.Project.ProjectManagerId == currentUser.Id && t.IsArchived)
+                .AsQueryable();
+
+            // Search by task title or project name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(t => 
+                    t.Title.ToLower().Contains(searchTerm) ||
+                    (t.Project != null && t.Project.Name.ToLower().Contains(searchTerm))
+                );
+            }
+
+            // Date range filtering on archived date
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(t => t.ArchivedAt.HasValue && t.ArchivedAt.Value.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(t => t.ArchivedAt.HasValue && t.ArchivedAt.Value.Date <= endDate.Date);
+            }
+
+            var tasks = await query
                 .OrderByDescending(t => t.ArchivedAt)
                 .ToListAsync();
 
+            ViewBag.SearchQuery = q;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
             return View(tasks);
         }
 

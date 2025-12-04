@@ -2,42 +2,106 @@
 
 @{
     ViewData["Title"] = "Inquiries";
+    var query = Context.Request.Query["q"].ToString();
+    var handledFilter = Context.Request.Query["handledFilter"].ToString();
+    var fromDate = Context.Request.Query["fromDate"].ToString();
+    var toDate = Context.Request.Query["toDate"].ToString();
 }
 
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col">
-            <h1 class="h3">Inquiries</h1>
-            <p class="text-muted">Messages submitted via the Contact form</p>
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Inquiries</h1>
+            <p class="text-muted small mb-0">Messages submitted via the Contact form</p>
+        </div>
+        <span class="badge bg-primary fs-6">@(Model?.Count() ?? 0) Inquiries</span>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters & Search</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3" role="search" aria-label="Inquiry search and filter">
+                <div class="col-md-6">
+                    <label for="searchInput" class="form-label">Search</label>
+                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by name, email, or subject..." value="@query" aria-label="Search inquiries" />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="handledFilter" class="form-label">Status</label>
+                    <select id="handledFilter" name="handledFilter" class="form-select">
+                        <option value="">All statuses</option>
+                        <option value="new" selected="@(handledFilter == "new" ? "selected" : null)">New</option>
+                        <option value="handled" selected="@(handledFilter == "handled" ? "selected" : null)">Handled</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="applyBtn" class="form-label">&nbsp;</label>
+                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
+                        <i class="bi bi-search"></i> Apply Filters
+                    </button>
+                </div>
+
+                <div class="col-12">
+                    <hr class="my-2" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="fromDate" class="form-label"><i class="bi bi-calendar-event"></i> From Date</label>
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" aria-label="From date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="toDate" class="form-label"><i class="bi bi-calendar-event"></i> To Date</label>
+                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" aria-label="To date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="applyDateBtn" class="form-label">&nbsp;</label>
+                    <button id="applyDateBtn" class="btn btn-outline-primary w-100" type="submit">
+                        <i class="bi bi-calendar3"></i> Apply Date Range
+                    </button>
+                </div>
+
+                <div class="col-12 text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Inquiries", "Admin")">
+                        <i class="bi bi-x-circle"></i> Reset Filters
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-body">
+        <div class="card-body p-0">
             @if (Model != null && Model.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Subject</th>
-                                <th>Message</th>
-                                <th>Received</th>
-                                <th>Handled</th>
-                                <th></th>
+                                <th scope="col" style="width: 20%;">Name</th>
+                                <th scope="col" style="width: 20%;">Email</th>
+                                <th scope="col" style="width: 20%;">Subject</th>
+                                <th scope="col" style="width: 18%;">Received</th>
+                                <th scope="col" style="width: 10%;">Status</th>
+                                <th scope="col" class="text-end" style="width: 12%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var i in Model)
                             {
                                 <tr>
-                                    <td>@i.Name</td>
-                                    <td>@i.Email</td>
-                                    <td>@i.Subject</td>
-                                    <td>@(i.Message?.Length > 120 ? i.Message.Substring(0, 117) + "..." : i.Message)</td>
-                                    <td>@i.CreatedAt.ToLocalTime().ToString("g")</td>
+                                    <td><strong>@i.Name</strong></td>
+                                    <td><small><a href="mailto:@i.Email">@i.Email</a></small></td>
+                                    <td>
+                                        <small>@(i.Subject?.Length > 40 ? i.Subject.Substring(0, 37) + "..." : i.Subject)</small>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">@i.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</small>
+                                    </td>
                                     <td>
                                         @if (i.IsHandled)
                                         {
@@ -48,14 +112,21 @@
                                             <span class="badge bg-warning text-dark">New</span>
                                         }
                                     </td>
-                                    <td>
-                                        @if (!i.IsHandled)
-                                        {
-                                            <form asp-controller="Admin" asp-action="MarkInquiryHandled" method="post" class="d-inline">
-                                                <input type="hidden" name="id" value="@i.Id" />
-                                                <button type="submit" class="btn btn-sm btn-outline-success">Mark handled</button>
-                                            </form>
-                                        }
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-action="InquiryDetails" asp-route-id="@i.Id" class="btn btn-outline-primary" title="View details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            @if (!i.IsHandled)
+                                            {
+                                                <form asp-controller="Admin" asp-action="MarkInquiryHandled" method="post" style="display: inline;">
+                                                    <input type="hidden" name="id" value="@i.Id" />
+                                                    <button type="submit" class="btn btn-outline-success" title="Mark as handled">
+                                                        <i class="bi bi-check"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -66,7 +137,8 @@
             else
             {
                 <div class="text-center py-5">
-                    <p class="text-muted">No inquiries have been submitted yet.</p>
+                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">No inquiries found. Try adjusting your filters.</p>
                 </div>
             }
         </div>

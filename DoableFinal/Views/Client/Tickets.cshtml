@@ -4,57 +4,125 @@
     ViewData["Title"] = "My Tickets";
     Layout = "_ClientLayout";
     var dateTimeFormat = "MMM dd, yyyy HH:mm";
+    var query = Context.Request.Query["q"].ToString();
+    var statusFilter = Context.Request.Query["statusFilter"].ToString();
+    var fromDate = Context.Request.Query["fromDate"].ToString();
+    var toDate = Context.Request.Query["toDate"].ToString();
 }
 
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="mt-4">My Tickets</h1>
-            <ol class="breadcrumb mb-4">
-                <li class="breadcrumb-item"><a asp-controller="Client" asp-action="Index">Dashboard</a></li>
-                <li class="breadcrumb-item active">Tickets</li>
-            </ol>
+            <h1 class="h3 mb-0">My Tickets</h1>
+            <p class="text-muted small mb-0">View and manage your support tickets</p>
         </div>
         <div>
             <a asp-action="CreateTicket" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Create Ticket
+                <i class="bi bi-plus-square"></i> Create Ticket
             </a>
         </div>
     </div>
 
-    <!-- @if (TempData["TicketMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["TicketMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    } -->
-
     <div class="card mb-4">
-        <div class="card-header">
-            <i class="fas fa-ticket-alt me-1"></i>
-            My Support Tickets
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters & Search</h5>
         </div>
         <div class="card-body">
+            <form method="get" class="row g-3" role="search" aria-label="Ticket search and filter">
+                <div class="col-md-6">
+                    <label for="searchInput" class="form-label">Search</label>
+                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by title..." value="@query" aria-label="Search tickets" />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select id="statusFilter" name="statusFilter" class="form-select">
+                        <option value="">All statuses</option>
+                        @foreach (var s in (List<string>)ViewBag.AvailableStatuses)
+                        {
+                            if (statusFilter == s || ViewBag.StatusFilter == s)
+                            {
+                                <option value="@s" selected>@s</option>
+                            }
+                            else
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="applyBtn" class="form-label">&nbsp;</label>
+                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
+                        <i class="bi bi-search"></i> Apply Filters
+                    </button>
+                </div>
+
+                <div class="col-12">
+                    <hr class="my-2" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="fromDate" class="form-label"><i class="bi bi-calendar-event"></i> From Date</label>
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" aria-label="From date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="toDate" class="form-label"><i class="bi bi-calendar-event"></i> To Date</label>
+                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" aria-label="To date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="applyDateBtn" class="form-label">&nbsp;</label>
+                    <button id="applyDateBtn" class="btn btn-outline-primary w-100" type="submit">
+                        <i class="bi bi-calendar3"></i> Apply Date Range
+                    </button>
+                </div>
+
+                <div class="col-12 text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Tickets", "Client")">
+                        <i class="bi bi-x-circle"></i> Reset All Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <i class="bi bi-ticket-perforated me-1"></i>
+            My Support Tickets (@(Model?.Count() ?? 0))
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>ID</th>
-                            <th>Title</th>
-                            <th>Status</th>
-                            <th>Priority</th>
-                            <th>Created At</th>
-                            <th>Last Updated</th>
-                            <th>Actions</th>
+                            <th scope="col" style="width: 10%;">ID</th>
+                            <th scope="col" style="width: 25%;">Title</th>
+                            <th scope="col" style="width: 15%;">Status</th>
+                            <th scope="col" style="width: 15%;">Priority</th>
+                            <th scope="col" style="width: 18%;">Created At</th>
+                            <th scope="col" class="text-end" style="width: 17%;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox"></i> No tickets found
+                                </td>
+                            </tr>
+                        }
                         @foreach (var ticket in Model)
                         {
                             <tr>
-                                <td>#@ticket.Id.ToString("D5")</td>
-                                <td>@ticket.Title</td>
+                                <td><span class="badge bg-light text-dark">#@ticket.Id.ToString("D5")</span></td>
+                                <td>
+                                    <strong>@ticket.Title</strong>
+                                </td>
                                 <td>
                                     <span class="badge bg-@(ticket.Status switch {
                                         "Open" => "primary",
@@ -69,15 +137,16 @@
                                         "Low" => "success",
                                         "Medium" => "warning",
                                         "High" => "danger",
-                                        "Urgent" => "dark",
+                                        "Critical" => "dark",
                                         _ => "secondary"
                                     })">@ticket.Priority</span>
                                 </td>
-                                <td>@ticket.CreatedAt.ToString(dateTimeFormat)</td>
-                                <td>@(ticket.UpdatedAt?.ToString(dateTimeFormat) ?? "-")</td>
                                 <td>
-                                    <a asp-action="TicketDetails" asp-route-id="@ticket.Id" class="btn btn-sm btn-info">
-                                        <i class="fas fa-eye"></i> View
+                                    <small class="text-muted">@ticket.CreatedAt.ToString(dateTimeFormat)</small>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="TicketDetails" asp-route-id="@ticket.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View
                                     </a>
                                 </td>
                             </tr>
@@ -86,5 +155,3 @@
                 </table>
             </div>
         </div>
-    </div>
-</div>

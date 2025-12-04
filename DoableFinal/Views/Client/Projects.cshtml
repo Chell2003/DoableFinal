@@ -3,6 +3,10 @@
 @{
     ViewData["Title"] = "My Projects";
     Layout = "_ClientLayout";
+    var query = Context.Request.Query["q"].ToString();
+    var statusFilter = Context.Request.Query["statusFilter"].ToString();
+    var fromDate = Context.Request.Query["fromDate"].ToString();
+    var toDate = Context.Request.Query["toDate"].ToString();
 }
 
 <div class="container-fluid">
@@ -16,6 +20,65 @@
                 }
             </div>
             <p class="text-muted">View and manage your project portfolio</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters & Search</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3" role="search" aria-label="Project search and filter">
+                <div class="col-md-6">
+                    <label for="searchInput" class="form-label">Search</label>
+                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by project name..." value="@query" aria-label="Search projects" />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select id="statusFilter" name="statusFilter" class="form-select">
+                        <option value="">All statuses</option>
+                        <option value="Not Started" selected="@(statusFilter == "Not Started" ? "selected" : null)">Not Started</option>
+                        <option value="In Progress" selected="@(statusFilter == "In Progress" ? "selected" : null)">In Progress</option>
+                        <option value="On Hold" selected="@(statusFilter == "On Hold" ? "selected" : null)">On Hold</option>
+                        <option value="Completed" selected="@(statusFilter == "Completed" ? "selected" : null)">Completed</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="applyBtn" class="form-label">&nbsp;</label>
+                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
+                        <i class="bi bi-search"></i> Apply Filters
+                    </button>
+                </div>
+
+                <div class="col-12">
+                    <hr class="my-2" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="fromDate" class="form-label"><i class="bi bi-calendar-event"></i> From Date</label>
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" aria-label="From date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="toDate" class="form-label"><i class="bi bi-calendar-event"></i> To Date</label>
+                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" aria-label="To date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="applyDateBtn" class="form-label">&nbsp;</label>
+                    <button id="applyDateBtn" class="btn btn-outline-primary w-100" type="submit">
+                        <i class="bi bi-calendar3"></i> Apply Date Range
+                    </button>
+                </div>
+
+                <div class="col-12 text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Projects", "Client")">
+                        <i class="bi bi-x-circle"></i> Reset Filters
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -49,40 +112,6 @@
 
 
     <div class="row g-3 mb-3 controls-row align-items-center">
-            <div class="col-md-6 col-lg-4">
-                <div class="input-group">
-                    <span class="input-group-text bg-transparent border-end-0">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="search" id="projectSearch" class="form-control border-start-0" 
-                           placeholder="Search projects..." value="@Context.Request.Query["q"].ToString()"
-                           aria-label="Search projects"
-                           data-bs-toggle="tooltip" data-bs-title="Search by name, description or manager">
-                    <button id="clearSearch" class="btn btn-outline-secondary" title="Clear search" aria-label="Clear search">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <select id="projectSort" class="form-select" aria-label="Sort projects" data-bs-toggle="tooltip" data-bs-title="Sort projects by different criteria">
-                    <option value="name">Sort by Name</option>
-                    <option value="startDate">Sort by Start Date</option>
-                    <option value="endDate">Sort by End Date</option>
-                    <option value="progress">Sort by Progress</option>
-                </select>
-            </div>
-            <div class="col-md-8 col-lg-3">
-                <div class="input-group">
-                    <label class="input-group-text" for="statusFilterSelect">Status</label>
-                    <select id="statusFilterSelect" class="form-select" aria-label="Filter by status">
-                        <option value="">All</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="On Hold">On Hold</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                    <button id="resetFilters" class="btn btn-outline-secondary" title="Reset filters">Reset</button>
-                </div>
-            </div>
             <div class="col-md-4 col-lg-2 text-lg-end">
                 <div class="input-group justify-content-end">
                     <label class="input-group-text" for="pageSize">Rows</label>

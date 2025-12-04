@@ -1,0 +1,89 @@
+@model DoableFinal.Models.Inquiry
+
+@{
+    ViewData["Title"] = "Inquiry Details";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h1 class="h3">Inquiry Details</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Inquiries">Inquiries</a></li>
+                <li class="breadcrumb-item active">Details</li>
+            </ol>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Inquiries" class="btn btn-outline-secondary">Back to Inquiries</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">@Model.Subject</h5>
+                        @if (Model.IsHandled)
+                        {
+                            <span class="badge bg-success">Handled</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">New</span>
+                        }
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-muted">Message</h6>
+                        <p class="lead">@Model.Message</p>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">Received</h6>
+                            <p>@Model.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted">From</h6>
+                            <p>@Model.Name</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <h6 class="text-muted">Email</h6>
+                            <p>
+                                <a href="mailto:@Model.Email">@Model.Email</a>
+                            </p>
+                        </div>
+                    </div>
+
+                    @if (!Model.IsHandled)
+                    {
+                        <hr />
+                        <form asp-action="MarkInquiryHandled" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check"></i> Mark as Handled
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="mailto:@Model.Email" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-envelope"></i> Reply via Email
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

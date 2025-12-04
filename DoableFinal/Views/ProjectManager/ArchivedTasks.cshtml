@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Archived Tasks";
+    var query = Context.Request.Query["q"].ToString();
+    var fromDate = Context.Request.Query["fromDate"].ToString();
+    var toDate = Context.Request.Query["toDate"].ToString();
 }
 
 @* Show TempData flash messages (Success / Error) so redirects that set TempData display them immediately *@
@@ -21,23 +24,87 @@
     </div>
 }
 
-<h2>Archived Tasks</h2>
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Archived Tasks</h1>
+            <p class="text-muted small mb-0">View and manage archived tasks</p>
+        </div>
+        <span class="badge bg-secondary fs-6">@(Model?.Count() ?? 0) Archived</span>
+    </div>
 
-<div class="table-responsive">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Task Title</th>
-                <th>Project</th>
-                <th>Assigned To</th>
-                <th>Status</th>
-                <th>Archived At</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var task in Model)
-            {
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters & Search</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3" role="search" aria-label="Archived task search and filter">
+                <div class="col-md-9">
+                    <label for="searchInput" class="form-label">Search</label>
+                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by task title or project..." value="@query" aria-label="Search archived tasks" />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="applyBtn" class="form-label">&nbsp;</label>
+                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+
+                <div class="col-12">
+                    <hr class="my-2" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="fromDate" class="form-label"><i class="bi bi-calendar-event"></i> From Date</label>
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" aria-label="From date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="toDate" class="form-label"><i class="bi bi-calendar-event"></i> To Date</label>
+                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" aria-label="To date" />
+                </div>
+
+                <div class="col-md-4">
+                    <label for="applyDateBtn" class="form-label">&nbsp;</label>
+                    <button id="applyDateBtn" class="btn btn-outline-primary w-100" type="submit">
+                        <i class="bi bi-calendar3"></i> Apply Date Range
+                    </button>
+                </div>
+
+                <div class="col-12 text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("ArchivedTasks", "ProjectManager")">
+                        <i class="bi bi-x-circle"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 25%;">Task Title</th>
+                            <th scope="col" style="width: 20%;">Project</th>
+                            <th scope="col" style="width: 18%;">Status</th>
+                            <th scope="col" style="width: 15%;">Archived At</th>
+                            <th scope="col" class="text-end" style="width: 22%;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox"></i> No archived tasks found
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var task in Model)
+                        {
                 <tr>
                     <td>@task.Title</td>
                     <td>@task.Project.Name</td>

@@ -37,7 +37,7 @@ namespace DoableFinal.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> MarkNotificationAsRead(int id)
+        public async Task<IActionResult> MarkNotificationAsRead(int id, string? returnUrl = null)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var notification = await _context.Notifications
@@ -50,6 +50,12 @@ namespace DoableFinal.Controllers
 
             notification.IsRead = true;
             await _context.SaveChangesAsync();
+
+            // If returnUrl is provided, redirect to it; otherwise go back to notifications
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
 
             return RedirectToAction(nameof(Notifications));
         }
@@ -329,7 +335,7 @@ namespace DoableFinal.Controllers
         }
 
         // Update Tasks method to use TaskAssignments
-        public async Task<IActionResult> Tasks()
+        public async Task<IActionResult> Tasks(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -337,15 +343,50 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            var tasks = await _context.TaskAssignments
+            var query = _context.TaskAssignments
                 .Where(ta => ta.EmployeeId == user.Id)
                 .Include(ta => ta.ProjectTask)
                     .ThenInclude(pt => pt.Project)
                 .Select(ta => ta.ProjectTask)
                 .Distinct()
+                .AsQueryable();
+
+            // Search by task title or project name
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
+                query = query.Where(t => 
+                    t.Title.ToLower().Contains(searchTerm) ||
+                    (t.Project != null && t.Project.Name.ToLower().Contains(searchTerm))
+                );
+            }
+
+            // Filter by status
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                query = query.Where(t => t.Status == statusFilter);
+            }
+
+            // Date range filtering
+            if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(t => t.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) && DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(t => t.CreatedAt.Date <= endDate.Date);
+            }
+
+            var tasks = await query
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
 
+            ViewBag.SearchQuery = q;
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
+            ViewBag.AvailableStatuses = new List<string> { "Open", "In Progress", "Resolved", "Closed" };
             return View(tasks);
         }
 
