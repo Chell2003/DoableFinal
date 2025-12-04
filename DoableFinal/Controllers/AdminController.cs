@@ -2652,5 +2652,361 @@ namespace DoableFinal.Controllers
             if (!string.IsNullOrEmpty(imagePath)) TempData["ImagePath"] = imagePath;
             return RedirectToAction(nameof(EditContactPageSection), new { id });
         }
+
+        // ===== VISUAL LIVE EDITOR API ENDPOINTS =====
+
+        [HttpGet]
+        public async Task<IActionResult> VisualEditor()
+        {
+            var sections = await _homePageService.GetAllSectionsAsync();
+            return View(sections);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLivePagePreview(string page = "home")
+        {
+            var sections = await _homePageService.GetAllSectionsAsync();
+            string html = "";
+
+            switch (page.ToLower())
+            {
+                case "about":
+                    html = await GenerateAboutPagePreview(sections);
+                    break;
+                case "services":
+                    html = await GenerateServicesPagePreview(sections);
+                    break;
+                case "contact":
+                    html = await GenerateContactPagePreview(sections);
+                    break;
+                default: // home
+                    html = await GenerateHomePagePreview(sections);
+                    break;
+            }
+
+            return Content(html, "text/html");
+        }
+
+        private async Task<string> GenerateHomePagePreview(List<DoableFinal.Models.HomePageSection> sections)
+        {
+            var heroTitle = sections.FirstOrDefault(s => s.SectionKey == "hero-title")?.Content ?? "QONNEC";
+            var heroBody = sections.FirstOrDefault(s => s.SectionKey == "hero-body")?.Content ?? "Streamline your projects, collaborate with your team, and achieve better results.";
+            var heroImagePath = sections.FirstOrDefault(s => s.SectionKey == "hero-image")?.ImagePath;
+            var feature1Title = sections.FirstOrDefault(s => s.SectionKey == "feature-1-title")?.Content ?? "Task Management";
+            var feature1Body = sections.FirstOrDefault(s => s.SectionKey == "feature-1-body")?.Content ?? "Organize and track tasks with our intuitive Kanban board system.";
+            var feature2Title = sections.FirstOrDefault(s => s.SectionKey == "feature-2-title")?.Content ?? "Team Collaboration";
+            var feature2Body = sections.FirstOrDefault(s => s.SectionKey == "feature-2-body")?.Content ?? "Work together seamlessly with real-time updates and communication tools.";
+            var feature3Title = sections.FirstOrDefault(s => s.SectionKey == "feature-3-title")?.Content ?? "Progress Tracking";
+            var feature3Body = sections.FirstOrDefault(s => s.SectionKey == "feature-3-body")?.Content ?? "Monitor project progress with detailed analytics and reporting.";
+            var ctaTitle = sections.FirstOrDefault(s => s.SectionKey == "cta-title")?.Content ?? "Ready to Get Started?";
+            var ctaBody = sections.FirstOrDefault(s => s.SectionKey == "cta-body")?.Content ?? "Join thousands of teams already using our platform to manage their projects.";
+
+            var heroSection = sections.FirstOrDefault(s => s.SectionKey == "hero-title");
+            var heroBodySection = sections.FirstOrDefault(s => s.SectionKey == "hero-body");
+            var heroImageSection = sections.FirstOrDefault(s => s.SectionKey == "hero-image");
+            var feature1TitleSection = sections.FirstOrDefault(s => s.SectionKey == "feature-1-title");
+            var feature1BodySection = sections.FirstOrDefault(s => s.SectionKey == "feature-1-body");
+            var feature2TitleSection = sections.FirstOrDefault(s => s.SectionKey == "feature-2-title");
+            var feature2BodySection = sections.FirstOrDefault(s => s.SectionKey == "feature-2-body");
+            var feature3TitleSection = sections.FirstOrDefault(s => s.SectionKey == "feature-3-title");
+            var feature3BodySection = sections.FirstOrDefault(s => s.SectionKey == "feature-3-body");
+            var ctaTitleSection = sections.FirstOrDefault(s => s.SectionKey == "cta-title");
+            var ctaBodySection = sections.FirstOrDefault(s => s.SectionKey == "cta-body");
+
+            var html = $@"
+<style>
+    .editable-section {{
+        position: relative;
+        transition: background-color 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }}
+    .editable-section:hover {{
+        background-color: rgba(0, 123, 255, 0.05);
+        box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.3);
+    }}
+    .editable-section.active {{
+        background-color: rgba(0, 123, 255, 0.1);
+        box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.6);
+    }}
+    .section-label {{
+        position: absolute; top: 8px; left: 12px;
+        background: rgba(0, 123, 255, 0.9);
+        color: white; padding: 4px 10px; border-radius: 4px;
+        font-size: 11px; font-weight: bold;
+        z-index: 100; opacity: 0; transition: opacity 0.2s;
+        pointer-events: none;
+    }}
+    .editable-section:hover .section-label,
+    .editable-section.active .section-label {{ opacity: 1; }}
+</style>
+<section class=""hero-section bg-primary text-white py-5 d-flex align-items-center editable-section"" data-section-id=""{heroSection?.Id ?? 1}"" data-section-key=""hero-title"">
+    <div class=""section-label"">Hero Title</div>
+    <div class=""container""><div class=""row justify-content-center text-center""><div class=""col-lg-8""><h1 class=""display-4 fw-bold"">{System.Security.SecurityElement.Escape(heroTitle)}</h1></div></div></div>
+</section>
+<section class=""bg-primary text-white py-4 editable-section"" data-section-id=""{heroBodySection?.Id ?? 2}"" data-section-key=""hero-body"">
+    <div class=""section-label"">Hero Description</div>
+    <div class=""container""><div class=""row justify-content-center text-center""><div class=""col-lg-8""><p class=""lead mb-4"">{System.Security.SecurityElement.Escape(heroBody)}</p><div class=""d-flex gap-3 justify-content-center mt-4""><a href=""#"" class=""btn btn-light btn-lg"">Get Started</a><a href=""#features"" class=""btn btn-outline-light btn-lg"">Learn More</a></div></div></div></div>
+</section>
+{(!string.IsNullOrEmpty(heroImagePath) || heroImageSection != null ? $@"<section class=""bg-white py-5 editable-section"" data-section-id=""{heroImageSection?.Id ?? 11}"" data-section-key=""hero-image"">
+    <div class=""section-label"">Hero Image (Click to Upload)</div>
+    <div class=""container text-center"">
+        {(!string.IsNullOrEmpty(heroImagePath) ? $@"<img src=""{heroImagePath}"" class=""img-fluid rounded"" alt=""Hero Image"" style=""max-width: 600px;"" />" : @"<div class=""alert alert-info"">No image uploaded yet. Click to upload one.</div>")}
+    </div>
+</section>" : "")}
+<section id=""features"" class=""py-5"">
+    <div class=""container""><h2 class=""text-center mb-5"">Why Choose Us</h2>
+    <div class=""row g-4"">
+        <div class=""col-md-4"">
+            <div class=""card border-0 shadow-sm editable-section"" data-section-id=""{feature1TitleSection?.Id ?? 3}"" data-section-key=""feature-1-title"">
+                <div class=""section-label"">Feature 1 Title (Click to Edit)</div>
+                <div class=""card-body text-center p-2"">
+                    <i class=""bi bi-kanban display-4 text-primary mb-2""></i>
+                    <h3 class=""h6 fw-bold"">{System.Security.SecurityElement.Escape(feature1Title)}</h3>
+                </div>
+            </div>
+            <div class=""card border-0 shadow-sm editable-section mt-2"" data-section-id=""{feature1BodySection?.Id ?? 8}"" data-section-key=""feature-1-body"">
+                <div class=""section-label"">Description (Click to Edit)</div>
+                <div class=""card-body text-center p-3"">
+                    <p class=""text-muted small"">{System.Security.SecurityElement.Escape(feature1Body)}</p>
+                </div>
+            </div>
+        </div>
+        <div class=""col-md-4"">
+            <div class=""card border-0 shadow-sm editable-section"" data-section-id=""{feature2TitleSection?.Id ?? 4}"" data-section-key=""feature-2-title"">
+                <div class=""section-label"">Feature 2 Title (Click to Edit)</div>
+                <div class=""card-body text-center p-2"">
+                    <i class=""bi bi-people display-4 text-primary mb-2""></i>
+                    <h3 class=""h6 fw-bold"">{System.Security.SecurityElement.Escape(feature2Title)}</h3>
+                </div>
+            </div>
+            <div class=""card border-0 shadow-sm editable-section mt-2"" data-section-id=""{feature2BodySection?.Id ?? 9}"" data-section-key=""feature-2-body"">
+                <div class=""section-label"">Description (Click to Edit)</div>
+                <div class=""card-body text-center p-3"">
+                    <p class=""text-muted small"">{System.Security.SecurityElement.Escape(feature2Body)}</p>
+                </div>
+            </div>
+        </div>
+        <div class=""col-md-4"">
+            <div class=""card border-0 shadow-sm editable-section"" data-section-id=""{feature3TitleSection?.Id ?? 5}"" data-section-key=""feature-3-title"">
+                <div class=""section-label"">Feature 3 Title (Click to Edit)</div>
+                <div class=""card-body text-center p-2"">
+                    <i class=""bi bi-graph-up display-4 text-primary mb-2""></i>
+                    <h3 class=""h6 fw-bold"">{System.Security.SecurityElement.Escape(feature3Title)}</h3>
+                </div>
+            </div>
+            <div class=""card border-0 shadow-sm editable-section mt-2"" data-section-id=""{feature3BodySection?.Id ?? 10}"" data-section-key=""feature-3-body"">
+                <div class=""section-label"">Description (Click to Edit)</div>
+                <div class=""card-body text-center p-3"">
+                    <p class=""text-muted small"">{System.Security.SecurityElement.Escape(feature3Body)}</p>
+                </div>
+            </div>
+        </div>
+    </div></div>
+</section>
+<section class=""bg-light py-5 editable-section"" data-section-id=""{ctaTitleSection?.Id ?? 6}"" data-section-key=""cta-title"">
+    <div class=""section-label"">CTA Title</div>
+    <div class=""container text-center""><h2 class=""mb-4"">{System.Security.SecurityElement.Escape(ctaTitle)}</h2></div>
+</section>
+<section class=""bg-light py-4 editable-section"" data-section-id=""{ctaBodySection?.Id ?? 7}"" data-section-key=""cta-body"">
+    <div class=""section-label"">CTA Description</div>
+    <div class=""container text-center""><p class=""lead mb-4"">{System.Security.SecurityElement.Escape(ctaBody)}</p><a href=""#"" class=""btn btn-primary btn-lg"">Create Free Account</a></div>
+</section>";
+            return html;
+        }
+
+        private async Task<string> GenerateAboutPagePreview(List<DoableFinal.Models.HomePageSection> sections)
+        {
+            var sections_about = sections.Where(s => s.SectionKey.StartsWith("about-")).OrderBy(s => s.SectionOrder).ToList();
+            
+            var html = @"<style>
+    .editable-section { position: relative; transition: background-color 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .editable-section:hover { background-color: rgba(0, 123, 255, 0.05); box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.3); }
+    .editable-section.active { background-color: rgba(0, 123, 255, 0.1); box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.6); }
+    .section-label { position: absolute; top: 8px; left: 12px; background: rgba(0, 123, 255, 0.9); color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .editable-section:hover .section-label, .editable-section.active .section-label { opacity: 1; }
+</style>
+<section class=""py-5 bg-light"">
+    <div class=""container""><h1 class=""display-5 fw-bold mb-4"">About Us</h1></div>
+</section>";
+
+            int index = 1;
+            foreach (var section in sections_about)
+            {
+                var bgClass = index % 2 == 0 ? "bg-white" : "bg-light";
+                var sectionHtml = $@"<section class=""py-5 {bgClass} editable-section"" data-section-id=""{section.Id}"" data-section-key=""{section.SectionKey}"">
+    <div class=""section-label"">{section.DisplayName} (Click to Edit)</div>
+    <div class=""container"">
+        {(!string.IsNullOrEmpty(section.ImagePath) ? $@"<div class=""mb-4""><img src=""{section.ImagePath}"" class=""img-fluid rounded"" alt=""{section.DisplayName}"" style=""max-width: 300px;"" /></div>" : "")}
+        <div class=""lead"">{System.Security.SecurityElement.Escape(section.Content)}</div>
+    </div>
+</section>";
+                html += sectionHtml;
+                index++;
+            }
+
+            return html;
+        }
+
+        private async Task<string> GenerateServicesPagePreview(List<DoableFinal.Models.HomePageSection> sections)
+        {
+            var sections_services = sections.Where(s => s.SectionKey.StartsWith("services-")).OrderBy(s => s.SectionOrder).ToList();
+            
+            var html = @"<style>
+    .editable-section { position: relative; transition: background-color 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .editable-section:hover { background-color: rgba(0, 123, 255, 0.05); box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.3); }
+    .editable-section.active { background-color: rgba(0, 123, 255, 0.1); box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.6); }
+    .section-label { position: absolute; top: 8px; left: 12px; background: rgba(0, 123, 255, 0.9); color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .editable-section:hover .section-label, .editable-section.active .section-label { opacity: 1; }
+</style>
+<section class=""py-5 bg-light"">
+    <div class=""container""><h1 class=""display-5 fw-bold mb-4"">Our Services</h1></div>
+</section>";
+
+            int index = 1;
+            foreach (var section in sections_services)
+            {
+                var bgClass = index % 2 == 0 ? "bg-white" : "bg-light";
+                var sectionHtml = $@"<section class=""py-5 {bgClass} editable-section"" data-section-id=""{section.Id}"" data-section-key=""{section.SectionKey}"">
+    <div class=""section-label"">{section.DisplayName} (Click to Edit)</div>
+    <div class=""container"">
+        {(!string.IsNullOrEmpty(section.ImagePath) ? $@"<div class=""mb-4""><img src=""{section.ImagePath}"" class=""img-fluid rounded"" alt=""{section.DisplayName}"" style=""max-width: 300px;"" /></div>" : "")}
+        <div class=""lead"">{System.Security.SecurityElement.Escape(section.Content)}</div>
+    </div>
+</section>";
+                html += sectionHtml;
+                index++;
+            }
+
+            return html;
+        }
+
+        private async Task<string> GenerateContactPagePreview(List<DoableFinal.Models.HomePageSection> sections)
+        {
+            var sections_contact = sections.Where(s => s.SectionKey.StartsWith("contact-")).OrderBy(s => s.SectionOrder).ToList();
+            
+            var html = @"<style>
+    .editable-section { position: relative; transition: background-color 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .editable-section:hover { background-color: rgba(0, 123, 255, 0.05); box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.3); }
+    .editable-section.active { background-color: rgba(0, 123, 255, 0.1); box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.6); }
+    .section-label { position: absolute; top: 8px; left: 12px; background: rgba(0, 123, 255, 0.9); color: white; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .editable-section:hover .section-label, .editable-section.active .section-label { opacity: 1; }
+</style>
+<section class=""py-5 bg-light"">
+    <div class=""container""><h1 class=""display-5 fw-bold mb-4"">Contact Us</h1></div>
+</section>";
+
+            int index = 1;
+            foreach (var section in sections_contact)
+            {
+                var bgClass = index % 2 == 0 ? "bg-white" : "bg-light";
+                var sectionHtml = $@"<section class=""py-5 {bgClass} editable-section"" data-section-id=""{section.Id}"" data-section-key=""{section.SectionKey}"">
+    <div class=""section-label"">{section.DisplayName} (Click to Edit)</div>
+    <div class=""container"">
+        {(!string.IsNullOrEmpty(section.ImagePath) ? $@"<div class=""mb-4""><img src=""{section.ImagePath}"" class=""img-fluid rounded"" alt=""{section.DisplayName}"" style=""max-width: 300px;"" /></div>" : "")}
+        <div class=""lead"">{System.Security.SecurityElement.Escape(section.Content)}</div>
+    </div>
+</section>";
+                html += sectionHtml;
+                index++;
+            }
+
+            return html;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSectionData(int id)
+        {
+            try
+            {
+                var section = await _context.HomePageSections.FindAsync(id);
+                if (section == null)
+                    return Json(new { success = false, message = "Section not found" });
+
+                // Check if section key contains "image" to determine if it supports image upload
+                var supportsImage = (section.SectionKey ?? "").Contains("image", StringComparison.OrdinalIgnoreCase);
+
+                return Json(new
+                {
+                    success = true,
+                    sectionKey = section.SectionKey,
+                    displayName = section.DisplayName,
+                    content = section.Content,
+                    imagePath = section.ImagePath,
+                    supportsImage = supportsImage
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting section data");
+                return Json(new { success = false, message = "Error loading section" });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveSectionData(int id, string? content, IFormFile? imageFile)
+        {
+            try
+            {
+                _logger.LogInformation($"SaveSectionData called: id={id}, content length={content?.Length ?? 0}, has image={imageFile != null}");
+                
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                {
+                    _logger.LogWarning("User not found in SaveSectionData");
+                    return Json(new { success = false, message = "User not found" });
+                }
+
+                var section = await _context.HomePageSections.FindAsync(id);
+                if (section == null)
+                {
+                    _logger.LogWarning($"Section not found: id={id}");
+                    return Json(new { success = false, message = "Section not found" });
+                }
+
+                // For image-only sections, allow empty content
+                bool isImageOnly = section.SectionKey != null && section.SectionKey.Contains("image", StringComparison.OrdinalIgnoreCase);
+                if (string.IsNullOrEmpty(content) && !isImageOnly && imageFile == null)
+                {
+                    _logger.LogWarning("Content is empty in SaveSectionData");
+                    return Json(new { success = false, message = "Content cannot be empty" });
+                }
+
+                string? imagePath = null;
+                if (imageFile != null && imageFile.Length > 0)
+                {
+                    try
+                    {
+                        var key = section.SectionKey ?? "home";
+                        var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "home", key);
+                        Directory.CreateDirectory(uploadDir);
+                        var fileName = $"{DateTime.UtcNow.Ticks}_{Path.GetFileName(imageFile.FileName)}";
+                        var filePath = Path.Combine(uploadDir, fileName);
+                        using (var stream = System.IO.File.Create(filePath))
+                        {
+                            await imageFile.CopyToAsync(stream);
+                        }
+                        imagePath = $"/uploads/home/{key}/{fileName}";
+                        _logger.LogInformation($"Image uploaded: {imagePath}");
+                    }
+                    catch (Exception imgEx)
+                    {
+                        _logger.LogError(imgEx, "Error uploading image");
+                        return Json(new { success = false, message = "Error uploading image: " + imgEx.Message });
+                    }
+                }
+
+                await _homePageService.UpdateSectionAsync(id, content, user.Id, imagePath);
+                _logger.LogInformation($"Section updated successfully: id={id}");
+                
+                var response = new { success = true, message = "Section updated successfully" };
+                return Json(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving section data");
+                return Json(new { success = false, message = "Error saving section: " + ex.Message });
+            }
+        }
     }
 }

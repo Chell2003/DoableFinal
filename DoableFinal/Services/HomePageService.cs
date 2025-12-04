@@ -13,7 +13,7 @@ namespace DoableFinal.Services
         Task<List<HomePageSection>> GetAllSectionsAsync();
         Task<HomePageSection> GetSectionByKeyAsync(string sectionKey);
         Task<List<HomePageSection>> GetSectionsByCategoryAsync(string category);
-        Task UpdateSectionAsync(int id, string content, string userId, string? imagePath = null);
+        Task UpdateSectionAsync(int id, string? content, string userId, string? imagePath = null);
         Task<HomePageSection> CreateSectionAsync(string sectionKey, string displayName, string content, string? iconClass = null, int? order = null);
     }
 
@@ -45,12 +45,15 @@ namespace DoableFinal.Services
                 .ToListAsync();
         }
 
-        public async Task UpdateSectionAsync(int id, string content, string userId, string? imagePath = null)
+        public async Task UpdateSectionAsync(int id, string? content, string userId, string? imagePath = null)
         {
             var section = await _context.HomePageSections.FindAsync(id);
             if (section != null)
             {
-                section.Content = content;
+                if (!string.IsNullOrEmpty(content))
+                {
+                    section.Content = content;
+                }
                 if (!string.IsNullOrEmpty(imagePath))
                 {
                     section.ImagePath = imagePath;

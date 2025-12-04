@@ -1,0 +1,591 @@
+@model IEnumerable<DoableFinal.Models.HomePageSection>
+@{
+    ViewData["Title"] = "Visual Live Editor";
+}
+
+@Html.AntiForgeryToken()
+
+<style>
+    .visual-editor-wrapper {
+        position: relative;
+        background: white;
+        display: flex;
+        height: 100vh;
+    }
+
+    .editor-sidebar {
+        width: 50px;
+        background: #f8f9fa;
+        border-right: 1px solid #ddd;
+        display: flex;
+        flex-direction: column;
+        padding: 10px 0;
+        z-index: 1000;
+    }
+
+    .page-tab {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: #666;
+        font-size: 20px;
+        transition: all 0.2s;
+        position: relative;
+        border-left: 3px solid transparent;
+    }
+
+    .page-tab:hover {
+        background: #e8e9ea;
+        color: #0d6efd;
+    }
+
+    .page-tab.active {
+        background: #e3f2fd;
+        color: #0d6efd;
+        border-left-color: #0d6efd;
+    }
+
+    .page-tab[title] {
+        cursor: help;
+    }
+
+    .editable-section {
+        position: relative;
+        transition: background-color 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+    .editable-section:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+        box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.3);
+    }
+
+    .editable-section.active {
+        background-color: rgba(0, 123, 255, 0.1);
+        box-shadow: inset 0 0 0 2px rgba(0, 123, 255, 0.6);
+    }
+
+    .section-label {
+        position: absolute;
+        top: 8px;
+        left: 12px;
+        background: rgba(0, 123, 255, 0.9);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: bold;
+        z-index: 100;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .editable-section:hover .section-label,
+    .editable-section.active .section-label {
+        opacity: 1;
+    }
+
+    /* Editor Panel */
+    .editor-panel {
+        position: fixed;
+        right: 0;
+        top: 0;
+        width: 450px;
+        height: 100vh;
+        background: white;
+        border-left: 1px solid #ddd;
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+        z-index: 999;
+        overflow-y: auto;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .editor-panel.show {
+        transform: translateX(0);
+    }
+
+    .editor-header {
+        padding: 20px;
+        border-bottom: 1px solid #ddd;
+        background: #f8f9fa;
+        flex-shrink: 0;
+    }
+
+    .editor-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .editor-page-label {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+    }
+
+    .editor-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-group textarea,
+    .form-group input[type="file"] {
+        width: 100%;
+    }
+
+    .editor-actions {
+        padding: 20px;
+        border-top: 1px solid #ddd;
+        background: #f8f9fa;
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .editor-actions button {
+        flex: 1;
+    }
+
+    .close-editor-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+    }
+
+    .close-editor-btn:hover {
+        color: #000;
+    }
+
+    .editor-header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .current-image-preview {
+        max-width: 100%;
+        height: auto;
+        margin-top: 10px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+
+    .section-key-display {
+        font-family: monospace;
+        background: #f0f0f0;
+        padding: 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .loading-overlay.show {
+        display: flex;
+    }
+
+    .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 4px solid white;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .success-message {
+        padding: 12px 16px;
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        border-radius: 4px;
+        margin-bottom: 16px;
+        display: none;
+    }
+
+    .success-message.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .editor-info {
+        padding: 12px;
+        background: #e7f3ff;
+        border-left: 4px solid #0066cc;
+        margin-bottom: 16px;
+        font-size: 13px;
+        border-radius: 2px;
+    }
+
+    .live-preview {
+        flex: 1;
+        overflow-y: auto;
+        margin-right: 450px;
+        transition: margin 0.3s ease;
+    }
+
+    .page-hidden {
+        display: none;
+    }
+
+    @@media (max-width: 768px) {
+        .editor-panel {
+            width: 100%;
+        }
+        .live-preview {
+            margin-right: 0;
+        }
+    }
+</style>
+
+<div class="visual-editor-wrapper">
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Page Tabs Sidebar -->
+    <div class="editor-sidebar">
+        <button class="page-tab active" data-page="home" title="Homepage" onclick="switchPage('home')">
+            <i class="bi bi-house-fill"></i>
+        </button>
+        <button class="page-tab" data-page="about" title="About Page" onclick="switchPage('about')">
+            <i class="bi bi-info-circle-fill"></i>
+        </button>
+        <button class="page-tab" data-page="services" title="Services Page" onclick="switchPage('services')">
+            <i class="bi bi-tools"></i>
+        </button>
+        <button class="page-tab" data-page="contact" title="Contact Page" onclick="switchPage('contact')">
+            <i class="bi bi-envelope-fill"></i>
+        </button>
+    </div>
+
+    <!-- Editor Panel -->
+    <div class="editor-panel" id="editorPanel">
+        <div class="editor-header">
+            <div class="editor-header-top">
+                <div>
+                    <h3 id="editorTitle">Select a section</h3>
+                    <div class="editor-page-label" id="editorPageLabel"></div>
+                </div>
+                <button class="close-editor-btn" onclick="closeEditor()">×</button>
+            </div>
+        </div>
+
+        <div class="editor-content">
+            <div class="success-message" id="successMessage">
+                ✓ Changes saved successfully
+            </div>
+
+            <div class="editor-info" id="editorInfo" style="display: none;">
+                <strong>Section:</strong> <span id="editorInfoKey"></span>
+            </div>
+
+            <form id="editorForm" onsubmit="saveSection(event)">
+                <div class="form-group" id="contentGroup" style="display: none;">
+                    <label for="sectionContent">Content</label>
+                    <textarea id="sectionContent" name="content" rows="8" class="form-control" placeholder="Enter text content..."></textarea>
+                    <small class="form-text text-muted d-block mt-2">
+                        Plain text only - no HTML formatting needed
+                    </small>
+                </div>
+
+                <div class="form-group" id="imageGroup" style="display: none;">
+                    <label>Current Image</label>
+                    <div id="currentImageContainer"></div>
+                    <label for="imageFile" class="d-block mt-3 mb-2">Upload New Image</label>
+                    <input type="file" id="imageFile" name="imageFile" class="form-control" accept="image/*" />
+                    <small class="form-text text-muted d-block mt-2">JPG, PNG, WebP. Max 5MB.</small>
+                </div>
+            </form>
+        </div>
+
+        <div class="editor-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeEditor()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveSection(event)">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- Live Preview Area -->
+    <div class="live-preview" id="livePreview"></div>
+</div>
+
+<script>
+    let currentPage = 'home';
+    let currentSectionId = null;
+    let currentSectionKey = null;
+    let pageData = {
+        home: null,
+        about: null,
+        services: null,
+        contact: null
+    };
+
+    async function switchPage(page) {
+        if (currentPage === page) return;
+        
+        currentPage = page;
+        
+        // Update active tab
+        document.querySelectorAll('.page-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelector(`[data-page="${page}"]`).classList.add('active');
+        
+        // Load page preview
+        closeEditor();
+        await loadPagePreview(page);
+    }
+
+    async function loadPagePreview(page) {
+        const preview = document.getElementById('livePreview');
+        
+        try {
+            showLoading();
+            const response = await fetch(`@Url.Action("GetLivePagePreview", "Admin")?page=${page}`);
+            const html = await response.text();
+            preview.innerHTML = html;
+            attachSectionClickHandlers();
+        } catch (error) {
+            console.error('Failed to load preview:', error);
+            preview.innerHTML = '<div class="alert alert-danger m-3">Failed to load page preview. Please try again.</div>';
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function attachSectionClickHandlers() {
+        document.querySelectorAll('[data-section-id]').forEach(elem => {
+            elem.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const sectionId = elem.getAttribute('data-section-id');
+                openEditorForSection(sectionId);
+            });
+        });
+    }
+
+    async function openEditorForSection(sectionId) {
+        currentSectionId = sectionId;
+        
+        try {
+            showLoading();
+            const response = await fetch(`@Url.Action("GetSectionData", "Admin")?id=${sectionId}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                alert('Failed to load section data');
+                hideLoading();
+                return;
+            }
+
+            currentSectionKey = data.sectionKey;
+            document.getElementById('editorTitle').textContent = `Editing: ${data.displayName}`;
+            document.getElementById('editorPageLabel').textContent = `Page: ${currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}`;
+            document.getElementById('editorInfoKey').textContent = data.sectionKey;
+            document.getElementById('editorInfo').style.display = 'block';
+
+            // Clear and populate form
+            document.getElementById('editorForm').reset();
+            
+            // Check if this is an image-only section
+            const isImageOnly = data.sectionKey && data.sectionKey.toLowerCase().includes('image');
+            
+            const contentGroup = document.getElementById('contentGroup');
+            if (isImageOnly) {
+                contentGroup.style.display = 'none';
+            } else {
+                document.getElementById('sectionContent').value = data.content || '';
+                contentGroup.style.display = 'block';
+            }
+
+            // Handle image
+            const imageGroup = document.getElementById('imageGroup');
+            if (data.supportsImage) {
+                imageGroup.style.display = 'block';
+                const container = document.getElementById('currentImageContainer');
+                if (data.imagePath) {
+                    container.innerHTML = `
+                        <div>
+                            <img src="${data.imagePath}" alt="Current section image" class="current-image-preview" />
+                            <small class="text-muted d-block mt-2">Current image</small>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<small class="text-muted">No image uploaded yet</small>';
+                }
+            } else {
+                imageGroup.style.display = 'none';
+            }
+
+            // Highlight section
+            document.querySelectorAll('.editable-section').forEach(e => e.classList.remove('active'));
+            const activeElem = document.querySelector(`[data-section-id="${sectionId}"]`);
+            if (activeElem) {
+                activeElem.classList.add('active');
+                activeElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            // Show panel
+            document.getElementById('editorPanel').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        } catch (error) {
+            console.error('Error opening editor:', error);
+            alert('Failed to open section editor');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async function saveSection(event) {
+        event.preventDefault();
+
+        if (!currentSectionId) {
+            alert('No section selected');
+            return;
+        }
+
+        try {
+            showLoading();
+            const formData = new FormData();
+            formData.append('id', currentSectionId);
+            formData.append('content', document.getElementById('sectionContent').value);
+            
+            // Add CSRF token to form data
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (tokenElement) {
+                formData.append('__RequestVerificationToken', tokenElement.value);
+            }
+            
+            const fileInput = document.getElementById('imageFile');
+            if (fileInput.files.length > 0) {
+                formData.append('imageFile', fileInput.files[0]);
+            }
+
+            console.log('Saving section:', { id: currentSectionId, content: document.getElementById('sectionContent').value });
+
+            const response = await fetch('@Url.Action("SaveSectionData", "Admin")', {
+                method: 'POST',
+                body: formData
+            });
+
+            console.log('Response status:', response.status);
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (jsonError) {
+                console.error('JSON parse error:', jsonError);
+                console.error('Response was:', responseText);
+                alert('Server error: Invalid response format. Check console for details.');
+                hideLoading();
+                return;
+            }
+
+            if (result.success) {
+                showSuccessMessage();
+                document.getElementById('imageFile').value = '';
+                
+                setTimeout(() => {
+                    loadPagePreview(currentPage);
+                    closeEditor();
+                }, 800);
+            } else {
+                alert('Error: ' + (result.message || 'Failed to save'));
+            }
+        } catch (error) {
+            console.error('Error saving section:', error);
+            alert('Failed to save section: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function closeEditor() {
+        document.getElementById('editorPanel').classList.remove('show');
+        document.querySelectorAll('.editable-section').forEach(e => e.classList.remove('active'));
+        document.body.style.overflow = 'auto';
+        currentSectionId = null;
+    }
+
+    function showLoading() {
+        document.getElementById('loadingOverlay').classList.add('show');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.remove('show');
+    }
+
+    function showSuccessMessage() {
+        const msg = document.getElementById('successMessage');
+        msg.classList.add('show');
+        setTimeout(() => msg.classList.remove('show'), 3000);
+    }
+
+    // Close editor with Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('editorPanel').classList.contains('show')) {
+            closeEditor();
+        }
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        loadPagePreview('home');
+    });
+</script>
+
+

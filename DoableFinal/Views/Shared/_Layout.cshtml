@@ -82,36 +82,10 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#contentSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                            <a asp-area="" asp-controller="Admin" asp-action="VisualEditor">
                                 <i class="bi bi-file-earmark-text"></i>
-                                <span>Content</span>
+                                <span>CMS Visual Live Editor</span>
                             </a>
-                            <ul class="collapse list-unstyled" id="contentSubmenu">
-                                <li>
-                                    <a asp-area="" asp-controller="Admin" asp-action="ManageHomePage">
-                                        <i class="bi bi-house"></i>
-                                        <span>Homepage Content</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a asp-area="" asp-controller="Admin" asp-action="ManageAboutPage">
-                                        <i class="bi bi-info-circle"></i>
-                                        <span>About Content</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a asp-area="" asp-controller="Admin" asp-action="ManageServicesPage">
-                                        <i class="bi bi-tools"></i>
-                                        <span>Services Content</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a asp-area="" asp-controller="Admin" asp-action="ManageContactPage">
-                                        <i class="bi bi-envelope"></i>
-                                        <span>Contact Content</span>
-                                    </a>
-                                </li>
-                            </ul>
                         </li>
                         <li>
                             <a asp-area="" asp-controller="Admin" asp-action="Profile">
