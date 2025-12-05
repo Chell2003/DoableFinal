@@ -15,29 +15,46 @@ namespace DoableFinal.Controllers
         protected readonly UserManager<ApplicationUser> _userManager;
         protected readonly NotificationService _notificationService;
         protected readonly TimelineAdjustmentService _timelineAdjustmentService;
+        protected readonly ILogger<BaseController> _logger;
 
         public BaseController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             NotificationService notificationService,
-            TimelineAdjustmentService timelineAdjustmentService)
+            TimelineAdjustmentService timelineAdjustmentService,
+            ILogger<BaseController> logger = null)
         {
             _context = context;
             _userManager = userManager;
             _notificationService = notificationService;
             _timelineAdjustmentService = timelineAdjustmentService;
+            _logger = logger;
         }
 
         protected async Task<ApplicationUser> GetCurrentUser()
         {
-            return await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                _logger?.LogInformation($"GetCurrentUser: UserId={user.Id}, Role='{user.Role}', UserName={user.UserName}");
+            }
+            else
+            {
+                _logger?.LogInformation("GetCurrentUser: User is NULL");
+            }
+            return user;
         }
 
         protected string GetCurrentRole()
         {
-            return User.IsInRole("Admin") ? "Admin" :
-                   (User.IsInRole("Project Manager") || User.IsInRole("ProjectManager")) ? "Project Manager" :
-                   User.IsInRole("Employee") ? "Employee" : "Client";
+            // First check ASP.NET Identity roles
+            if (User.IsInRole("Admin")) return "Admin";
+            if (User.IsInRole("Project Manager") || User.IsInRole("ProjectManager")) return "Project Manager";
+            if (User.IsInRole("Employee")) return "Employee";
+            if (User.IsInRole("Client")) return "Client";
+            
+            // If still no role found, default to Client (for users without explicit roles assigned)
+            return "Client";
         }
 
         protected async Task<int> GetProjectCount(string userId, string role)

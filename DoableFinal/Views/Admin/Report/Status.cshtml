@@ -1,0 +1,273 @@
+@model StatusReportViewModel
+
+@{
+    ViewData["Title"] = "Status Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h1>
+                <i class="fas fa-tasks"></i> Status Report
+            </h1>
+            <p class="text-muted">Project: <strong>@Model.ProjectName</strong></p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="@Url.Action("StatusPrint", new { id = Model.ProjectId })" class="btn btn-secondary" target="_blank">
+                <i class="fas fa-file-pdf"></i> Print View
+            </a>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="text-success">Completed</h5>
+                    <h2 class="mb-0">@Model.CompletedTasks.Count</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="text-info">In Progress</h5>
+                    <h2 class="mb-0">@Model.InProgressTasks.Count</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="text-warning">Upcoming</h5>
+                    <h2 class="mb-0">@Model.UpcomingTasks.Count</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Completion</h5>
+                    <h2 class="mb-0">@Math.Round(Model.CompletionPercentage, 1)%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Overall Progress</h5>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: @Model.CompletionPercentage%;" 
+                             aria-valuenow="@Model.CompletionPercentage" aria-valuemin="0" aria-valuemax="100">
+                            @Math.Round(Model.CompletionPercentage, 1)%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Tasks -->
+    @if (Model.CompletedTasks.Count > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-check-circle"></i> Completed Tasks (@Model.CompletedTasks.Count)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Task</th>
+                                        <th>Priority</th>
+                                        <th>Due Date</th>
+                                        <th>Completed</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var task in Model.CompletedTasks.OrderByDescending(t => t.CompletedAt))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@task.Title</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-@GetPriorityClass(task.Priority)">@task.Priority</span>
+                                            </td>
+                                            <td>@task.DueDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                @if (task.CompletedAt.HasValue)
+                                                {
+                                                    <span class="text-success">@task.CompletedAt.Value.ToString("MMM dd, yyyy")</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- In Progress Tasks -->
+    @if (Model.InProgressTasks.Count > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-spinner"></i> In Progress Tasks (@Model.InProgressTasks.Count)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Task</th>
+                                        <th>Priority</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var task in Model.InProgressTasks.OrderBy(t => t.DueDate))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@task.Title</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-@GetPriorityClass(task.Priority)">@task.Priority</span>
+                                            </td>
+                                            <td>@task.DueDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                @if (task.DueDate < DateTime.UtcNow)
+                                                {
+                                                    <span class="text-danger">OVERDUE</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-info">On Schedule</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Upcoming Tasks -->
+    @if (Model.UpcomingTasks.Count > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-hourglass-start"></i> Upcoming Tasks (@Model.UpcomingTasks.Count)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Task</th>
+                                        <th>Priority</th>
+                                        <th>Due Date</th>
+                                        <th>Days Until Due</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var task in Model.UpcomingTasks.OrderBy(t => t.DueDate))
+                                    {
+                                        var daysUntilDue = (int)(task.DueDate - DateTime.UtcNow).TotalDays;
+                                        <tr>
+                                            <td>
+                                                <strong>@task.Title</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-@GetPriorityClass(task.Priority)">@task.Priority</span>
+                                            </td>
+                                            <td>@task.DueDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                @if (daysUntilDue < 7)
+                                                {
+                                                    <span class="text-danger"><strong>@daysUntilDue days</strong></span>
+                                                }
+                                                else if (daysUntilDue < 14)
+                                                {
+                                                    <span class="text-warning">@daysUntilDue days</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">@daysUntilDue days</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Report Footer -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-light border">
+                <small class="text-muted">
+                    Report generated on @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style media="print">
+    .btn, .alert-light { display: none; }
+    body { font-size: 11pt; }
+</style>
+
+@functions {
+    string GetPriorityClass(string priority)
+    {
+        return priority switch
+        {
+            "High" => "danger",
+            "Medium" => "warning",
+            "Low" => "info",
+            _ => "secondary"
+        };
+    }
+}

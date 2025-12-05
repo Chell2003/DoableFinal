@@ -1,0 +1,284 @@
+@model WorkloadReportViewModel
+
+@{
+    ViewData["Title"] = "Workload Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h1>
+                <i class="fas fa-users"></i> Workload Report
+            </h1>
+            <p class="text-muted">Project: <strong>@Model.ProjectName</strong></p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" onclick="printWorkload(@Model.ProjectId)">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="@Url.Action("WorkloadPrint", new { id = Model.ProjectId })" class="btn btn-secondary" target="_blank">
+                <i class="fas fa-file-pdf"></i> Print View
+            </a>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Team Members</h5>
+                    <h2 class="mb-0">@Model.EmployeeWorkloads.Count</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Avg Tasks/Employee</h5>
+                    <h2 class="mb-0">@Math.Round(Model.AverageTasksPerEmployee, 1)</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="text-success">Most Loaded</h5>
+                    <p class="mb-0">@Model.MostLoadedEmployee</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="text-info">Least Loaded</h5>
+                    <p class="mb-0">@Model.LeastLoadedEmployee</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overallocation Alerts -->
+    @if (Model.OverallocationAlerts.Count > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-exclamation-triangle"></i> Over-allocation Alerts (@Model.OverallocationAlerts.Count)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var alert in Model.OverallocationAlerts)
+                        {
+                            var severityClass = alert.SeverityLevel == "High" ? "danger" : "warning";
+                            <div class="alert alert-@severityClass mb-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>@alert.EmployeeName</h6>
+                                        <p class="mb-1">
+                                            <strong>Assigned Tasks:</strong> @alert.TaskCount
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong>Overdue Tasks:</strong> <span class="text-danger">@alert.OverdueTaskCount</span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p>
+                                            <span class="badge badge-@severityClass">@alert.SeverityLevel Priority</span>
+                                        </p>
+                                        <p class="mb-0"><em>@alert.Recommendation</em></p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Employee Workload Summary -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks"></i> Employee Workload Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Assigned</th>
+                                    <th>Completed</th>
+                                    <th>In Progress</th>
+                                    <th>Overdue</th>
+                                    <th>Workload</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var workload in Model.EmployeeWorkloads)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@workload.EmployeeName</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary" style="color: black;">@workload.AssignedTaskCount</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-success" style="color: black;">@workload.CompletedTaskCount</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info" style="color: black;">@workload.InProgressTaskCount</span>
+                                        </td>
+                                        <td>
+                                            @if (workload.OverdueTaskCount > 0)
+                                            {
+                                                <span class="badge badge-danger" style="color: black;">@workload.OverdueTaskCount</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-light" style="color: black;">0</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                @{
+                                                    var color = workload.WorkloadPercentage > 80 ? "danger" : workload.WorkloadPercentage > 60 ? "warning" : "success";
+                                                }
+                                                <div class="progress-bar bg-@color" role="progressbar" style="width: @workload.WorkloadPercentage%;" 
+                                                     aria-valuenow="@workload.WorkloadPercentage" aria-valuemin="0" aria-valuemax="100">
+                                                    @Math.Round(workload.WorkloadPercentage, 0)%
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Task Assignments -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> Detailed Task Assignments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var workload in Model.EmployeeWorkloads)
+                    {
+                        <div class="mb-4">
+                            <h6 class="bg-light p-2 rounded">@workload.EmployeeName (@workload.AssignedTaskCount tasks)</h6>
+                            @if (workload.Tasks.Count == 0)
+                            {
+                                <p class="text-muted ms-3">No tasks assigned</p>
+                            }
+                            else
+                            {
+                                <div class="ms-3">
+                                    <ul class="list-group">
+                                        @foreach (var task in workload.Tasks.OrderBy(t => t.DueDate))
+                                        {
+                                            <li class="list-group-item">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-5">
+                                                        <strong>@task.TaskTitle</strong>
+                                                        @if (task.IsOverdue)
+                                                        {
+                                                            <span class="badge badge-danger ms-2">OVERDUE</span>
+                                                        }
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <span class="badge badge-@GetTaskStatusClass(task.Status)">@task.Status</span>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <span class="badge badge-@GetPriorityClass(task.Priority)">@task.Priority</span>
+                                                    </div>
+                                                    <div class="col-md-3 text-end">
+                                                        <small class="text-muted">@task.DueDate.ToString("MMM dd, yyyy")</small>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Footer -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-light border">
+                <small class="text-muted">
+                    Report generated on @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style media="print">
+    .btn, .alert-light { display: none; }
+    body { font-size: 10pt; }
+</style>
+
+<script>
+    function printWorkload(projectId) {
+        const url = `/Report/WorkloadPrint/${projectId}`;
+        const printWindow = window.open(url, "_blank");
+
+        printWindow.onload = function () {
+            printWindow.print();
+            printWindow.onafterprint = function () {
+                printWindow.close();
+            };
+        };
+    }
+</script>
+
+
+@functions {
+    string GetTaskStatusClass(string status)
+    {
+        return status switch
+        {
+            "Completed" => "success",
+            "In Progress" => "info",
+            "Not Started" => "warning",
+            _ => "secondary"
+        };
+    }
+
+    string GetPriorityClass(string priority)
+    {
+        return priority switch
+        {
+            "High" => "danger",
+            "Medium" => "warning",
+            "Low" => "info",
+            _ => "secondary"
+        };
+    }
+}

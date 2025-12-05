@@ -107,6 +107,22 @@ namespace DoableFinal.Controllers
 
                 if (result.Succeeded)
                 {
+                    // Ensure user has appropriate Identity role based on their custom Role property
+                    var user = await _userManager.FindByEmailAsync(model.Email);
+                    if (user != null && user.Role != null)
+                    {
+                        // Check if user has any Identity roles
+                        var userRoles = await _userManager.GetRolesAsync(user);
+                        if (userRoles == null || userRoles.Count == 0)
+                        {
+                            // No roles assigned, add the one from custom Role property
+                            await _userManager.AddToRoleAsync(user, user.Role);
+                            
+                            // Refresh the security principal to include the new role
+                            await _signInManager.RefreshSignInAsync(user);
+                        }
+                    }
+
                     return await RedirectToLocal(returnUrl);
                 }
 
@@ -303,6 +319,12 @@ namespace DoableFinal.Controllers
             }
 
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
         }
     }
 } 

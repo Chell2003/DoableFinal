@@ -48,6 +48,110 @@ namespace DoableFinal.Data
                 }
             }
 
+            // Create a test client user if it doesn't exist
+            var clientEmail = "client@example.com";
+            var clientUser = await userManager.FindByEmailAsync(clientEmail);
+            if (clientUser == null)
+            {
+                clientUser = new ApplicationUser
+                {
+                    UserName = clientEmail,
+                    Email = clientEmail,
+                    FirstName = "Test",
+                    LastName = "Client",
+                    Role = "Client",
+                    EmailConfirmed = true,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    EmailNotificationsEnabled = true
+                };
+
+                var result = await userManager.CreateAsync(clientUser, "Client@123456");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(clientUser, "Client");
+                }
+            }
+
+            // Create a test project manager user if it doesn't exist
+            var pmEmail = "pm@example.com";
+            var pmUser = await userManager.FindByEmailAsync(pmEmail);
+            if (pmUser == null)
+            {
+                pmUser = new ApplicationUser
+                {
+                    UserName = pmEmail,
+                    Email = pmEmail,
+                    FirstName = "Test",
+                    LastName = "ProjectManager",
+                    Role = "Project Manager",
+                    EmailConfirmed = true,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    EmailNotificationsEnabled = true
+                };
+
+                var result = await userManager.CreateAsync(pmUser, "ProjectManager@123456");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(pmUser, "Project Manager");
+                }
+            }
+
+            // Create test projects for reporting if they don't exist
+            if (!await dbContext.Projects.AnyAsync())
+            {
+                // Ensure admin user ID is in context
+                adminUser = adminUser ?? await userManager.FindByEmailAsync(adminEmail);
+                clientUser = clientUser ?? await userManager.FindByEmailAsync(clientEmail);
+                pmUser = pmUser ?? await userManager.FindByEmailAsync(pmEmail);
+
+                if (adminUser != null && clientUser != null && pmUser != null)
+                {
+                    var testProject1 = new Project
+                    {
+                        Name = "Website Redesign",
+                        Description = "Redesign the company website with modern UI/UX",
+                        StartDate = DateTime.UtcNow.AddDays(-30),
+                        EndDate = DateTime.UtcNow.AddDays(30),
+                        Status = "In Progress",
+                        ClientId = clientUser.Id,
+                        ProjectManagerId = pmUser.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        IsArchived = false
+                    };
+
+                    var testProject2 = new Project
+                    {
+                        Name = "Mobile App Development",
+                        Description = "Develop iOS and Android applications",
+                        StartDate = DateTime.UtcNow.AddDays(-60),
+                        EndDate = DateTime.UtcNow.AddDays(60),
+                        Status = "In Progress",
+                        ClientId = clientUser.Id,
+                        ProjectManagerId = pmUser.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        IsArchived = false
+                    };
+
+                    var testProject3 = new Project
+                    {
+                        Name = "Admin Test Project",
+                        Description = "A project for testing admin access",
+                        StartDate = DateTime.UtcNow.AddDays(-45),
+                        EndDate = DateTime.UtcNow.AddDays(45),
+                        Status = "In Progress",
+                        ClientId = adminUser.Id,
+                        ProjectManagerId = pmUser.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        IsArchived = false
+                    };
+
+                    dbContext.Projects.AddRange(testProject1, testProject2, testProject3);
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+
             // Seed Homepage Sections
             await SeedHomePageSections(dbContext);
 

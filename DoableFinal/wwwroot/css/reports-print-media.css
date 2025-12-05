@@ -1,0 +1,18 @@
+/* Only print media rules for consistent browser printing */
+@media print {
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 11pt;
+        margin: 0;
+        padding: 10px;
+        color: #333;
+    }
+    .btn, .alert-light, .nav, .navbar, .breadcrumb, .page-footer, .no-print {
+        display: none !important;
+    }
+    .print-header { page-break-after: avoid; }
+    .section { page-break-inside: avoid; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background-color: #f5f5f5; }
+}

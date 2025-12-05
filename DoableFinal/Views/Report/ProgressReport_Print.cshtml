@@ -1,0 +1,305 @@
+@model ProgressReportViewModel
+
+@{
+    ViewData["Title"] = "Progress Report - Print";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/reports-print.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .print-header {
+            border-bottom: 3px solid #0d47a1;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .print-header h1 {
+            margin: 0;
+            color: #0d47a1;
+            font-size: 24pt;
+        }
+        .report-meta {
+            color: #666;
+            font-size: 9pt;
+            margin-top: 5px;
+        }
+        .section {
+            page-break-inside: avoid;
+            margin-bottom: 25px;
+        }
+        .section-header {
+            background-color: #0d47a1;
+            color: white;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 15px;
+            border-radius: 3px;
+        }
+        .health-indicator {
+            display: inline-block;
+            padding: 10px 15px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin: 5px;
+            color: white;
+        }
+        .health-green { background-color: #28a745; }
+        .health-yellow { background-color: #ffc107; color: black; }
+        .health-red { background-color: #dc3545; }
+        .progress {
+            height: 25px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            background-color: #28a745;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .summary-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 3px;
+            text-align: center;
+        }
+        .summary-card h6 {
+            margin: 0 0 10px 0;
+            font-size: 9pt;
+            color: #666;
+        }
+        .summary-card .value {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #0d47a1;
+        }
+        .milestone-item {
+            border-left: 3px solid #0d47a1;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .alert-box {
+            border-left: 4px solid #dc3545;
+            padding: 10px 15px;
+            background-color: #f8d7da;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+        .alert-box.success {
+            border-left-color: #28a745;
+            background-color: #d4edda;
+        }
+        .print-footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 8pt;
+            color: #999;
+            text-align: center;
+        }
+        @@media print {
+            body { margin: 0; padding: 10px; }
+            .section { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="print-header">
+        <h1>Progress Report</h1>
+        <div class="report-meta">
+            <strong>Project:</strong> @Model.ProjectName<br>
+            <strong>Status:</strong> @Model.ProjectStatus<br>
+            <strong>Generated:</strong> @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC
+        </div>
+    </div>
+
+    <!-- Health Indicator Section -->
+    <div class="section">
+        <div class="section-header">Project Health</div>
+        <div>
+            <span class="health-indicator health-@GetHealthClassLower(Model.HealthIndicator.OverallHealth)">Overall: @Model.HealthIndicator.OverallHealth</span>
+            <span class="health-indicator health-@GetHealthClassLower(Model.HealthIndicator.ScheduleHealth)">Schedule: @Model.HealthIndicator.ScheduleHealth</span>
+            <span class="health-indicator health-@GetHealthClassLower(Model.HealthIndicator.ResourceHealth)">Resources: @Model.HealthIndicator.ResourceHealth</span>
+            <span class="health-indicator health-@GetHealthClassLower(Model.HealthIndicator.QualityHealth)">Quality: @Model.HealthIndicator.QualityHealth</span>
+        </div>
+
+        @if (Model.HealthIndicator.Risks.Count > 0)
+        {
+            <div class="alert-box" style="margin-top: 15px;">
+                <strong>Identified Risks:</strong>
+                <ul style="margin: 10px 0 0 20px;">
+                    @foreach (var risk in Model.HealthIndicator.Risks)
+                    {
+                        <li>@risk</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (Model.HealthIndicator.Achievements.Count > 0)
+        {
+            <div class="alert-box success">
+                <strong>Achievements:</strong>
+                <ul style="margin: 10px 0 0 20px;">
+                    @foreach (var achievement in Model.HealthIndicator.Achievements)
+                    {
+                        <li>@achievement</li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+
+    <!-- Overall Progress -->
+    <div class="section">
+        <div class="section-header">Overall Progress</div>
+        <div class="progress">
+            <div class="progress-bar" style="width: @Model.CompletionPercentage%;">
+                @Math.Round(Model.CompletionPercentage, 1)%
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Summary -->
+    <div class="section">
+        <div class="section-header">Task Breakdown</div>
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h6>Total Tasks</h6>
+                <div class="value">@Model.TaskBreakdown.TotalTasks</div>
+            </div>
+            <div class="summary-card">
+                <h6>Completed</h6>
+                <div class="value" style="color: #28a745;">@Model.TaskBreakdown.CompletedTasks</div>
+            </div>
+            <div class="summary-card">
+                <h6>In Progress</h6>
+                <div class="value" style="color: #17a2b8;">@Model.TaskBreakdown.InProgressTasks</div>
+            </div>
+            <div class="summary-card">
+                <h6>Not Started</h6>
+                <div class="value" style="color: #ffc107;">@Model.TaskBreakdown.NotStartedTasks</div>
+            </div>
+        </div>
+        @if (Model.TaskBreakdown.OverdueTasks > 0)
+        {
+            <div class="alert-box">
+                <strong>@Model.TaskBreakdown.OverdueTasks Overdue Task(s)</strong>
+            </div>
+        }
+    </div>
+
+    <!-- Milestones -->
+    @if (Model.Milestones.Count > 0)
+    {
+        <div class="section">
+            <div class="section-header">Project Milestones</div>
+            @foreach (var milestone in Model.Milestones)
+            {
+                <div class="milestone-item">
+                    <strong>@milestone.Title</strong> [@milestone.Status]<br>
+                    <small>Target: @milestone.TargetDate.ToString("MMM dd, yyyy")</small>
+                    @if (milestone.CompletedDate.HasValue)
+                    {
+                        <small> | Completed: @milestone.CompletedDate.Value.ToString("MMM dd, yyyy")</small>
+                    }
+                    <br>
+                    <small>@milestone.Description</small>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Project Timeline -->
+    <div class="section">
+        <div class="section-header">Project Timeline</div>
+        <table>
+            <tr>
+                <th>Start Date</th>
+                <td>@Model.ProjectStartDate.ToString("MMMM dd, yyyy")</td>
+            </tr>
+            <tr>
+                <th>Expected End</th>
+                <td>@(Model.ProjectExpectedEndDate?.ToString("MMMM dd, yyyy") ?? "Not set")</td>
+            </tr>
+            @if (Model.ProjectEndDate.HasValue)
+            {
+                <tr>
+                    <th>Actual End</th>
+                    <td>@Model.ProjectEndDate.Value.ToString("MMMM dd, yyyy")</td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <th>Days Elapsed</th>
+                    <td>@((int)(DateTime.UtcNow - Model.ProjectStartDate).TotalDays) days</td>
+                </tr>
+            }
+        </table>
+    </div>
+
+    <div class="print-footer">
+        Report generated on @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC
+    </div>
+</body>
+</html>
+
+@functions {
+    string GetHealthClassLower(string health)
+    {
+        return health switch
+        {
+            "Green" => "green",
+            "Yellow" => "yellow",
+            "Red" => "red",
+            _ => "green"
+        };
+    }
+}

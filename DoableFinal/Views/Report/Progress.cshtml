@@ -1,0 +1,343 @@
+@model ProgressReportViewModel
+
+@{
+    ViewData["Title"] = "Progress Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h1>
+                <i class="fas fa-chart-pie"></i> Progress Report
+            </h1>
+            <p class="text-muted">Project: <strong>@Model.ProjectName</strong></p>
+            <p class="text-muted">Status: <strong>@Model.ProjectStatus</strong></p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" onclick="printProgress(@Model.ProjectId)">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="@Url.Action("ProgressPrint", new { id = Model.ProjectId })" class="btn btn-secondary" target="_blank">
+                <i class="fas fa-file-pdf"></i> Print View
+            </a>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Health Indicator -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header @GetHealthHeaderClass(Model.HealthIndicator.OverallHealth)">
+                    <h5 class="mb-0">
+                        <i class="fas fa-heartbeat"></i> Project Health
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-4">
+                        <div class="col-md-3">
+                            <h6>Overall Health</h6>
+                            <div class="health-badge @GetHealthClass(Model.HealthIndicator.OverallHealth)">
+                                @Model.HealthIndicator.OverallHealth
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <h6>Schedule</h6>
+                            <div class="health-badge @GetHealthClass(Model.HealthIndicator.ScheduleHealth)">
+                                @Model.HealthIndicator.ScheduleHealth
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <h6>Resources</h6>
+                            <div class="health-badge @GetHealthClass(Model.HealthIndicator.ResourceHealth)">
+                                @Model.HealthIndicator.ResourceHealth
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <h6>Quality</h6>
+                            <div class="health-badge @GetHealthClass(Model.HealthIndicator.QualityHealth)">
+                                @Model.HealthIndicator.QualityHealth
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.HealthIndicator.Risks.Count > 0)
+                    {
+                        <div class="alert alert-danger mb-3">
+                            <h6><i class="fas fa-exclamation-circle"></i> Identified Risks</h6>
+                            <ul class="mb-0">
+                                @foreach (var risk in Model.HealthIndicator.Risks)
+                                {
+                                    <li>@risk</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    @if (Model.HealthIndicator.Achievements.Count > 0)
+                    {
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-star"></i> Achievements</h6>
+                            <ul class="mb-0">
+                                @foreach (var achievement in Model.HealthIndicator.Achievements)
+                                {
+                                    <li>@achievement</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Completion -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3">Overall Progress</h5>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: @Model.CompletionPercentage%;" 
+                             aria-valuenow="@Model.CompletionPercentage" aria-valuemin="0" aria-valuemax="100">
+                            <strong>@Math.Round(Model.CompletionPercentage, 1)% Complete</strong>
+                        </div>
+                    </div>
+                    <p class="mt-2 mb-0">
+                        <small class="text-muted">
+                            Started: @Model.ProjectStartDate.ToString("MMM dd, yyyy")
+                            | Expected End: @(Model.ProjectExpectedEndDate?.ToString("MMM dd, yyyy") ?? "Not set")
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Breakdown -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks"></i> Task Breakdown
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <h6>Total Tasks</h6>
+                            <h3 class="text-dark">@Model.TaskBreakdown.TotalTasks</h3>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <h6 class="text-success">Completed</h6>
+                            <h3 class="text-success">@Model.TaskBreakdown.CompletedTasks</h3>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <h6 class="text-info">In Progress</h6>
+                            <h3 class="text-info">@Model.TaskBreakdown.InProgressTasks</h3>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <h6 class="text-warning">Not Started</h6>
+                            <h3 class="text-warning">@Model.TaskBreakdown.NotStartedTasks</h3>
+                        </div>
+                    </div>
+
+                    @if (Model.TaskBreakdown.OverdueTasks > 0)
+                    {
+                        <div class="alert alert-danger mt-3 mb-0">
+                            <strong><i class="fas fa-exclamation-triangle"></i> @Model.TaskBreakdown.OverdueTasks Overdue Task(s)</strong>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Milestones -->
+    @if (Model.Milestones.Count > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-flag"></i> Project Milestones (@Model.Milestones.Count)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            @foreach (var milestone in Model.Milestones)
+                            {
+                                var statusIcon = milestone.Status switch
+                                {
+                                    "Completed" => "check-circle",
+                                    "On Track" => "arrow-circle-right",
+                                    "At Risk" => "exclamation-circle",
+                                    "Delayed" => "times-circle",
+                                    _ => "question-circle"
+                                };
+                                var statusColor = milestone.Status switch
+                                {
+                                    "Completed" => "success",
+                                    "On Track" => "info",
+                                    "At Risk" => "warning",
+                                    "Delayed" => "danger",
+                                    _ => "secondary"
+                                };
+
+                                <div class="mb-3 p-3 border rounded">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-1 text-center">
+                                            <i class="fas fa-@statusIcon fa-2x text-@statusColor"></i>
+                                        </div>
+                                        <div class="col-md-7">
+                                            <h6 class="mb-1">@milestone.Title</h6>
+                                            <p class="mb-1 text-muted">@milestone.Description</p>
+                                            <small class="text-muted">
+                                                Target: @milestone.TargetDate.ToString("MMM dd, yyyy")
+                                                @if (milestone.CompletedDate.HasValue)
+                                                {
+                                                    <span> | Completed: @milestone.CompletedDate.Value.ToString("MMM dd, yyyy")</span>
+                                                }
+                                            </small>
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            <span class="badge badge-@statusColor">@milestone.Status</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Project Timeline Info -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar"></i> Project Timeline
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Project Duration</h6>
+                            <p class="mb-0">
+                                <strong>Start:</strong> @Model.ProjectStartDate.ToString("MMMM dd, yyyy")<br>
+                                <strong>Expected End:</strong> @(Model.ProjectExpectedEndDate?.ToString("MMMM dd, yyyy") ?? "Not set")<br>
+                                @if (Model.ProjectEndDate.HasValue)
+                                {
+                                    <strong>Actual End:</strong> @Model.ProjectEndDate.Value.ToString("MMMM dd, yyyy")
+                                }
+                                else
+                                {
+                                    <strong>Days Elapsed:</strong> @((int)(DateTime.UtcNow - Model.ProjectStartDate).TotalDays) <text>days</text>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Completion Rate</h6>
+                            <p class="mb-0">
+                                <strong>Completed Tasks:</strong> @Model.TaskBreakdown.CompletedTasks / @Model.TaskBreakdown.TotalTasks<br>
+                                <strong>In Progress:</strong> @Model.TaskBreakdown.InProgressTasks tasks<br>
+                                <strong>Remaining:</strong> @(Model.TaskBreakdown.TotalTasks - Model.TaskBreakdown.CompletedTasks) tasks
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Footer -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-light border">
+                <small class="text-muted">
+                    Report generated on @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .health-badge {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    .health-badge.green {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .health-badge.yellow {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .health-badge.red {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .timeline {
+        position: relative;
+    }
+</style>
+
+<style media="print">
+    .btn, .alert-light { display: none; }
+    body { font-size: 10pt; }
+</style>
+
+<script>
+    function printProgress(projectId) {
+        const url = `/Report/ProgressPrint/${projectId}`;
+        const printWindow = window.open(url, "_blank");
+
+        printWindow.onload = function () {
+            printWindow.print();
+            printWindow.onafterprint = function () {
+                printWindow.close();
+            };
+        };
+    }
+</script>
+
+@functions {
+    string GetHealthHeaderClass(string health)
+    {
+        return health switch
+        {
+            "Green" => "bg-success text-white",
+            "Yellow" => "bg-warning",
+            "Red" => "bg-danger text-white",
+            _ => "bg-secondary text-white"
+        };
+    }
+
+    string GetHealthClass(string health)
+    {
+        return health switch
+        {
+            "Green" => "green",
+            "Yellow" => "yellow",
+            "Red" => "red",
+            _ => "green"
+        };
+    }
+}

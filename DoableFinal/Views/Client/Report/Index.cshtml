@@ -1,0 +1,205 @@
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">
+                <i class="fas fa-chart-bar"></i> Project Reports
+            </h1>
+        </div>
+    </div>
+
+    <!-- Report Type Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card report-card h-100 border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Status Report</h5>
+                    <p class="card-text">View completed, in-progress, and upcoming tasks</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card report-card h-100 border-info">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">Time Tracking</h5>
+                    <p class="card-text">Track time per task and employee</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card report-card h-100 border-warning">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">Workload Report</h5>
+                    <p class="card-text">View task assignments and workload</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card report-card h-100 border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-pie fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Progress Report</h5>
+                    <p class="card-text">Track project completion and milestones</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Selection -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Select Project</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Projects.Count == 0)
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No projects available
+                        </div>
+                    }
+                    else
+                    {
+                        <form method="get" id="projectForm">
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="projectSelect" class="form-label">Project</label>
+                                    <select class="form-select" id="projectSelect" name="projectId" onchange="updateReportLinks()">
+                                        <option value="">-- Select a Project --</option>
+                                        @foreach (var project in Model.Projects)
+                                        {
+                                            <option value="@project.Id">@project.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>&nbsp;</label>
+                                    <button type="button" class="btn btn-primary w-100" onclick="loadReport('Status')" id="statusBtn" disabled>
+                                        <i class="fas fa-tasks"></i> View Status Report
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Report Action Buttons (visible when project selected) -->
+                        <div id="reportButtons" style="display: none;">
+                            <div class="row mt-3">
+                                <div class="col-md-3 mb-2">
+                                    <button type="button" class="btn btn-outline-primary w-100" onclick="loadReport('Status')">
+                                        <i class="fas fa-tasks"></i> Status Report
+                                    </button>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <button type="button" class="btn btn-outline-info w-100" onclick="showTimeTrackingModal()">
+                                        <i class="fas fa-clock"></i> Time Tracking
+                                    </button>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <button type="button" class="btn btn-outline-warning w-100" onclick="loadReport('Workload')">
+                                        <i class="fas fa-users"></i> Workload Report
+                                    </button>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <button type="button" class="btn btn-outline-success w-100" onclick="loadReport('Progress')">
+                                        <i class="fas fa-chart-pie"></i> Progress Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Modal for Time Tracking -->
+    <div class="modal fade" id="timeTrackingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Time Tracking Report - Date Range</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="timeTrackingForm">
+                        <div class="mb-3">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")">
+                        </div>
+                        <div class="mb-3">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="loadTimeTrackingReport()">View Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .report-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: default;
+    }
+
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<script>
+    function updateReportLinks() {
+        const projectSelect = document.getElementById('projectSelect');
+        const reportButtons = document.getElementById('reportButtons');
+        const statusBtn = document.getElementById('statusBtn');
+        
+        if (projectSelect.value) {
+            reportButtons.style.display = 'block';
+            statusBtn.disabled = false;
+        } else {
+            reportButtons.style.display = 'none';
+            statusBtn.disabled = true;
+        }
+    }
+
+    function loadReport(reportType) {
+        const projectId = document.getElementById('projectSelect').value;
+        if (!projectId) {
+            alert('Please select a project first');
+            return;
+        }
+        window.location.href = `/Report/${reportType}/${projectId}`;
+    }
+
+    function showTimeTrackingModal() {
+        const modal = new bootstrap.Modal(document.getElementById('timeTrackingModal'));
+        modal.show();
+    }
+
+    function loadTimeTrackingReport() {
+        const projectId = document.getElementById('projectSelect').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        if (!projectId) {
+            alert('Please select a project first');
+            return;
+        }
+        
+        window.location.href = `/Report/TimeTracking/${projectId}?startDate=${startDate}&endDate=${endDate}`;
+        bootstrap.Modal.getInstance(document.getElementById('timeTrackingModal')).hide();
+    }
+</script>

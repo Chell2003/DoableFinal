@@ -1,0 +1,297 @@
+@model TimeTrackingReportViewModel
+
+@{
+    ViewData["Title"] = "Time Tracking Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h1>
+                <i class="fas fa-clock"></i> Time Tracking Report
+            </h1>
+            <p class="text-muted">Project: <strong>@Model.ProjectName</strong></p>
+            @if (Model.StartDate.HasValue && Model.EndDate.HasValue)
+            {
+                <p class="text-muted">Period: @Model.StartDate.Value.ToString("MMM dd, yyyy") - @Model.EndDate.Value.ToString("MMM dd, yyyy")</p>
+            }
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" onclick="printTimeTracking(@Model.ProjectId)">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <a href="@Url.Action("TimeTrackingPrint", new { id = Model.ProjectId, startDate = Model.StartDate?.ToString("yyyy-MM-dd"), endDate = Model.EndDate?.ToString("yyyy-MM-dd") })" class="btn btn-secondary" target="_blank">
+                <i class="fas fa-file-pdf"></i> Print View
+            </a>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Total Hours</h5>
+                    <h2 class="mb-0">@Math.Round(Model.TotalHours, 1)h</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Tasks Tracked</h5>
+                    <h2 class="mb-0">@Model.TaskTimes.Count</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Employees</h5>
+                    <h2 class="mb-0">@Model.EmployeeTimes.Count</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Average/Task</h5>
+                    <h2 class="mb-0">@(Model.TaskTimes.Count > 0 ? Math.Round(Model.TotalHours / Model.TaskTimes.Count, 1) : 0)h</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time per Task -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks"></i> Time per Task
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.TaskTimes.Count == 0)
+                    {
+                        <p class="text-muted">No time entries recorded</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Task</th>
+                                        <th>Hours</th>
+                                        <th>Status</th>
+                                        <th>% of Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var task in Model.TaskTimes)
+                                    {
+                                        var percentage = Model.TotalHours > 0 ? (task.Hours / Model.TotalHours * 100) : 0;
+                                        <tr>
+                                            <td><strong>@task.TaskTitle</strong></td>
+                                            <td>@Math.Round(task.Hours, 2)h</td>
+                                            <td>
+                                                <span class="badge badge-@GetTaskStatusClass(task.Status)">@task.Status</span>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar" role="progressbar" style="width: @percentage%;" 
+                                                         aria-valuenow="@percentage" aria-valuemin="0" aria-valuemax="100">
+                                                        @Math.Round(percentage, 1)%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <th>TOTAL</th>
+                                        <th><strong>@Math.Round(Model.TotalHours, 2)h</strong></th>
+                                        <th></th>
+                                        <th><strong>100%</strong></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Time Summary -->
+    @if (Model.EmployeeTimes.Count > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users"></i> Time per Employee
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Total Hours</th>
+                                        <th>Tasks</th>
+                                        <th>Avg/Task</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var emp in Model.EmployeeTimes)
+                                    {
+                                        <tr>
+                                            <td><strong>@emp.EmployeeName</strong></td>
+                                            <td>@Math.Round(emp.TotalHours, 2)h</td>
+                                            <td>@emp.TaskCount</td>
+                                            <td>@Math.Round(emp.AverageHoursPerTask, 2)h</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Daily Breakdown -->
+    @if (Model.DailyBreakdown.Count > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt"></i> Daily Breakdown
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Hours</th>
+                                        <th>Tasks</th>
+                                        <th>Avg/Task</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var day in Model.DailyBreakdown)
+                                    {
+                                        var avgPerTask = day.TaskCount > 0 ? day.Hours / day.TaskCount : 0;
+                                        <tr>
+                                            <td><strong>@day.Date.ToString("dddd, MMM dd")</strong></td>
+                                            <td>@Math.Round(day.Hours, 2)h</td>
+                                            <td>@day.TaskCount</td>
+                                            <td>@Math.Round(avgPerTask, 2)h</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Weekly Breakdown -->
+    @if (Model.WeeklyBreakdown.Count > 0)
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-week"></i> Weekly Breakdown
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Week</th>
+                                        <th>Hours</th>
+                                        <th>Tasks</th>
+                                        <th>Avg/Task</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var week in Model.WeeklyBreakdown)
+                                    {
+                                        var avgPerTask = week.TaskCount > 0 ? week.Hours / week.TaskCount : 0;
+                                        <tr>
+                                            <td><strong>@week.WeekStartDate.ToString("MMM dd") - @week.WeekEndDate.ToString("MMM dd")</strong></td>
+                                            <td>@Math.Round(week.Hours, 2)h</td>
+                                            <td>@week.TaskCount</td>
+                                            <td>@Math.Round(avgPerTask, 2)h</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Report Footer -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-light border">
+                <small class="text-muted">
+                    Report generated on @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style media="print">
+    .btn, .alert-light { display: none; }
+    body { font-size: 10pt; }
+</style>
+<script>
+    function printTimeTracking(projectId) {
+        const url = `/Report/TimeTrackingPrint/${projectId}`;
+        const printWindow = window.open(url, "_blank");
+
+        printWindow.onload = function () {
+            printWindow.print();
+            printWindow.onafterprint = function () {
+                printWindow.close();
+            };
+        };
+    }
+</script>
+@functions {
+    string GetTaskStatusClass(string status)
+    {
+        return status switch
+        {
+            "Completed" => "success",
+            "In Progress" => "info",
+            "Not Started" => "warning",
+            _ => "secondary"
+        };
+    }
+}

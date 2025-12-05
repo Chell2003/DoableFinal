@@ -22,6 +22,7 @@ namespace DoableFinal.Data
         public DbSet<TicketComment> TicketComments { get; set; }
         public DbSet<TicketAttachment> TicketAttachments { get; set; }
         public DbSet<HomePageSection> HomePageSections { get; set; }
+        public DbSet<TimeEntry> TimeEntries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

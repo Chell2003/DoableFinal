@@ -36,6 +36,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddScoped<TimelineAdjustmentService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<HomePageService>();
+builder.Services.AddScoped<ReportService>();
 // Register ContentService for reading editable home pages
 builder.Services.AddSingleton<ContentService>();
 
@@ -98,5 +99,9 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "projectManager",
     pattern: "{controller=ProjectManager}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
+    name: "report",
+    pattern: "{controller=Report}/{action=Index}/{id?}");
 
 app.Run();
