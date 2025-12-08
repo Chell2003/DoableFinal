@@ -4,6 +4,9 @@
 name: Build and deploy ASP.Net Core app to Azure Web App - doable
 
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
@@ -35,13 +38,23 @@ jobs:
   deploy:
     runs-on: windows-latest
     needs: build
-    
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
       
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_88B8F9A0FF9E41EDB69A3CC4BA023B8D }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_43340B5AA1774FC89C2645E5E17BDC19 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D5664C2193ED4C18A2859B0AFFD9E99B }}
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -49,4 +62,4 @@ jobs:
           app-name: 'doable'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_3FB24529E15A4FC399FA3BE3D4DE07A5 }}
+          
