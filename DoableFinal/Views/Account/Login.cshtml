@@ -18,15 +18,15 @@
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
-                        <div class="form-group mb-3 d-flex align-items-center gap-2">
-                            <label asp-for="Password" class="form-label w-100"></label>
-                            <div class="flex-grow-1 position-relative">
-                                <input asp-for="Password" class="form-control pe-5" id="passwordInput" />
-                                <span asp-validation-for="Password" class="text-danger"></span>
-                                <button type="button" class="btn btn-link p-0 position-absolute top-50 end-0 translate-middle-y me-2" tabindex="-1" style="z-index:2; height:2rem; width:2rem; display:flex; align-items:center; justify-content:center;" onclick="togglePasswordVisibility()">
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label"></label>
+                            <div class="input-group">
+                                <input asp-for="Password" class="form-control" id="passwordInput" />
+                                <button type="button" class="btn btn-outline-secondary" tabindex="-1" style="border-top-left-radius:0; border-bottom-left-radius:0;" onclick="togglePasswordVisibility()">
                                     <i class="fa fa-eye" id="togglePasswordIcon"></i>
                                 </button>
                             </div>
+                            <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-3">
