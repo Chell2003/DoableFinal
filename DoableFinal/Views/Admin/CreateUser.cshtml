@@ -47,19 +47,30 @@
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Password" class="form-label">Password</label>
-                        <input type="password" asp-for="Password" class="form-control" />
-                        <span asp-validation-for="Password" class="text-danger"></span>
-                    </div>
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="Password" class="form-label">Password</label>
+        <div class="input-group">
+            <input type="password" asp-for="Password" class="form-control" id="password" />
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password', this)">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
-                        <input type="password" asp-for="ConfirmPassword" class="form-control" />
-                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                    </div>
-                </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+        <div class="input-group">
+            <input type="password" asp-for="ConfirmPassword" class="form-control" id="confirmPassword" />
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirmPassword', this)">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+    </div>
+</div>
+
 
                 <!-- Employee and Project Manager Fields -->
                 <div id="employeeFields" style="display: none;">
@@ -313,5 +324,18 @@
                 }
             });
         });
+
+function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector("i");
+
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.replace("bi-eye", "bi-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.replace("bi-eye-slash", "bi-eye");
+        }
+    }
     </script>
 }
