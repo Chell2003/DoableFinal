@@ -20,9 +20,9 @@
 
                         <div class="form-group mb-3 position-relative">
                             <label asp-for="Password" class="form-label"></label>
-                            <input asp-for="Password" class="form-control" id="passwordInput" />
+                            <input asp-for="Password" class="form-control pe-5" id="passwordInput" />
                             <span asp-validation-for="Password" class="text-danger"></span>
-                            <button type="button" class="btn btn-link position-absolute top-50 end-0 translate-middle-y px-2" tabindex="-1" style="z-index:2;" onclick="togglePasswordVisibility()">
+                            <button type="button" class="btn btn-link p-0 position-absolute top-50 end-0 translate-middle-y me-3" tabindex="-1" style="z-index:2; height:2rem; width:2rem; display:flex; align-items:center; justify-content:center;" onclick="togglePasswordVisibility()">
                                 <i class="fa fa-eye" id="togglePasswordIcon"></i>
                             </button>
                         </div>
