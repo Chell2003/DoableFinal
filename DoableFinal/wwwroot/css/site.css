@@ -313,3 +313,13 @@ body {
     white-space: nowrap;
     line-height: 60px;
 }
+
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    background: #fff !important; /* or your preferred color */
+    z-index: 1000;
+  }
+  .navbar-nav {
+    background: #fff !important; /* or your preferred color */
+  }
+}
