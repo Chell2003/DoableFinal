@@ -60,18 +60,33 @@ body {
 
 @media (max-width: 768px) {
     .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 250px;
+        height: 100vh;
+        z-index: 1050;
+        background: #fff;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+        transition: margin-left 0.3s, left 0.3s;
         margin-left: -250px;
     }
     .sidebar.active {
         margin-left: 0;
     }
+    .sidebar-overlay {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.3);
+        z-index: 1040;
+        transition: opacity 0.3s;
+    }
     #content {
         margin-left: 0 !important;
-        width: 100% !important;
-    }
-    .sidebar.active + #content {
-        margin-left: 250px !important;
-        width: calc(100% - 250px) !important;
     }
 }
 
