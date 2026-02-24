@@ -485,7 +485,7 @@ body {
   padding-left: 0.8rem;
 }
 
-/* --- LANDING PAGE HEADER (horizontal nav on mobile) --- */
+/* --- LANDING PAGE HEADER (vertical dropdown list on mobile) --- */
 @media (max-width: 991.98px) {
   .landing-header {
     position: relative;
@@ -501,36 +501,47 @@ body {
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     border-radius: 0 0 16px 16px;
     z-index: 1001;
-    padding: 0.5rem;
+    padding: 0.5rem 0;
   }
 
   .landing-header .navbar-nav {
     display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-    justify-content: center !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
     width: 100% !important;
-    gap: 0.25rem !important;
-    padding: 0.25rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
     border-radius: 0 !important;
   }
 
   .landing-header .navbar-nav .nav-item {
-    width: auto !important;
+    width: 100% !important;
+    display: block !important;
     margin: 0 !important;
-    display: inline-block !important;
   }
 
   .landing-header .navbar-nav .nav-link {
-    width: auto !important;
-    text-align: center !important;
-    padding: 0.5rem 0.75rem !important;
+    width: 100% !important;
+    display: block !important;
+    text-align: left !important;
+    padding: 0.75rem 1.25rem !important;
     font-size: 1rem !important;
-    display: inline-block !important;
+    color: #4361ee !important;
+    font-weight: 500;
+    border-bottom: 1px solid #f0f0f0;
     white-space: nowrap;
+  }
+
+  .landing-header .navbar-nav .nav-link:hover,
+  .landing-header .navbar-nav .nav-link.active {
+    background: #f1f3fa;
+    color: #222 !important;
+  }
+
+  .landing-header .navbar-nav .nav-item:last-child .nav-link {
+    border-bottom: none;
   }
 }
 
