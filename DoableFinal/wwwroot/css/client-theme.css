@@ -1,7 +1,7 @@
 :root {
-    --primary-color: #FF5733;
-    --primary-hover: #E64A2E;
-    --primary-light: rgba(255, 87, 51, 0.1);
+    --primary-color: #4361ee;
+    --primary-hover: #4361ee;
+    --primary-light: rgb(194, 210, 255);
 }
 
 body {
@@ -9,9 +9,9 @@ body {
 }
 
 :root {
-    --primary-color: #FF5733;
-    --primary-hover: #E64A2E;
-    --primary-light: rgba(255, 87, 51, 0.1);
+    --primary-color: #4361ee;
+    --primary-hover: #4361ee;
+    --primary-light: rgb(194, 210, 255);
     --sidebar-width: 250px;
 }
 
