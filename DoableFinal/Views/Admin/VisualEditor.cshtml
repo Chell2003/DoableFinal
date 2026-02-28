@@ -281,21 +281,20 @@
     }
 
     @@media (max-width: 768px) {
-    .editor-sidebar {
+        .editor-panel {
+            width: 100%;
+        }
+        .live-preview {
+            margin-right: 0;
+        }
+            .editor-sidebar {
         position: fixed;
         left: 0;
         top: 60px; /* below the navbar */
         height: calc(100vh - 60px);
         z-index: 900; /* BELOW main nav sidebar */
     }
-    .editor-panel {
-            width: 100%;
-        }
-    
-    .live-preview {
-        padding-left: 50px; /* make room for editor sidebar */
     }
-}
 </style>
 
 <div class="visual-editor-wrapper">
