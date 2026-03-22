@@ -2,235 +2,534 @@
 @{
     ViewData["Title"] = "Contact Us";
     var sections = ViewBag.Sections as List<DoableFinal.Models.HomePageSection> ?? new List<DoableFinal.Models.HomePageSection>();
-    
-    // Hero section
-    var heroTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-title")?.Content ?? "<h1 class=\"display-4 fw-bold mb-4\">Contact Us</h1>";
-    var heroBody = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-body")?.Content ?? "<p class=\"lead\">Get in touch with our team. We're here to help!</p>";
+
+    var heroTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-title")?.Content ?? "Contact Us";
+    var heroBody  = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-body")?.Content  ?? "Get in touch with our team. We're here to help!";
     var heroImage = sections.FirstOrDefault(s => s.SectionKey == "contact-hero-image")?.ImagePath;
-    var heroTitleHasTag = !string.IsNullOrWhiteSpace(heroTitle) && heroTitle.TrimStart().StartsWith("<");
-    var heroBodyHasTag = !string.IsNullOrWhiteSpace(heroBody) && heroBody.TrimStart().StartsWith("<");
-    
-    // Contact form section
+
     var formTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-form-title")?.Content ?? "Send us a Message";
-    
-    // Contact information cards
-    var addressTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-address-title")?.Content ?? "Address";
+
+    var addressTitle   = sections.FirstOrDefault(s => s.SectionKey == "contact-address-title")?.Content   ?? "Address";
     var addressContent = sections.FirstOrDefault(s => s.SectionKey == "contact-address-content")?.Content ?? "123 Business Street<br>New York, NY 10001<br>United States";
-    
-    var phoneTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-phone-title")?.Content ?? "Phone";
-    var phoneContent = sections.FirstOrDefault(s => s.SectionKey == "contact-phone-content")?.Content ?? "+1 (555) 123-4567<br>+1 (555) 987-6543";
-    
-    var emailTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-email-title")?.Content ?? "Email";
-    var emailContent = sections.FirstOrDefault(s => s.SectionKey == "contact-email-content")?.Content ?? "support@doable.com<br>sales@doable.com";
-    
-    // FAQ section
-    var faqTitle = sections.FirstOrDefault(s => s.SectionKey == "contact-faq-title")?.Content ?? "Frequently Asked Questions";
+    var phoneTitle     = sections.FirstOrDefault(s => s.SectionKey == "contact-phone-title")?.Content     ?? "Phone";
+    var phoneContent   = sections.FirstOrDefault(s => s.SectionKey == "contact-phone-content")?.Content   ?? "+1 (555) 123-4567<br>+1 (555) 987-6543";
+    var emailTitle     = sections.FirstOrDefault(s => s.SectionKey == "contact-email-title")?.Content     ?? "Email";
+    var emailContent   = sections.FirstOrDefault(s => s.SectionKey == "contact-email-content")?.Content   ?? "support@doable.com<br>sales@doable.com";
+
+    var faqTitle     = sections.FirstOrDefault(s => s.SectionKey == "contact-faq-title")?.Content     ?? "Frequently Asked Questions";
     var faq1Question = sections.FirstOrDefault(s => s.SectionKey == "contact-faq1-question")?.Content ?? "How do I get started with Doable?";
-    var faq1Answer = sections.FirstOrDefault(s => s.SectionKey == "contact-faq1-answer")?.Content ?? "Getting started is easy! Simply create an account, choose your plan, and you can begin managing your projects right away. Our intuitive interface will guide you through the setup process.";
-    
+    var faq1Answer   = sections.FirstOrDefault(s => s.SectionKey == "contact-faq1-answer")?.Content   ?? "Getting started is easy! Simply create an account, choose your plan, and you can begin managing your projects right away.";
     var faq2Question = sections.FirstOrDefault(s => s.SectionKey == "contact-faq2-question")?.Content ?? "Can I upgrade or downgrade my plan?";
-    var faq2Answer = sections.FirstOrDefault(s => s.SectionKey == "contact-faq2-answer")?.Content ?? "Yes, you can change your plan at any time. Simply go to your account settings and select the new plan you'd like to switch to. Changes will be reflected in your next billing cycle.";
-    
+    var faq2Answer   = sections.FirstOrDefault(s => s.SectionKey == "contact-faq2-answer")?.Content   ?? "Yes, you can change your plan at any time. Simply go to your account settings and select the new plan you'd like to switch to.";
     var faq3Question = sections.FirstOrDefault(s => s.SectionKey == "contact-faq3-question")?.Content ?? "What payment methods do you accept?";
-    var faq3Answer = sections.FirstOrDefault(s => s.SectionKey == "contact-faq3-answer")?.Content ?? "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and bank transfers for annual plans. All payments are processed securely through our payment partners.";
+    var faq3Answer   = sections.FirstOrDefault(s => s.SectionKey == "contact-faq3-answer")?.Content   ?? "We accept all major credit cards, PayPal, and bank transfers for annual plans.";
+
+    var contentPage = ViewBag.ContentPage as DoableFinal.ViewModels.ContentPageViewModel;
+    var resolvedImage = (contentPage != null && !string.IsNullOrEmpty(contentPage.ImagePath))
+                        ? contentPage.ImagePath : heroImage;
 }
+
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;900&family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ── Tokens ── */
+:root {
+    --brand:       #0d6efd;
+    --brand-dark:  #0a58ca;
+    --ink:         #0d1117;
+    --ink-soft:    #4a5568;
+    --surface:     #f8f9fa;
+    --white:       #ffffff;
+    --rule:        rgba(13,110,253,.15);
+    --font-hero:   'League Spartan', sans-serif;
+    --font-display:'Playfair Display', Georgia, serif;
+    --font-body:   'DM Sans', sans-serif;
+}
+
+.contact-page * { box-sizing: border-box; }
+.contact-page { font-family: var(--font-body); color: var(--ink); }
+
+/* ══════════════════════════════════════
+   HERO
+══════════════════════════════════════ */
+.contact-hero {
+    position: relative;
+    background: var(--brand);
+    overflow: hidden;
+    padding: 96px 0 88px;
+}
+.contact-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+.contact-hero::after {
+    content: '';
+    position: absolute;
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(255,255,255,.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+.contact-hero .container { position: relative; z-index: 1; }
+
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.75);
+    margin-bottom: 20px;
+    animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .05s both;
+}
+.hero-eyebrow span { display:inline-block; width:28px; height:1px; background:rgba(255,255,255,.6); }
+
+.contact-hero h1 {
+    font-family: var(--font-hero);
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 900;
+    letter-spacing: -2px;
+    color: var(--white);
+    line-height: 1.08;
+    margin-bottom: 20px;
+    animation: fadeUp .75s cubic-bezier(.22,1,.36,1) .15s both;
+}
+.contact-hero .hero-lead {
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: rgba(255,255,255,.82);
+    line-height: 1.8;
+    animation: fadeUp .75s cubic-bezier(.22,1,.36,1) .28s both;
+}
+.hero-img-wrap {
+    animation: fadeUp .75s cubic-bezier(.22,1,.36,1) .35s both;
+}
+
+/* ══════════════════════════════════════
+   SHARED
+══════════════════════════════════════ */
+.section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .7rem;
+    font-weight: 500;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 12px;
+}
+.section-label::before {
+    content: '';
+    display: inline-block;
+    width: 22px; height: 2px;
+    background: var(--brand);
+    border-radius: 1px;
+}
+.section-heading {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    font-weight: 700;
+    color: var(--ink);
+    position: relative;
+    display: inline-block;
+}
+.section-heading::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -10px;
+    transform: translateX(-50%) scaleX(0);
+    width: 55%;
+    height: 3px;
+    background: var(--brand);
+    border-radius: 2px;
+    transition: transform .55s cubic-bezier(.22,1,.36,1) .3s;
+}
+.section-heading.visible::after { transform: translateX(-50%) scaleX(1); }
+.heading-center { text-align: center; margin-bottom: 52px; }
+
+/* ══════════════════════════════════════
+   CONTACT FORM
+══════════════════════════════════════ */
+.contact-form-section {
+    padding: 96px 0;
+    background: var(--white);
+}
+.form-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 52px 48px;
+    box-shadow: 0 4px 48px rgba(13,17,23,.08);
+    border: 1px solid var(--rule);
+}
+.form-card .form-label {
+    font-size: .82rem;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+}
+.form-card .form-control {
+    border: 1px solid rgba(13,110,253,.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: var(--font-body);
+    font-size: .95rem;
+    font-weight: 300;
+    color: var(--ink);
+    background: var(--surface);
+    transition: border-color .25s, box-shadow .25s, background .25s;
+}
+.form-card .form-control:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(13,110,253,.12);
+    background: var(--white);
+    outline: none;
+}
+.form-card textarea.form-control { resize: vertical; min-height: 140px; }
+
+.btn-submit {
+    background: var(--brand);
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: .95rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 40px;
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1),
+                box-shadow .25s ease,
+                background .2s;
+}
+.btn-submit:hover {
+    background: var(--brand-dark);
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 24px rgba(13,110,253,.3);
+}
+
+/* ══════════════════════════════════════
+   CONTACT INFO CARDS
+══════════════════════════════════════ */
+.contact-info-section {
+    padding: 80px 0;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+}
+.contact-info-section::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 40%; height: 100%;
+    background: linear-gradient(135deg, transparent 45%, rgba(13,110,253,.03) 45%);
+    pointer-events: none;
+}
+
+.info-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 36px 28px;
+    height: 100%;
+    border: 1px solid var(--rule);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1),
+                box-shadow .3s ease, border-color .3s;
+}
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--brand), var(--brand-dark));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .4s cubic-bezier(.22,1,.36,1);
+}
+.info-card:hover {
+    transform: translateY(-7px) scale(1.01);
+    box-shadow: 0 20px 50px rgba(13,110,253,.11);
+    border-color: transparent;
+}
+.info-card:hover::before { transform: scaleX(1); }
+
+.info-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: rgba(13,110,253,.08);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    color: var(--brand);
+    margin-bottom: 18px;
+    transition: background .3s, transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.info-card:hover .info-icon {
+    background: var(--brand);
+    color: var(--white);
+    transform: rotate(8deg) scale(1.1);
+}
+.info-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 10px;
+}
+.info-card p {
+    font-size: .92rem;
+    font-weight: 300;
+    color: var(--ink-soft);
+    line-height: 1.75;
+    margin: 0;
+}
+
+/* ══════════════════════════════════════
+   FAQ
+══════════════════════════════════════ */
+.contact-faq-section {
+    padding: 96px 0;
+    background: var(--white);
+}
+
+.faq-item {
+    border-radius: 14px;
+    border: 1px solid var(--rule);
+    overflow: hidden;
+    margin-bottom: 12px;
+    transition: box-shadow .3s ease;
+}
+.faq-item:hover { box-shadow: 0 8px 28px rgba(13,110,253,.08); }
+
+.accordion-button {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--white);
+    padding: 22px 28px;
+    border: none;
+    box-shadow: none !important;
+}
+.accordion-button:not(.collapsed) {
+    color: var(--brand);
+    background: var(--white);
+}
+.accordion-button::after {
+    filter: none;
+    background-size: 16px;
+}
+.accordion-button:not(.collapsed)::after {
+    filter: invert(30%) sepia(90%) saturate(500%) hue-rotate(200deg);
+}
+.accordion-body {
+    font-size: .95rem;
+    font-weight: 300;
+    color: var(--ink-soft);
+    line-height: 1.85;
+    padding: 0 28px 24px;
+    background: var(--white);
+}
+
+/* ══════════════════════════════════════
+   SCROLL REVEAL
+══════════════════════════════════════ */
+.reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity .65s cubic-bezier(.22,1,.36,1),
+                transform .65s cubic-bezier(.22,1,.36,1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: .12s; }
+.reveal-delay-2 { transition-delay: .24s; }
+.reveal-delay-3 { transition-delay: .36s; }
+
+@@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<div class="contact-page">
 
 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
 {
-    <div class="alert alert-info mb-0">
-        <a asp-controller="Admin" asp-action="ManageContactPage" class="btn btn-sm btn-primary">Edit Contact Content</a>
+    <div class="alert alert-info mb-0 rounded-0">
+        <div class="container">
+            <a asp-controller="Admin" asp-action="ManageContactPage" class="btn btn-sm btn-primary">
+                <i class="bi bi-pencil-square me-1"></i> Edit Contact Content
+            </a>
+        </div>
     </div>
 }
 
-@{
-    var contentPage = ViewBag.ContentPage as DoableFinal.ViewModels.ContentPageViewModel;
-}
-@if (contentPage != null)
-{
-    <section class="bg-light py-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    @if (heroTitleHasTag)
-                    {
-                        @Html.Raw(heroTitle)
-                    }
-                    else
-                    {
-                        <h1 class="display-4 fw-bold mb-4">@Html.Raw(heroTitle)</h1>
-                    }
-                    @if (heroBodyHasTag)
-                    {
-                        @Html.Raw(heroBody)
-                    }
-                    else
-                    {
-                        <p class="lead">@Html.Raw(heroBody)</p>
-                    }
-                </div>
-                <div class="col-lg-6">
-                    @if (!string.IsNullOrEmpty(contentPage.ImagePath))
-                    {
-                        @if (!string.IsNullOrEmpty(contentPage.ImagePath))
-                        {
-                            <img src="@(contentPage.ImagePath)" alt="Contact" class="img-fluid" />
-                        }
-                    }
-                    else
-                    {
-                        <img src="@heroImage" alt="Contact Us" class="img-fluid" />
-                    }
-                </div>
-            </div>
-        </div>
-    </section>
-}
-else
-{
-    <!-- Contact Hero Section -->
-    <section class="bg-light py-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    @Html.Raw(heroTitle)
-                    @Html.Raw(heroBody)
-                </div>
-                <div class="col-lg-6">
-                    <img src="@heroImage" alt="Contact Us" class="img-fluid">
-                </div>
-            </div>
-        </div>
-    </section>
-}
- 
-
-<!-- Contact Form Section -->
-<section class="py-5">
+<!-- ── HERO ── -->
+<section class="contact-hero">
     <div class="container">
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <h2 class="text-center mb-4">@Html.Raw(formTitle)</h2>
-                        <form asp-action="Contact" method="post">
-                            <div asp-validation-summary="ModelOnly" class="text-danger mb-4"></div>
-                    
-                            
-                            <div class="mb-3">
+        <div class="row align-items-center gy-5">
+            <div class="col-lg-7 text-lg-start text-center">
+                <div class="hero-eyebrow"><span></span> Reach Out <span></span></div>
+                <h1>@Html.Raw(heroTitle)</h1>
+                <p class="hero-lead">@Html.Raw(heroBody)</p>
+            </div>
+            @if (!string.IsNullOrEmpty(resolvedImage))
+            {
+                <div class="col-lg-5 text-center hero-img-wrap">
+                    <img src="@resolvedImage" alt="Contact Us" class="img-fluid rounded-3 shadow-lg">
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- ── CONTACT FORM ── -->
+<section class="contact-form-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="heading-center reveal">
+                    <div class="section-label" style="justify-content:center;">Drop Us a Line</div>
+                    <h2 class="section-heading">@Html.Raw(formTitle)</h2>
+                </div>
+                <div class="form-card reveal reveal-delay-1">
+                    <form asp-action="Contact" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-4"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6 mb-1">
                                 <label asp-for="Name" class="form-label"></label>
-                                <input asp-for="Name" class="form-control" />
-                                <span asp-validation-for="Name" class="text-danger"></span>
+                                <input asp-for="Name" class="form-control" placeholder="Your full name" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
                             </div>
-
-                            <div class="mb-3">
+                            <div class="col-md-6 mb-1">
                                 <label asp-for="Email" class="form-label"></label>
-                                <input asp-for="Email" class="form-control" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
+                                <input asp-for="Email" class="form-control" placeholder="your@email.com" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
                             </div>
-
-                            <div class="mb-3">
+                            <div class="col-12 mb-1">
                                 <label asp-for="Subject" class="form-label"></label>
-                                <input asp-for="Subject" class="form-control" />
-                                <span asp-validation-for="Subject" class="text-danger"></span>
+                                <input asp-for="Subject" class="form-control" placeholder="What's this about?" />
+                                <span asp-validation-for="Subject" class="text-danger small"></span>
                             </div>
-
-                            <div class="mb-3">
+                            <div class="col-12 mb-1">
                                 <label asp-for="Message" class="form-label"></label>
-                                <textarea asp-for="Message" class="form-control" rows="5"></textarea>
-                                <span asp-validation-for="Message" class="text-danger"></span>
+                                <textarea asp-for="Message" class="form-control" rows="5" placeholder="Tell us how we can help…"></textarea>
+                                <span asp-validation-for="Message" class="text-danger small"></span>
                             </div>
-
-                            <div class="text-center">
-                                <button type="submit" class="btn btn-primary btn-lg">Send Message</button>
-                            </div>
-                        </form>
-                    </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn-submit">
+                                <i class="bi bi-send me-2"></i>Send Message
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Contact Information Section -->
-<section class="bg-light py-5">
+<!-- ── CONTACT INFO ── -->
+<section class="contact-info-section">
     <div class="container">
         <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4 text-center">
-                        <i class="bi bi-geo-alt display-4 text-primary mb-3"></i>
-                        <h3 class="h5">@Html.Raw(addressTitle)</h3>
-                        <p class="mb-0">@Html.Raw(addressContent)</p>
-                    </div>
+            <div class="col-md-4 reveal reveal-delay-1">
+                <div class="info-card">
+                    <div class="info-icon"><i class="bi bi-geo-alt"></i></div>
+                    <h3>@Html.Raw(addressTitle)</h3>
+                    <p>@Html.Raw(addressContent)</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4 text-center">
-                        <i class="bi bi-telephone display-4 text-primary mb-3"></i>
-                        <h3 class="h5">@Html.Raw(phoneTitle)</h3>
-                        <p class="mb-0">@Html.Raw(phoneContent)</p>
-                    </div>
+            <div class="col-md-4 reveal reveal-delay-2">
+                <div class="info-card">
+                    <div class="info-icon"><i class="bi bi-telephone"></i></div>
+                    <h3>@Html.Raw(phoneTitle)</h3>
+                    <p>@Html.Raw(phoneContent)</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4 text-center">
-                        <i class="bi bi-envelope display-4 text-primary mb-3"></i>
-                        <h3 class="h5">@Html.Raw(emailTitle)</h3>
-                        <p class="mb-0">@Html.Raw(emailContent)</p>
-                    </div>
+            <div class="col-md-4 reveal reveal-delay-3">
+                <div class="info-card">
+                    <div class="info-icon"><i class="bi bi-envelope"></i></div>
+                    <h3>@Html.Raw(emailTitle)</h3>
+                    <p>@Html.Raw(emailContent)</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- FAQ Section -->
-<section class="py-5">
+<!-- ── FAQ ── -->
+<section class="contact-faq-section">
     <div class="container">
-        <h2 class="text-center mb-5">@Html.Raw(faqTitle)</h2>
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
+        <div class="heading-center reveal">
+            <div class="section-label" style="justify-content:center;">Got Questions?</div>
+            <h2 class="section-heading">@Html.Raw(faqTitle)</h2>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
                 <div class="accordion" id="faqAccordion">
-                    <div class="accordion-item border-0 shadow-sm mb-3">
+                    <div class="faq-item reveal reveal-delay-1">
                         <h3 class="accordion-header">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
                                 @Html.Raw(faq1Question)
                             </button>
                         </h3>
                         <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                @Html.Raw(faq1Answer)
-                            </div>
+                            <div class="accordion-body">@Html.Raw(faq1Answer)</div>
                         </div>
                     </div>
-                    <div class="accordion-item border-0 shadow-sm mb-3">
+                    <div class="faq-item reveal reveal-delay-2">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
                                 @Html.Raw(faq2Question)
                             </button>
                         </h3>
                         <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                @Html.Raw(faq2Answer)
-                            </div>
+                            <div class="accordion-body">@Html.Raw(faq2Answer)</div>
                         </div>
                     </div>
-                    <div class="accordion-item border-0 shadow-sm mb-3">
+                    <div class="faq-item reveal reveal-delay-3">
                         <h3 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
                                 @Html.Raw(faq3Question)
                             </button>
                         </h3>
                         <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                @Html.Raw(faq3Answer)
-                            </div>
+                            <div class="accordion-body">@Html.Raw(faq3Answer)</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</section> 
+</section>
+
+</div><!-- /contact-page -->
+
+<script>
+(function () {
+    const targets = document.querySelectorAll('.reveal, .section-heading');
+    if (!targets.length) return;
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    targets.forEach(el => observer.observe(el));
+})();
+</script>
