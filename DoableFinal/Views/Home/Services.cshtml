@@ -2,195 +2,573 @@
 @{
     ViewData["Title"] = "Our Services";
     var sections = ViewBag.Sections as List<DoableFinal.Models.HomePageSection> ?? new List<DoableFinal.Models.HomePageSection>();
-    
-    var heroTitle = sections.FirstOrDefault(s => s.SectionKey == "services-hero-title")?.Content ?? "<h1 class=\"display-4 fw-bold mb-4\">Our Services</h1>";
-    var heroBody = sections.FirstOrDefault(s => s.SectionKey == "services-hero-body")?.Content ?? "<p class=\"lead\">Comprehensive project management solutions tailored to your needs.</p>";
+
+    var heroTitle = sections.FirstOrDefault(s => s.SectionKey == "services-hero-title")?.Content ?? "Our Services";
+    var heroBody  = sections.FirstOrDefault(s => s.SectionKey == "services-hero-body")?.Content  ?? "Comprehensive project management solutions tailored to your needs.";
     var heroImage = sections.FirstOrDefault(s => s.SectionKey == "services-hero-image")?.ImagePath;
-    
+
     var coreTitle = sections.FirstOrDefault(s => s.SectionKey == "services-core-title")?.Content ?? "Core Services";
-    
-    // Core Service Cards
+
     var service1Title = sections.FirstOrDefault(s => s.SectionKey == "services-service1-title")?.Content ?? "Task Management";
-    var service1Body = sections.FirstOrDefault(s => s.SectionKey == "services-service1-body")?.Content ?? "Organize and track tasks with our intuitive Kanban board system. Set priorities, deadlines, and dependencies to keep your projects on track.";
-    
+    var service1Body  = sections.FirstOrDefault(s => s.SectionKey == "services-service1-body")?.Content  ?? "Organize and track tasks with our intuitive Kanban board system. Set priorities, deadlines, and dependencies to keep your projects on track.";
     var service2Title = sections.FirstOrDefault(s => s.SectionKey == "services-service2-title")?.Content ?? "Team Collaboration";
-    var service2Body = sections.FirstOrDefault(s => s.SectionKey == "services-service2-body")?.Content ?? "Foster seamless communication with real-time updates, file sharing, and team discussions. Keep everyone aligned and informed.";
-    
+    var service2Body  = sections.FirstOrDefault(s => s.SectionKey == "services-service2-body")?.Content  ?? "Foster seamless communication with real-time updates, file sharing, and team discussions. Keep everyone aligned and informed.";
     var service3Title = sections.FirstOrDefault(s => s.SectionKey == "services-service3-title")?.Content ?? "Progress Tracking";
-    var service3Body = sections.FirstOrDefault(s => s.SectionKey == "services-service3-body")?.Content ?? "Monitor project progress with detailed analytics, milestone tracking, and performance metrics. Make data-driven decisions.";
-    
+    var service3Body  = sections.FirstOrDefault(s => s.SectionKey == "services-service3-body")?.Content  ?? "Monitor project progress with detailed analytics, milestone tracking, and performance metrics. Make data-driven decisions.";
+
     var pricingTitle = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-title")?.Content ?? "Software Pricing";
-    
-    // Pricing Plans
-    var standardTitle = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-title")?.Content ?? "STANDARD";
-    var standardPrice = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-price")?.Content ?? "₱2,999.00 / month / location";
-    var standardUsers = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-users")?.Content ?? "3 users (₱500.00/additional user)";
-    var standardSupport = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-support")?.Content ?? "Email/Viber chat support";
+
+    var standardTitle    = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-title")?.Content    ?? "STANDARD";
+    var standardPrice    = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-price")?.Content    ?? "₱2,999.00 / month / location";
+    var standardUsers    = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-users")?.Content    ?? "3 users (₱500.00/additional user)";
+    var standardSupport  = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-support")?.Content  ?? "Email/Viber chat support";
     var standardFeatures = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-features")?.Content ?? "✔ Dashboard, Vehicle Management, Estimates\n✔ Job Orders, Invoices, Appointments\n✔ Customer & Supplier Management\n✔ Accounting (Chart of Accounts, P&L, Balance Sheet)\n✔ Reports (Sales, Service, Mechanic, Top Products)\n✔ 50 Free SMS/month";
-    var standardFee = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-fee")?.Content ?? "One-time implementation fee of ₱20,000.00";
-    
-    var eliteTitle = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-title")?.Content ?? "ELITE";
-    var elitePrice = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-price")?.Content ?? "₱3,999.00 / month / location";
-    var eliteUsers = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-users")?.Content ?? "5 users (₱500.00/additional user)";
-    var eliteSupport = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-support")?.Content ?? "Email/Viber chat support";
+    var standardFee      = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-standard-fee")?.Content      ?? "One-time implementation fee of ₱20,000.00";
+
+    var eliteTitle    = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-title")?.Content    ?? "ELITE";
+    var elitePrice    = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-price")?.Content    ?? "₱3,999.00 / month / location";
+    var eliteUsers    = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-users")?.Content    ?? "5 users (₱500.00/additional user)";
+    var eliteSupport  = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-support")?.Content  ?? "Email/Viber chat support";
     var eliteFeatures = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-features")?.Content ?? "✔ 100 Free SMS/month & Custom Sender ID\n✔ Automated SMS Service Reminders\n✔ Loyalty and Memberships\n✔ Barcoding & Online Payments (Future)\n✔ Supplier & Customer Portals (Future)\n✔ Stock Transfer & Inventory Forecasting (Future)\n✔ Payroll (Future), BIR CAS";
-    var eliteFee = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-fee")?.Content ?? "One-time implementation fee of ₱30,000.00";
-    
-    var enterpriseTitle = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-title")?.Content ?? "ENTERPRISE";
-    var enterprisePrice = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-price")?.Content ?? "Custom Pricing";
+    var eliteFee      = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-elite-fee")?.Content      ?? "One-time implementation fee of ₱30,000.00";
+
+    var enterpriseTitle    = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-title")?.Content    ?? "ENTERPRISE";
+    var enterprisePrice    = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-price")?.Content    ?? "Custom Pricing";
     var enterpriseBranches = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-branches")?.Content ?? "Minimum of 10 branches";
-    var enterpriseUsers = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-users")?.Content ?? "10 users (₱300.00/additional user)";
-    var enterpriseSupport = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-support")?.Content ?? "Email/Viber chat/Phone support";
+    var enterpriseUsers    = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-users")?.Content    ?? "10 users (₱300.00/additional user)";
+    var enterpriseSupport  = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-support")?.Content  ?? "Email/Viber chat/Phone support";
     var enterpriseFeatures = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-features")?.Content ?? "✔ Dedicated Server Instance\n✔ Customized Printout & Inspection Templates\n✔ Customized Software Branding\n✔ Multi-Location Management & Reports\n✔ API Access";
-    var enterpriseFee = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-fee")?.Content ?? "Call us for customized pricing";
-    
+    var enterpriseFee      = sections.FirstOrDefault(s => s.SectionKey == "services-pricing-enterprise-fee")?.Content      ?? "Call us for customized pricing";
+
     var featuresTitle = sections.FirstOrDefault(s => s.SectionKey == "services-features-title")?.Content ?? "Additional Features";
-    
-    // Additional Features
+
     var feature1Title = sections.FirstOrDefault(s => s.SectionKey == "services-feature1-title")?.Content ?? "Security & Compliance";
-    var feature1Body = sections.FirstOrDefault(s => s.SectionKey == "services-feature1-body")?.Content ?? "Enterprise-grade security with data encryption, role-based access control, and compliance with industry standards.";
-    
+    var feature1Body  = sections.FirstOrDefault(s => s.SectionKey == "services-feature1-body")?.Content  ?? "Enterprise-grade security with data encryption, role-based access control, and compliance with industry standards.";
     var feature2Title = sections.FirstOrDefault(s => s.SectionKey == "services-feature2-title")?.Content ?? "Mobile Access";
-    var feature2Body = sections.FirstOrDefault(s => s.SectionKey == "services-feature2-body")?.Content ?? "Access your projects on the go with our mobile-friendly interface and native mobile apps.";
-    
+    var feature2Body  = sections.FirstOrDefault(s => s.SectionKey == "services-feature2-body")?.Content  ?? "Access your projects on the go with our mobile-friendly interface and native mobile apps.";
     var feature3Title = sections.FirstOrDefault(s => s.SectionKey == "services-feature3-title")?.Content ?? "Time Tracking";
-    var feature3Body = sections.FirstOrDefault(s => s.SectionKey == "services-feature3-body")?.Content ?? "Track time spent on tasks and projects with our integrated time tracking feature.";
-    
+    var feature3Body  = sections.FirstOrDefault(s => s.SectionKey == "services-feature3-body")?.Content  ?? "Track time spent on tasks and projects with our integrated time tracking feature.";
     var feature4Title = sections.FirstOrDefault(s => s.SectionKey == "services-feature4-title")?.Content ?? "Reporting";
-    var feature4Body = sections.FirstOrDefault(s => s.SectionKey == "services-feature4-body")?.Content ?? "Generate comprehensive reports and insights to make informed decisions.";
+    var feature4Body  = sections.FirstOrDefault(s => s.SectionKey == "services-feature4-body")?.Content  ?? "Generate comprehensive reports and insights to make informed decisions.";
 }
+
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;900&family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ── Tokens (matches Index + About) ── */
+:root {
+    --brand:       #0d6efd;
+    --brand-dark:  #0a58ca;
+    --ink:         #0d1117;
+    --ink-soft:    #4a5568;
+    --surface:     #f8f9fa;
+    --white:       #ffffff;
+    --rule:        rgba(13,110,253,.15);
+    --gold:        #f59e0b;
+    --green:       #10b981;
+    --font-display:'Playfair Display', Georgia, serif;
+    --font-hero:   'League Spartan', sans-serif;
+    --font-body:   'DM Sans', sans-serif;
+}
+
+.svc-page * { box-sizing: border-box; }
+.svc-page { font-family: var(--font-body); color: var(--ink); }
+
+/* ══════════════════════════════════════
+   HERO
+══════════════════════════════════════ */
+.svc-hero {
+    position: relative;
+    background: var(--brand);
+    overflow: hidden;
+    padding: 96px 0 88px;
+}
+.svc-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+.svc-hero::after {
+    content: '';
+    position: absolute;
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(255,255,255,.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+.svc-hero .container { position: relative; z-index: 1; }
+
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.75);
+    margin-bottom: 20px;
+    animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .05s both;
+}
+.hero-eyebrow span { display:inline-block; width:28px; height:1px; background:rgba(255,255,255,.6); }
+
+.svc-hero h1 {
+    font-family: var(--font-hero);
+    letter-spacing: -2px;
+    font-size: clamp(2.6rem, 5.5vw, 4.5rem);
+    font-weight: 900;
+    color: var(--white);
+    line-height: 1.1;
+    margin-bottom: 20px;
+    animation: fadeUp .75s cubic-bezier(.22,1,.36,1) .15s both;
+}
+.svc-hero .hero-lead {
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: rgba(255,255,255,.82);
+    line-height: 1.8;
+    animation: fadeUp .75s cubic-bezier(.22,1,.36,1) .28s both;
+}
+.svc-hero .hero-img-wrap {
+    animation: fadeUp .75s cubic-bezier(.22,1,.36,1) .35s both;
+}
+
+/* ══════════════════════════════════════
+   SHARED UTILITIES
+══════════════════════════════════════ */
+.section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .7rem;
+    font-weight: 500;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--brand);
+    margin-bottom: 12px;
+}
+.section-label::before {
+    content: '';
+    display: inline-block;
+    width: 22px; height: 2px;
+    background: var(--brand);
+    border-radius: 1px;
+}
+
+.section-heading {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    font-weight: 700;
+    color: var(--ink);
+    position: relative;
+    display: inline-block;
+}
+.section-heading::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -10px;
+    transform: translateX(-50%) scaleX(0);
+    width: 55%;
+    height: 3px;
+    background: var(--brand);
+    border-radius: 2px;
+    transition: transform .55s cubic-bezier(.22,1,.36,1) .3s;
+}
+.section-heading.visible::after { transform: translateX(-50%) scaleX(1); }
+
+.heading-center { text-align: center; margin-bottom: 56px; }
+
+/* ══════════════════════════════════════
+   CORE SERVICES
+══════════════════════════════════════ */
+.svc-core { padding: 96px 0; background: var(--white); }
+
+.core-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 40px 32px;
+    height: 100%;
+    border: 1px solid var(--rule);
+    position: relative;
+    overflow: hidden;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1),
+                box-shadow .3s ease,
+                border-color .3s ease;
+}
+.core-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--brand), var(--brand-dark));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .4s cubic-bezier(.22,1,.36,1);
+}
+.core-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 20px 50px rgba(13,110,253,.12);
+    border-color: transparent;
+}
+.core-card:hover::before { transform: scaleX(1); }
+
+.core-card .bi {
+    font-size: 2.5rem;
+    color: var(--brand);
+    display: inline-block;
+    margin-bottom: 20px;
+    transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.core-card:hover .bi { transform: rotate(8deg) scale(1.15); }
+
+.core-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+}
+.core-card p {
+    font-size: .95rem;
+    font-weight: 300;
+    color: var(--ink-soft);
+    line-height: 1.8;
+    margin: 0;
+}
+
+/* ══════════════════════════════════════
+   PRICING
+══════════════════════════════════════ */
+.svc-pricing {
+    padding: 96px 0;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+}
+.svc-pricing::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 40%; height: 100%;
+    background: linear-gradient(135deg, transparent 45%, rgba(13,110,253,.03) 45%);
+    pointer-events: none;
+}
+
+.pricing-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 44px 36px;
+    height: 100%;
+    border: 1px solid var(--rule);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+}
+.pricing-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 60px rgba(13,110,253,.1);
+}
+
+/* featured / elite card */
+.pricing-card.is-featured {
+    border: 2px solid var(--brand);
+    box-shadow: 0 8px 40px rgba(13,110,253,.14);
+}
+.pricing-card.is-featured:hover {
+    box-shadow: 0 24px 60px rgba(13,110,253,.2);
+}
+
+.pricing-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--brand);
+    color: var(--white);
+    font-size: .7rem;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 4px 16px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.pricing-plan-name {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: -.01em;
+    margin-bottom: 8px;
+}
+.plan-standard  { color: var(--brand); }
+.plan-elite     { color: var(--gold); }
+.plan-enterprise{ color: var(--green); }
+
+.pricing-price {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 4px;
+}
+.pricing-users {
+    font-size: .88rem;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+}
+.pricing-support {
+    font-size: .8rem;
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+}
+.pricing-features-label {
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+}
+.pricing-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+    flex: 1;
+}
+.pricing-features li {
+    font-size: .88rem;
+    font-weight: 300;
+    color: var(--ink-soft);
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(0,0,0,.04);
+    line-height: 1.55;
+}
+.pricing-fee {
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: center;
+    margin-top: auto;
+}
+
+/* ══════════════════════════════════════
+   ADDITIONAL FEATURES
+══════════════════════════════════════ */
+.svc-features { padding: 96px 0; background: var(--white); }
+
+.feat-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 28px;
+    border-radius: 14px;
+    border: 1px solid var(--rule);
+    background: var(--white);
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1),
+                box-shadow .3s ease, border-color .3s ease;
+    height: 100%;
+}
+.feat-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(13,110,253,.1);
+    border-color: transparent;
+}
+.feat-icon {
+    flex-shrink: 0;
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: rgba(13,110,253,.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    color: var(--brand);
+    transition: background .3s, transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.feat-item:hover .feat-icon {
+    background: var(--brand);
+    color: var(--white);
+    transform: rotate(8deg) scale(1.1);
+}
+.feat-item h4 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+}
+.feat-item p {
+    font-size: .92rem;
+    font-weight: 300;
+    color: var(--ink-soft);
+    line-height: 1.75;
+    margin: 0;
+}
+
+/* ══════════════════════════════════════
+   SCROLL REVEAL
+══════════════════════════════════════ */
+.reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity .65s cubic-bezier(.22,1,.36,1),
+                transform .65s cubic-bezier(.22,1,.36,1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: .12s; }
+.reveal-delay-2 { transition-delay: .24s; }
+.reveal-delay-3 { transition-delay: .36s; }
+.reveal-delay-4 { transition-delay: .18s; }
+.reveal-delay-5 { transition-delay: .30s; }
+
+@@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<div class="svc-page">
 
 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
 {
-    <div class="alert alert-info mb-0">
-        <a asp-controller="Admin" asp-action="ManageServicesPage" class="btn btn-sm btn-primary">Edit Services Content</a>
+    <div class="alert alert-info mb-0 rounded-0">
+        <div class="container">
+            <a asp-controller="Admin" asp-action="ManageServicesPage" class="btn btn-sm btn-primary">
+                <i class="bi bi-pencil-square me-1"></i> Edit Services Content
+            </a>
+        </div>
     </div>
 }
 
-<!-- Services Hero Section -->
-<section class="bg-light py-5">
+<!-- ── HERO ── -->
+<section class="svc-hero">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">@Html.Raw(heroTitle)</h1>
-                <p class="lead">@Html.Raw(heroBody)</p>
+        <div class="row align-items-center gy-5">
+            <div class="col-lg-7 text-lg-start text-center">
+                <div class="hero-eyebrow"><span></span> What We Offer <span></span></div>
+                <h1>@Html.Raw(heroTitle)</h1>
+                <p class="hero-lead">@Html.Raw(heroBody)</p>
             </div>
-            <div class="col-lg-6 text-center">
-                @if (!string.IsNullOrEmpty(heroImage))
-                {
-                    <img src="@heroImage" alt="Our Services" class="img-fluid">
-                }
-            </div>
+            @if (!string.IsNullOrEmpty(heroImage))
+            {
+                <div class="col-lg-5 text-center hero-img-wrap">
+                    <img src="@heroImage" alt="Our Services" class="img-fluid rounded-3 shadow-lg">
+                </div>
+            }
         </div>
     </div>
 </section>
 
-<!-- Core Services Section -->
-<section class="py-5">
+<!-- ── CORE SERVICES ── -->
+<section class="svc-core">
     <div class="container">
-        <h2 class="text-center mb-5">@coreTitle</h2>
+        <div class="heading-center reveal">
+            <div class="section-label" style="justify-content:center;">What We Do</div>
+            <h2 class="section-heading">@Html.Raw(coreTitle)</h2>
+        </div>
         <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <i class="bi bi-kanban display-4 text-primary mb-3"></i>
-                        <h3 class="h5">@service1Title</h3>
-                        <p>@service1Body</p>
-                    </div>
+            <div class="col-md-4 reveal reveal-delay-1">
+                <div class="core-card">
+                    <i class="bi bi-kanban"></i>
+                    <h3>@Html.Raw(service1Title)</h3>
+                    <p>@Html.Raw(service1Body)</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <i class="bi bi-people display-4 text-primary mb-3"></i>
-                        <h3 class="h5">@service2Title</h3>
-                        <p>@service2Body</p>
-                    </div>
+            <div class="col-md-4 reveal reveal-delay-2">
+                <div class="core-card">
+                    <i class="bi bi-people"></i>
+                    <h3>@Html.Raw(service2Title)</h3>
+                    <p>@Html.Raw(service2Body)</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <i class="bi bi-graph-up display-4 text-primary mb-3"></i>
-                        <h3 class="h5">@service3Title</h3>
-                        <p>@service3Body</p>
-                    </div>
+            <div class="col-md-4 reveal reveal-delay-3">
+                <div class="core-card">
+                    <i class="bi bi-graph-up"></i>
+                    <h3>@Html.Raw(service3Title)</h3>
+                    <p>@Html.Raw(service3Body)</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Pricing Plans Section -->
-<section class="bg-light py-5">
+<!-- ── PRICING ── -->
+<section class="svc-pricing">
     <div class="container">
-        <h2 class="text-center mb-5">@pricingTitle</h2>
-        <div class="row g-4">
+        <div class="heading-center reveal">
+            <div class="section-label" style="justify-content:center;">Plans & Pricing</div>
+            <h2 class="section-heading">@Html.Raw(pricingTitle)</h2>
+        </div>
+        <div class="row g-4 align-items-stretch">
 
-            <!-- STANDARD PLAN -->
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4 text-center">
-                        <h3 class="h4 text-primary mb-3">@standardTitle</h3>
-                        <p class="fw-bold mb-1">@standardPrice</p>
-                        <p>@standardUsers</p>
-                        <p class="small text-muted mb-4">@standardSupport</p>
-
-                        <h5 class="text-start mb-3">Features</h5>
-                        <ul class="text-start small list-unstyled">
-                            @foreach(var line in standardFeatures.Split('\n'))
-                            {
-                                <li>@line</li>
-                            }
-                        </ul>
-                        <p class="fw-bold mt-3">@standardFee</p>
-                    </div>
+            <!-- STANDARD -->
+            <div class="col-md-4 reveal reveal-delay-1">
+                <div class="pricing-card">
+                    <div class="pricing-plan-name plan-standard">@Html.Raw(standardTitle)</div>
+                    <div class="pricing-price">@Html.Raw(standardPrice)</div>
+                    <div class="pricing-users">@Html.Raw(standardUsers)</div>
+                    <div class="pricing-support">@Html.Raw(standardSupport)</div>
+                    <div class="pricing-features-label">Features</div>
+                    <ul class="pricing-features">
+                        @foreach (var line in standardFeatures.Split('\n'))
+                        {
+                            if (!string.IsNullOrWhiteSpace(line))
+                            { <li>@line</li> }
+                        }
+                    </ul>
+                    <div class="pricing-fee">@Html.Raw(standardFee)</div>
                 </div>
             </div>
 
-            <!-- ELITE PLAN -->
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm border-primary position-relative">
-                    <div class="position-absolute top-0 start-50 translate-middle">
-                        <span class="badge bg-primary">Popular</span>
-                    </div>
-                    <div class="card-body p-4 text-center">
-                        <h3 class="h4 text-warning mb-3">@eliteTitle</h3>
-                        <p class="fw-bold mb-1">@elitePrice</p>
-                        <p>@eliteUsers</p>
-                        <p class="small text-muted mb-4">@eliteSupport</p>
-
-                        <h5 class="text-start mb-3">Includes all STANDARD features plus:</h5>
-                        <ul class="text-start small list-unstyled">
-                            @foreach(var line in eliteFeatures.Split('\n'))
-                            {
-                                <li>@line</li>
-                            }
-                        </ul>
-                        <p class="fw-bold mt-3">@eliteFee</p>
-                    </div>
+            <!-- ELITE -->
+            <div class="col-md-4 reveal reveal-delay-2">
+                <div class="pricing-card is-featured">
+                    <div class="pricing-badge">Most Popular</div>
+                    <div class="pricing-plan-name plan-elite">@Html.Raw(eliteTitle)</div>
+                    <div class="pricing-price">@Html.Raw(elitePrice)</div>
+                    <div class="pricing-users">@Html.Raw(eliteUsers)</div>
+                    <div class="pricing-support">@Html.Raw(eliteSupport)</div>
+                    <div class="pricing-features-label">Includes all Standard features plus:</div>
+                    <ul class="pricing-features">
+                        @foreach (var line in eliteFeatures.Split('\n'))
+                        {
+                            if (!string.IsNullOrWhiteSpace(line))
+                            { <li>@line</li> }
+                        }
+                    </ul>
+                    <div class="pricing-fee">@Html.Raw(eliteFee)</div>
                 </div>
             </div>
 
-            <!-- ENTERPRISE PLAN -->
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4 text-center">
-                        <h3 class="h4 text-success mb-3">@enterpriseTitle</h3>
-                        <p class="fw-bold mb-1">@enterprisePrice</p>
-                        <p>@enterpriseBranches</p>
-                        <p>@enterpriseUsers</p>
-                        <p class="small text-muted mb-4">@enterpriseSupport</p>
-
-                        <h5 class="text-start mb-3">Includes all ELITE features plus:</h5>
-                        <ul class="text-start small list-unstyled">
-                            @foreach(var line in enterpriseFeatures.Split('\n'))
-                            {
-                                <li>@line</li>
-                            }
-                        </ul>
-                        <p class="fw-bold mt-3">@enterpriseFee</p>
-                    </div>
+            <!-- ENTERPRISE -->
+            <div class="col-md-4 reveal reveal-delay-3">
+                <div class="pricing-card">
+                    <div class="pricing-plan-name plan-enterprise">@Html.Raw(enterpriseTitle)</div>
+                    <div class="pricing-price">@Html.Raw(enterprisePrice)</div>
+                    <div class="pricing-users">@Html.Raw(enterpriseBranches)</div>
+                    <div class="pricing-users">@Html.Raw(enterpriseUsers)</div>
+                    <div class="pricing-support">@Html.Raw(enterpriseSupport)</div>
+                    <div class="pricing-features-label">Includes all Elite features plus:</div>
+                    <ul class="pricing-features">
+                        @foreach (var line in enterpriseFeatures.Split('\n'))
+                        {
+                            if (!string.IsNullOrWhiteSpace(line))
+                            { <li>@line</li> }
+                        }
+                    </ul>
+                    <div class="pricing-fee">@Html.Raw(enterpriseFee)</div>
                 </div>
             </div>
 
@@ -198,47 +576,68 @@
     </div>
 </section>
 
-<!-- Additional Features Section -->
-<section class="py-5">
+<!-- ── ADDITIONAL FEATURES ── -->
+<section class="svc-features">
     <div class="container">
-        <h2 class="text-center mb-5">@featuresTitle</h2>
+        <div class="heading-center reveal">
+            <div class="section-label" style="justify-content:center;">More Capabilities</div>
+            <h2 class="section-heading">@Html.Raw(featuresTitle)</h2>
+        </div>
         <div class="row g-4">
-            <div class="col-md-6">
-                <div class="d-flex align-items-start">
-                    <i class="bi bi-shield-check text-primary me-3 fs-4"></i>
+            <div class="col-md-6 reveal reveal-delay-1">
+                <div class="feat-item">
+                    <div class="feat-icon"><i class="bi bi-shield-check"></i></div>
                     <div>
-                        <h4 class="h5">@feature1Title</h4>
-                        <p>@feature1Body</p>
+                        <h4>@Html.Raw(feature1Title)</h4>
+                        <p>@Html.Raw(feature1Body)</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="d-flex align-items-start">
-                    <i class="bi bi-phone text-primary me-3 fs-4"></i>
+            <div class="col-md-6 reveal reveal-delay-2">
+                <div class="feat-item">
+                    <div class="feat-icon"><i class="bi bi-phone"></i></div>
                     <div>
-                        <h4 class="h5">@feature2Title</h4>
-                        <p>@feature2Body</p>
+                        <h4>@Html.Raw(feature2Title)</h4>
+                        <p>@Html.Raw(feature2Body)</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="d-flex align-items-start">
-                    <i class="bi bi-clock-history text-primary me-3 fs-4"></i>
+            <div class="col-md-6 reveal reveal-delay-3">
+                <div class="feat-item">
+                    <div class="feat-icon"><i class="bi bi-clock-history"></i></div>
                     <div>
-                        <h4 class="h5">@feature3Title</h4>
-                        <p>@feature3Body</p>
+                        <h4>@Html.Raw(feature3Title)</h4>
+                        <p>@Html.Raw(feature3Body)</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="d-flex align-items-start">
-                    <i class="bi bi-file-earmark-text text-primary me-3 fs-4"></i>
+            <div class="col-md-6 reveal reveal-delay-4">
+                <div class="feat-item">
+                    <div class="feat-icon"><i class="bi bi-file-earmark-text"></i></div>
                     <div>
-                        <h4 class="h5">@feature4Title</h4>
-                        <p>@feature4Body</p>
+                        <h4>@Html.Raw(feature4Title)</h4>
+                        <p>@Html.Raw(feature4Body)</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+</div><!-- /svc-page -->
+
+<script>
+(function () {
+    const targets = document.querySelectorAll('.reveal, .section-heading');
+    if (!targets.length) return;
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    targets.forEach(el => observer.observe(el));
+})();
+</script>
