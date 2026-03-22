@@ -24,13 +24,13 @@
 <style>
 /* ── Design tokens ── */
 :root {
-    --brand:      #4361ee;
-    --brand-dark: #2f4ac8;
+    --brand:      #0d6efd;
+    --brand-dark: #0a58ca;
     --ink:        #0d1117;
     --ink-soft:   #4a5568;
-    --surface:    #f7f8fc;
+    --surface:    #f8f9fa;
     --white:      #ffffff;
-    --rule:       rgba(67,97,238,.15);
+    --rule:       rgba(13,110,253,.15);
     --font-display: 'Playfair Display', Georgia, serif;
     --font-body:    'DM Sans', sans-serif;
 }
@@ -43,7 +43,7 @@
 ══════════════════════════════════════ */
 .about-hero {
     position: relative;
-    background: var(--ink);
+    background: var(--brand);
     overflow: hidden;
     padding: 100px 0 90px;
 }
@@ -52,8 +52,8 @@
     position: absolute;
     inset: 0;
     background-image:
-        linear-gradient(rgba(67,97,238,.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(67,97,238,.07) 1px, transparent 1px);
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
     background-size: 60px 60px;
     mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
     -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
@@ -64,7 +64,7 @@
     top: -120px; left: 50%;
     transform: translateX(-50%);
     width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(67,97,238,.35) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255,255,255,.12) 0%, transparent 70%);
     pointer-events: none;
 }
 .about-hero .container { position: relative; z-index: 1; }
@@ -77,14 +77,14 @@
     font-weight: 500;
     letter-spacing: .2em;
     text-transform: uppercase;
-    color: rgba(255,255,255,.45);
+    color: rgba(255,255,255,.75);
     margin-bottom: 20px;
     animation: heroFadeUp .6s cubic-bezier(.22,1,.36,1) .05s both;
 }
 .hero-eyebrow span {
     display: inline-block;
     width: 28px; height: 1px;
-    background: var(--brand);
+    background: rgba(255,255,255,.6);
 }
 .about-hero h1 {
     font-family: var(--font-display);
@@ -98,7 +98,7 @@
 .about-hero .hero-lead {
     font-size: 1.1rem;
     font-weight: 300;
-    color: rgba(255,255,255,.6);
+    color: rgba(255,255,255,.85);
     max-width: 520px;
     margin: 0 auto;
     line-height: 1.8;
@@ -126,7 +126,7 @@
     font-weight: 500;
     letter-spacing: .12em;
     text-transform: uppercase;
-    color: rgba(255,255,255,.38);
+    color: rgba(255,255,255,.65);
     margin-top: 6px;
 }
 
@@ -186,7 +186,7 @@
     font-family: var(--font-display);
     font-size: 14rem;
     line-height: .8;
-    color: rgba(67,97,238,.05);
+    color: rgba(13,110,253,.05);
     position: absolute;
     top: -20px; right: -10px;
     pointer-events: none;
@@ -208,7 +208,7 @@
     position: absolute;
     top: 0; right: 0;
     width: 40%; height: 100%;
-    background: linear-gradient(135deg, transparent 45%, rgba(67,97,238,.04) 45%);
+    background: linear-gradient(135deg, transparent 45%, rgba(13,110,253,.04) 45%);
     pointer-events: none;
 }
 .mission-card {
@@ -226,7 +226,7 @@
     bottom: -60px; right: -60px;
     width: 200px; height: 200px;
     border-radius: 50%;
-    background: rgba(67,97,238,.04);
+    background: rgba(13,110,253,.04);
     pointer-events: none;
 }
 .mission-heading {
@@ -266,7 +266,7 @@
     transform: translateX(-50%) scaleX(0);
     width: 50%;
     height: 3px;
-    background: var(--brand);
+    background: rgba(255,255,255,.6);
     border-radius: 2px;
     transition: transform .55s cubic-bezier(.22,1,.36,1) .3s;
 }
@@ -296,7 +296,7 @@
 }
 .value-card:hover {
     transform: translateY(-8px) scale(1.01);
-    box-shadow: 0 20px 50px rgba(67,97,238,.12);
+    box-shadow: 0 20px 50px rgba(13,110,253,.12);
     border-color: transparent;
 }
 .value-card:hover::before { transform: scaleX(1); }
@@ -304,12 +304,12 @@
     font-family: var(--font-display);
     font-size: 4rem;
     font-weight: 900;
-    color: rgba(67,97,238,.07);
+    color: rgba(13,110,253,.07);
     line-height: 1;
     margin-bottom: 12px;
     transition: color .3s;
 }
-.value-card:hover .value-number { color: rgba(67,97,238,.14); }
+.value-card:hover .value-number { color: rgba(13,110,253,.14); }
 .value-title {
     font-family: var(--font-display);
     font-size: 1.35rem;
