@@ -208,39 +208,43 @@
             }
             
             function updateDateConstraints() {
+                const today = getTodayString();
                 const projectId = parseInt($('#ProjectId').val());
+
                 if (!projectId || !projectDates[projectId]) {
+                    // No project selected — still enforce today as the minimum
+                    $("#StartDate").attr('min', today).removeAttr('max');
+                    $("#DueDate").attr('min', today).removeAttr('max');
                     $("#projectDateInfo").text("");
                     return;
                 }
 
                 const project = projectDates[projectId];
-                const startDate = project.start;
+                // Use the later of today vs. project start so past project dates are also blocked
+                const effectiveMin = project.start < today ? today : project.start;
                 const endDate = project.end;
 
                 // Set date input constraints
-                $("#StartDate").attr('min', startDate);
-                $("#StartDate").attr('max', endDate);
-                $("#DueDate").attr('min', startDate);
-                $("#DueDate").attr('max', endDate);
+                $("#StartDate").attr('min', effectiveMin).attr('max', endDate);
+                $("#DueDate").attr('min', effectiveMin).attr('max', endDate);
 
                 // Show project date constraints
-                $("#projectDateInfo").html(`Project timeline: <strong>${startDate}</strong> to <strong>${endDate}</strong>`);
+                $("#projectDateInfo").html(`Project timeline: <strong>${project.start}</strong> to <strong>${endDate}</strong>`);
 
-                // Adjust dates if they're outside project bounds
+                // Clamp existing values into the allowed range
                 const currentStartDate = $("#StartDate").val();
                 const currentDueDate = $("#DueDate").val();
                 
-                if (currentStartDate < startDate) {
-                    $("#StartDate").val(startDate);
+                if (currentStartDate && currentStartDate < effectiveMin) {
+                    $("#StartDate").val(effectiveMin);
                 }
-                if (currentStartDate > endDate) {
+                if (currentStartDate && currentStartDate > endDate) {
                     $("#StartDate").val(endDate);
                 }
-                if (currentDueDate < startDate) {
-                    $("#DueDate").val(startDate);
+                if (currentDueDate && currentDueDate < effectiveMin) {
+                    $("#DueDate").val(effectiveMin);
                 }
-                if (currentDueDate > endDate) {
+                if (currentDueDate && currentDueDate > endDate) {
                     $("#DueDate").val(endDate);
                 }
             }
