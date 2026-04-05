@@ -166,6 +166,15 @@
             // Initialize variables
             const projectDates = @Html.Raw(ViewBag.ProjectDatesJson ?? "{}");
             const employees = @Html.Raw(ViewBag.EmployeesJson ?? "[]");
+
+            // ── Helper: returns today's date as "YYYY-MM-DD" in local time ──
+            function getTodayString() {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            }
             
             // Initialize Select2 for employee assignment
             $('.select2-employee').select2({
@@ -208,39 +217,43 @@
             }
             
             function updateDateConstraints() {
+                const today = getTodayString();
                 const projectId = parseInt($('#ProjectId').val());
+
                 if (!projectId || !projectDates[projectId]) {
+                    // No project selected — still enforce today as the minimum
+                    $("#StartDate").attr('min', today).removeAttr('max');
+                    $("#DueDate").attr('min', today).removeAttr('max');
                     $("#projectDateInfo").text("");
                     return;
                 }
 
                 const project = projectDates[projectId];
-                const startDate = project.start;
+                // Use the later of today vs. project start so past project dates are also blocked
+                const effectiveMin = project.start < today ? today : project.start;
                 const endDate = project.end;
 
                 // Set date input constraints
-                $("#StartDate").attr('min', startDate);
-                $("#StartDate").attr('max', endDate);
-                $("#DueDate").attr('min', startDate);
-                $("#DueDate").attr('max', endDate);
+                $("#StartDate").attr('min', effectiveMin).attr('max', endDate);
+                $("#DueDate").attr('min', effectiveMin).attr('max', endDate);
 
                 // Show project date constraints
-                $("#projectDateInfo").html(`Project timeline: <strong>${startDate}</strong> to <strong>${endDate}</strong>`);
+                $("#projectDateInfo").html(`Project timeline: <strong>${project.start}</strong> to <strong>${endDate}</strong>`);
 
-                // Adjust dates if they're outside project bounds
+                // Clamp existing values into the allowed range
                 const currentStartDate = $("#StartDate").val();
                 const currentDueDate = $("#DueDate").val();
                 
-                if (currentStartDate < startDate) {
-                    $("#StartDate").val(startDate);
+                if (currentStartDate && currentStartDate < effectiveMin) {
+                    $("#StartDate").val(effectiveMin);
                 }
-                if (currentStartDate > endDate) {
+                if (currentStartDate && currentStartDate > endDate) {
                     $("#StartDate").val(endDate);
                 }
-                if (currentDueDate < startDate) {
-                    $("#DueDate").val(startDate);
+                if (currentDueDate && currentDueDate < effectiveMin) {
+                    $("#DueDate").val(effectiveMin);
                 }
-                if (currentDueDate > endDate) {
+                if (currentDueDate && currentDueDate > endDate) {
                     $("#DueDate").val(endDate);
                 }
             }
@@ -266,28 +279,35 @@
             });
 
             $("#StartDate, #DueDate").change(function() {
+                const today = getTodayString();
                 const projectId = parseInt($('#ProjectId').val());
-                if (!projectId || !projectDates[projectId]) return;
 
-                const project = projectDates[projectId];
-                const startDate = project.start;
-                const endDate = project.end;
-                
-                // Ensure dates are within project bounds
-                if ($(this).val() < startDate) {
-                    $(this).val(startDate);
-                }
-                if ($(this).val() > endDate) {
-                    $(this).val(endDate);
+                // Always block past dates regardless of project selection
+                if ($(this).val() < today) {
+                    $(this).val(today);
                 }
 
-                // If DueDate is before StartDate, adjust it
+                if (projectId && projectDates[projectId]) {
+                    const project = projectDates[projectId];
+                    const effectiveMin = project.start < today ? today : project.start;
+                    const endDate = project.end;
+
+                    // Ensure dates are within project bounds
+                    if ($(this).val() < effectiveMin) {
+                        $(this).val(effectiveMin);
+                    }
+                    if ($(this).val() > endDate) {
+                        $(this).val(endDate);
+                    }
+                }
+
+                // If DueDate is before StartDate, push DueDate forward
                 if ($(this).is('#StartDate') && $("#DueDate").val() < $(this).val()) {
                     $("#DueDate").val($(this).val());
                 }
             });
 
-            // Initial setup
+            // Initial setup — apply today's minimum immediately on page load
             updateDateConstraints();
         });
     </script>
