@@ -235,27 +235,26 @@
 
     /* ---------- Section Label ---------- */
     .section-label {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
+        display: inline-block;
         font-size: .7rem;
-        font-weight: 500;
-        letter-spacing: .2em;
+        font-weight: 600;
+        letter-spacing: .18em;
         text-transform: uppercase;
         color: #347deb;
+        background: rgba(52, 125, 235, 0.08);
+        border: 1px solid rgba(52, 125, 235, 0.20);
+        border-radius: 20px;
+        padding: 5px 14px;
         margin-bottom: 14px;
     }
 
-    .section-label::before {
-        content: '';
-        display: inline-block;
-        width: 22px; height: 2px;
-        background: #347deb;
-        border-radius: 1px;
-    }
+    .section-label::before { display: none; }
 
     /* ---------- Section Headings (matches Index) ---------- */
     .section-heading-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         text-align: center;
         margin-bottom: 3rem;
     }
@@ -680,8 +679,8 @@
 <!-- Values Section -->
 <section class="about-values" id="values">
     <div class="container">
-        <div class="section-heading-wrap mb-5 reveal text-center">
-            <div class="section-label" style="justify-content: center; margin-bottom: 10px;">What We Stand For</div>
+        <div class="section-heading-wrap mb-5 reveal">
+            <div class="section-label">What We Stand For</div>
             <h2 class="section-heading">@Html.Raw(valuesTitle)</h2>
         </div>
         <div class="row g-4">
