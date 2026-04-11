@@ -196,27 +196,26 @@
 
     /* ---------- Section Label ---------- */
     .section-label {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
+        display: inline-block;
         font-size: .7rem;
-        font-weight: 500;
-        letter-spacing: .2em;
+        font-weight: 600;
+        letter-spacing: .18em;
         text-transform: uppercase;
         color: #347deb;
+        background: rgba(52, 125, 235, 0.08);
+        border: 1px solid rgba(52, 125, 235, 0.20);
+        border-radius: 20px;
+        padding: 5px 14px;
         margin-bottom: 14px;
     }
 
-    .section-label::before {
-        content: '';
-        display: inline-block;
-        width: 22px; height: 2px;
-        background: #347deb;
-        border-radius: 1px;
-    }
+    .section-label::before { display: none; }
 
     /* ---------- Section Headings (matches Index) ---------- */
     .section-heading-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         text-align: center;
         margin-bottom: 3rem;
     }
@@ -705,8 +704,8 @@
 <!-- Core Services Section -->
 <section id="core-services" class="py-5">
     <div class="container">
-        <div class="section-heading-wrap mb-5 reveal text-center">
-            <div class="section-label" style="justify-content: center; margin-bottom: 10px;">What We Do</div>
+        <div class="section-heading-wrap mb-5 reveal">
+            <div class="section-label">What We Do</div>
             <h2 class="section-heading">@Html.Raw(coreTitle)</h2>
         </div>
         <div class="row g-4">
@@ -744,8 +743,8 @@
 <!-- Pricing Section -->
 <section id="pricing" class="py-5">
     <div class="container">
-        <div class="section-heading-wrap mb-5 reveal text-center">
-            <div class="section-label" style="justify-content: center; margin-bottom: 10px;">Plans &amp; Pricing</div>
+        <div class="section-heading-wrap mb-5 reveal">
+            <div class="section-label">Plans &amp; Pricing</div>
             <h2 class="section-heading">@Html.Raw(pricingTitle)</h2>
         </div>
         <div class="row g-4 align-items-stretch">
@@ -822,8 +821,8 @@
 <!-- Additional Features Section -->
 <section id="additional-features" class="py-5">
     <div class="container">
-        <div class="section-heading-wrap mb-5 reveal text-center">
-            <div class="section-label" style="justify-content: center; margin-bottom: 10px;">More Capabilities</div>
+        <div class="section-heading-wrap mb-5 reveal">
+            <div class="section-label">More Capabilities</div>
             <h2 class="section-heading">@Html.Raw(featuresTitle)</h2>
         </div>
         <div class="row g-4">
