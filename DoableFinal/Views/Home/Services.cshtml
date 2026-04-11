@@ -52,468 +52,705 @@
     var feature4Body  = sections.FirstOrDefault(s => s.SectionKey == "services-feature4-body")?.Content  ?? "Generate comprehensive reports and insights to make informed decisions.";
 }
 
-<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;900&family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-
 <style>
-/* ── Tokens (matches Index + About) ── */
-:root {
-    --brand:       #0d6efd;
-    --brand-dark:  #0a58ca;
-    --ink:         #0d1117;
-    --ink-soft:    #4a5568;
-    --surface:     #f8f9fa;
-    --white:       #ffffff;
-    --rule:        rgba(13,110,253,.15);
-    --gold:        #f59e0b;
-    --green:       #10b981;
-    --font-display:'Playfair Display', Georgia, serif;
-    --font-hero:   'League Spartan', sans-serif;
-    --font-body:   'DM Sans', sans-serif;
-}
+    /* =============================================
+       SERVICES PAGE — #347deb theme (matches Index)
+       ============================================= */
 
-.svc-page * { box-sizing: border-box; }
-.svc-page { font-family: var(--font-body); color: var(--ink); }
+    /* ---------- Keyframes ---------- */
+    @@keyframes heroFadeUp {
+        from { opacity: 0; transform: translateY(40px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
 
-/* ══════════════════════════════════════
-   HERO
-══════════════════════════════════════ */
-.svc-hero {
-    position: relative;
-    background: var(--brand);
-    overflow: hidden;
-    padding: 96px 0 88px;
-}
-.svc-hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
-    background-size: 60px 60px;
-    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
-}
-.svc-hero::after {
-    content: '';
-    position: absolute;
-    top: -100px; left: 50%;
-    transform: translateX(-50%);
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(255,255,255,.12) 0%, transparent 70%);
-    pointer-events: none;
-}
-.svc-hero .container { position: relative; z-index: 1; }
+    @@keyframes heroFloat {
+        0%, 100% { transform: translateY(0px); }
+        50%       { transform: translateY(-10px); }
+    }
 
-.hero-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    font-size: .72rem;
-    font-weight: 500;
-    letter-spacing: .2em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.75);
-    margin-bottom: 20px;
-    animation: fadeUp .6s cubic-bezier(.22,1,.36,1) .05s both;
-}
-.hero-eyebrow span { display:inline-block; width:28px; height:1px; background:rgba(255,255,255,.6); }
+    @@keyframes shimmerMove {
+        0%   { background-position: -200% center; }
+        100% { background-position:  200% center; }
+    }
 
-.svc-hero h1 {
-    font-family: var(--font-hero);
-    letter-spacing: -2px;
-    font-size: clamp(2.6rem, 5.5vw, 4.5rem);
-    font-weight: 900;
-    color: var(--white);
-    line-height: 1.1;
-    margin-bottom: 20px;
-    animation: fadeUp .75s cubic-bezier(.22,1,.36,1) .15s both;
-}
-.svc-hero .hero-lead {
-    font-size: 1.1rem;
-    font-weight: 300;
-    color: rgba(255,255,255,.82);
-    line-height: 1.8;
-    animation: fadeUp .75s cubic-bezier(.22,1,.36,1) .28s both;
-}
-.svc-hero .hero-img-wrap {
-    animation: fadeUp .75s cubic-bezier(.22,1,.36,1) .35s both;
-}
+    @@keyframes orbDrift {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33%       { transform: translate(18px, -12px) scale(1.04); }
+        66%       { transform: translate(-10px, 8px) scale(0.97); }
+    }
 
-/* ══════════════════════════════════════
-   SHARED UTILITIES
-══════════════════════════════════════ */
-.section-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    font-size: .7rem;
-    font-weight: 500;
-    letter-spacing: .2em;
-    text-transform: uppercase;
-    color: var(--brand);
-    margin-bottom: 12px;
-}
-.section-label::before {
-    content: '';
-    display: inline-block;
-    width: 22px; height: 2px;
-    background: var(--brand);
-    border-radius: 1px;
-}
+    @@keyframes ctaPulse {
+        0%, 100% { box-shadow: 0 4px 20px rgba(52, 125, 235, 0.30); }
+        50%       { box-shadow: 0 8px 36px rgba(52, 125, 235, 0.52); }
+    }
 
-.section-heading {
-    font-family: var(--font-display);
-    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
-    font-weight: 700;
-    color: var(--ink);
-    position: relative;
-    display: inline-block;
-}
-.section-heading::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    bottom: -10px;
-    transform: translateX(-50%) scaleX(0);
-    width: 55%;
-    height: 3px;
-    background: var(--brand);
-    border-radius: 2px;
-    transition: transform .55s cubic-bezier(.22,1,.36,1) .3s;
-}
-.section-heading.visible::after { transform: translateX(-50%) scaleX(1); }
+    /* ---------- Hero Section (identical to Index) ---------- */
+    .hero-section {
+        background: linear-gradient(135deg, #0f2660 0%, #1a3f80 30%, #2360c8 65%, #347deb 100%) !important;
+        position: relative;
+        overflow: hidden;
+        min-height: 480px;
+        display: flex;
+        align-items: center;
+    }
 
-.heading-center { text-align: center; margin-bottom: 56px; }
+    .hero-section::before,
+    .hero-section::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+    }
 
-/* ══════════════════════════════════════
-   CORE SERVICES
-══════════════════════════════════════ */
-.svc-core { padding: 96px 0; background: var(--white); }
+    .hero-section::before {
+        width: 420px; height: 420px;
+        top: -120px; right: -100px;
+        background: rgba(255, 255, 255, 0.05);
+        animation: orbDrift 9s ease-in-out infinite;
+    }
 
-.core-card {
-    background: var(--white);
-    border-radius: 16px;
-    padding: 40px 32px;
-    height: 100%;
-    border: 1px solid var(--rule);
-    position: relative;
-    overflow: hidden;
-    transition: transform .3s cubic-bezier(.34,1.56,.64,1),
-                box-shadow .3s ease,
-                border-color .3s ease;
-}
-.core-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 4px;
-    background: linear-gradient(90deg, var(--brand), var(--brand-dark));
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform .4s cubic-bezier(.22,1,.36,1);
-}
-.core-card:hover {
-    transform: translateY(-8px) scale(1.01);
-    box-shadow: 0 20px 50px rgba(13,110,253,.12);
-    border-color: transparent;
-}
-.core-card:hover::before { transform: scaleX(1); }
+    .hero-section::after {
+        width: 280px; height: 280px;
+        bottom: -80px; left: -60px;
+        background: rgba(255, 255, 255, 0.04);
+        animation: orbDrift 12s ease-in-out infinite reverse;
+    }
 
-.core-card .bi {
-    font-size: 2.5rem;
-    color: var(--brand);
-    display: inline-block;
-    margin-bottom: 20px;
-    transition: transform .4s cubic-bezier(.34,1.56,.64,1);
-}
-.core-card:hover .bi { transform: rotate(8deg) scale(1.15); }
+    .hero-section .container::after {
+        content: '';
+        display: block;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        background-size: 200% auto;
+        animation: shimmerMove 3s linear infinite;
+        margin-top: 2rem;
+        border-radius: 2px;
+    }
 
-.core-card h3 {
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 12px;
-}
-.core-card p {
-    font-size: .95rem;
-    font-weight: 300;
-    color: var(--ink-soft);
-    line-height: 1.8;
-    margin: 0;
-}
+    .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: .72rem;
+        font-weight: 500;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.75);
+        margin-bottom: 20px;
+        animation: heroFadeUp .6s cubic-bezier(.22,1,.36,1) .05s both;
+    }
 
-/* ══════════════════════════════════════
-   PRICING
-══════════════════════════════════════ */
-.svc-pricing {
-    padding: 96px 0;
-    background: var(--surface);
-    position: relative;
-    overflow: hidden;
-}
-.svc-pricing::before {
-    content: '';
-    position: absolute;
-    top: 0; right: 0;
-    width: 40%; height: 100%;
-    background: linear-gradient(135deg, transparent 45%, rgba(13,110,253,.03) 45%);
-    pointer-events: none;
-}
+    .hero-eyebrow span {
+        display: inline-block;
+        width: 28px; height: 1px;
+        background: rgba(255, 255, 255, 0.6);
+    }
 
-.pricing-card {
-    background: var(--white);
-    border-radius: 20px;
-    padding: 44px 36px;
-    height: 100%;
-    border: 1px solid var(--rule);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
-}
-.pricing-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 24px 60px rgba(13,110,253,.1);
-}
+    .hero-title-anim {
+        animation: heroFadeUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+    }
 
-/* featured / elite card */
-.pricing-card.is-featured {
-    border: 2px solid var(--brand);
-    box-shadow: 0 8px 40px rgba(13,110,253,.14);
-}
-.pricing-card.is-featured:hover {
-    box-shadow: 0 24px 60px rgba(13,110,253,.2);
-}
+    .hero-section h1 {
+        text-shadow: 0 2px 16px rgba(10, 30, 80, 0.25);
+    }
 
-.pricing-badge {
-    position: absolute;
-    top: -14px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--brand);
-    color: var(--white);
-    font-size: .7rem;
-    font-weight: 500;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    padding: 4px 16px;
-    border-radius: 20px;
-    white-space: nowrap;
-}
+    .hero-body-anim {
+        animation: heroFadeUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+    }
 
-.pricing-plan-name {
-    font-family: var(--font-display);
-    font-size: 1.6rem;
-    font-weight: 900;
-    letter-spacing: -.01em;
-    margin-bottom: 8px;
-}
-.plan-standard  { color: var(--brand); }
-.plan-elite     { color: var(--gold); }
-.plan-enterprise{ color: var(--green); }
+    .hero-section .lead {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.88);
+        line-height: 1.7;
+        max-width: 600px;
+    }
 
-.pricing-price {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--ink);
-    margin-bottom: 4px;
-}
-.pricing-users {
-    font-size: .88rem;
-    color: var(--ink-soft);
-    margin-bottom: 4px;
-}
-.pricing-support {
-    font-size: .8rem;
-    color: var(--ink-soft);
-    margin-bottom: 28px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--rule);
-}
-.pricing-features-label {
-    font-size: .72rem;
-    font-weight: 500;
-    letter-spacing: .15em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    margin-bottom: 14px;
-}
-.pricing-features {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 24px;
-    flex: 1;
-}
-.pricing-features li {
-    font-size: .88rem;
-    font-weight: 300;
-    color: var(--ink-soft);
-    padding: 5px 0;
-    border-bottom: 1px solid rgba(0,0,0,.04);
-    line-height: 1.55;
-}
-.pricing-fee {
-    font-size: .85rem;
-    font-weight: 500;
-    color: var(--ink);
-    background: var(--surface);
-    border-radius: 8px;
-    padding: 10px 14px;
-    text-align: center;
-    margin-top: auto;
-}
+    .hero-img-anim {
+        animation: heroFloat 4s ease-in-out infinite,
+                   heroFadeUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+    }
 
-/* ══════════════════════════════════════
-   ADDITIONAL FEATURES
-══════════════════════════════════════ */
-.svc-features { padding: 96px 0; background: var(--white); }
+    .hero-img-anim img {
+        box-shadow: 0 12px 48px rgba(10, 30, 80, 0.30);
+        border: 2px solid rgba(255,255,255,0.15);
+    }
 
-.feat-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 20px;
-    padding: 28px;
-    border-radius: 14px;
-    border: 1px solid var(--rule);
-    background: var(--white);
-    transition: transform .3s cubic-bezier(.34,1.56,.64,1),
-                box-shadow .3s ease, border-color .3s ease;
-    height: 100%;
-}
-.feat-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 16px 40px rgba(13,110,253,.1);
-    border-color: transparent;
-}
-.feat-icon {
-    flex-shrink: 0;
-    width: 48px; height: 48px;
-    border-radius: 12px;
-    background: rgba(13,110,253,.08);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem;
-    color: var(--brand);
-    transition: background .3s, transform .4s cubic-bezier(.34,1.56,.64,1);
-}
-.feat-item:hover .feat-icon {
-    background: var(--brand);
-    color: var(--white);
-    transform: rotate(8deg) scale(1.1);
-}
-.feat-item h4 {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--ink);
-    margin-bottom: 6px;
-}
-.feat-item p {
-    font-size: .92rem;
-    font-weight: 300;
-    color: var(--ink-soft);
-    line-height: 1.75;
-    margin: 0;
-}
+    /* ---------- Scroll Reveal (identical to Index) ---------- */
+    .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    }
 
-/* ══════════════════════════════════════
-   SCROLL REVEAL
-══════════════════════════════════════ */
-.reveal {
-    opacity: 0;
-    transform: translateY(28px);
-    transition: opacity .65s cubic-bezier(.22,1,.36,1),
-                transform .65s cubic-bezier(.22,1,.36,1);
-}
-.reveal.visible { opacity: 1; transform: translateY(0); }
-.reveal-delay-1 { transition-delay: .12s; }
-.reveal-delay-2 { transition-delay: .24s; }
-.reveal-delay-3 { transition-delay: .36s; }
-.reveal-delay-4 { transition-delay: .18s; }
-.reveal-delay-5 { transition-delay: .30s; }
+    .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
-@@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
+    .reveal-delay-1 { transition-delay: 0.10s; }
+    .reveal-delay-2 { transition-delay: 0.22s; }
+    .reveal-delay-3 { transition-delay: 0.34s; }
+    .reveal-delay-4 { transition-delay: 0.18s; }
+    .reveal-delay-5 { transition-delay: 0.30s; }
+
+    /* ---------- Section Label ---------- */
+    .section-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: .7rem;
+        font-weight: 500;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+        color: #347deb;
+        margin-bottom: 14px;
+    }
+
+    .section-label::before {
+        content: '';
+        display: inline-block;
+        width: 22px; height: 2px;
+        background: #347deb;
+        border-radius: 1px;
+    }
+
+    /* ---------- Section Headings (matches Index) ---------- */
+    .section-heading-wrap {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .section-heading {
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #1a3f80;
+        letter-spacing: -0.4px;
+        position: relative;
+        display: inline-block;
+    }
+
+    .section-heading::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: -8px;
+        transform: translateX(-50%) scaleX(0);
+        width: 55%;
+        height: 3px;
+        background: linear-gradient(90deg, #347deb, #60aaff);
+        border-radius: 2px;
+        transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.3s;
+    }
+
+    .section-heading.visible::after {
+        transform: translateX(-50%) scaleX(1);
+    }
+
+    /* ---------- Core Services (matches Index feature-card exactly) ---------- */
+    #core-services {
+        background: #ffffff;
+        padding: 5rem 0;
+    }
+
+    .feature-card {
+        border-radius: 18px !important;
+        border: 1px solid rgba(52, 125, 235, 0.08) !important;
+        background: #fff;
+        box-shadow: 0 2px 18px rgba(52, 125, 235, 0.08) !important;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    box-shadow 0.3s ease;
+        cursor: default;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #1a3f80, #347deb, #60aaff);
+        background-size: 200% auto;
+        animation: shimmerMove 3.5s linear infinite;
+        border-radius: 18px 18px 0 0;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .feature-card:hover::before {
+        opacity: 1;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 18px 44px rgba(52, 125, 235, 0.16) !important;
+    }
+
+    .feature-card .card-body {
+        padding: 2.2rem 1.5rem 2rem;
+    }
+
+    .feature-card .bi {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 72px; height: 72px;
+        border-radius: 50%;
+        background: rgba(52, 125, 235, 0.10);
+        color: #347deb !important;
+        font-size: 2rem !important;
+        margin-bottom: 1.2rem;
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    background 0.3s;
+    }
+
+    .feature-card:hover .bi {
+        transform: rotate(10deg) scale(1.18);
+        background: rgba(52, 125, 235, 0.18);
+    }
+
+    .feature-card h3.h5 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1a3f80;
+        margin-bottom: 0.6rem;
+    }
+
+    .feature-card p {
+        font-size: 0.88rem;
+        color: #6b84b0;
+        line-height: 1.65;
+        margin: 0;
+    }
+
+    /* ---------- Pricing Section ---------- */
+    #pricing {
+        background: #f4f7fd;
+        padding: 5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #pricing::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0;
+        width: 40%; height: 100%;
+        background: linear-gradient(135deg, transparent 45%, rgba(52, 125, 235, 0.04) 45%);
+        pointer-events: none;
+    }
+
+    .pricing-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 44px 36px;
+        height: 100%;
+        border: 1px solid rgba(52, 125, 235, 0.08);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 2px 18px rgba(52, 125, 235, 0.08);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    box-shadow 0.3s ease;
+        overflow: hidden;
+    }
+
+    .pricing-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #1a3f80, #347deb, #60aaff);
+        background-size: 200% auto;
+        animation: shimmerMove 3.5s linear infinite;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .pricing-card:hover::before {
+        opacity: 1;
+    }
+
+    .pricing-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 18px 44px rgba(52, 125, 235, 0.16);
+    }
+
+    .pricing-card.is-featured {
+        border: 2px solid #347deb;
+        box-shadow: 0 8px 40px rgba(52, 125, 235, 0.14);
+    }
+
+    .pricing-card.is-featured::before {
+        opacity: 1;
+    }
+
+    .pricing-card.is-featured:hover {
+        box-shadow: 0 24px 60px rgba(52, 125, 235, 0.24);
+    }
+
+    .pricing-badge {
+        position: absolute;
+        top: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #347deb, #1a3f80);
+        color: #fff;
+        font-size: .7rem;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        padding: 4px 18px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .pricing-plan-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        margin-bottom: 10px;
+    }
+
+    .plan-standard  { color: #347deb; }
+    .plan-elite     { color: #f59e0b; }
+    .plan-enterprise{ color: #10b981; }
+
+    .pricing-price {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1a3f80;
+        margin-bottom: 4px;
+    }
+
+    .pricing-users {
+        font-size: .88rem;
+        color: #6b84b0;
+        margin-bottom: 4px;
+    }
+
+    .pricing-support {
+        font-size: .8rem;
+        color: #6b84b0;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(52, 125, 235, 0.10);
+    }
+
+    .pricing-features-label {
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+        color: #1a3f80;
+        margin-bottom: 14px;
+    }
+
+    .pricing-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 24px;
+        flex: 1;
+    }
+
+    .pricing-features li {
+        font-size: .88rem;
+        color: #6b84b0;
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(52, 125, 235, 0.05);
+        line-height: 1.6;
+    }
+
+    .pricing-fee {
+        font-size: .85rem;
+        font-weight: 600;
+        color: #1a3f80;
+        background: #f4f7fd;
+        border-radius: 10px;
+        padding: 10px 14px;
+        text-align: center;
+        margin-top: auto;
+    }
+
+    /* ---------- Additional Features ---------- */
+    #additional-features {
+        background: #ffffff;
+        padding: 5rem 0;
+    }
+
+    .feat-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 28px;
+        border-radius: 18px;
+        border: 1px solid rgba(52, 125, 235, 0.08);
+        background: #fff;
+        box-shadow: 0 2px 18px rgba(52, 125, 235, 0.07);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    box-shadow 0.3s ease;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feat-item::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #1a3f80, #347deb, #60aaff);
+        background-size: 200% auto;
+        animation: shimmerMove 3.5s linear infinite;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .feat-item:hover::before {
+        opacity: 1;
+    }
+
+    .feat-item:hover {
+        transform: translateY(-6px) scale(1.01);
+        box-shadow: 0 18px 44px rgba(52, 125, 235, 0.14);
+    }
+
+    .feat-icon {
+        flex-shrink: 0;
+        width: 56px; height: 56px;
+        border-radius: 50%;
+        background: rgba(52, 125, 235, 0.10);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        color: #347deb;
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    background 0.3s;
+    }
+
+    .feat-item:hover .feat-icon {
+        transform: rotate(10deg) scale(1.18);
+        background: rgba(52, 125, 235, 0.18);
+    }
+
+    .feat-item h4 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1a3f80;
+        margin-bottom: 6px;
+    }
+
+    .feat-item p {
+        font-size: .88rem;
+        color: #6b84b0;
+        line-height: 1.7;
+        margin: 0;
+    }
+
+    /* ---------- CTA Section (identical to Index) ---------- */
+    .bg-light.py-5 {
+        background: linear-gradient(160deg, #eef3fc 0%, #f8faff 50%, #e6eef9 100%) !important;
+        padding: 5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bg-light.py-5::before {
+        content: '';
+        position: absolute;
+        top: -80px; right: -80px;
+        width: 300px; height: 300px;
+        border-radius: 50%;
+        background: rgba(52, 125, 235, 0.06);
+        pointer-events: none;
+    }
+
+    .bg-light.py-5 h2 {
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #1a3f80;
+        letter-spacing: -0.3px;
+    }
+
+    .bg-light.py-5 .lead {
+        font-size: 1rem;
+        color: #6b84b0;
+        max-width: 540px;
+        margin: 0 auto 1.5rem;
+        line-height: 1.7;
+    }
+
+    .cta-btn,
+    .bg-light.py-5 .btn-primary {
+        background: linear-gradient(135deg, #347deb, #1a3f80);
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 0.8rem 2.2rem;
+        letter-spacing: 0.2px;
+        animation: ctaPulse 2.8s ease-in-out infinite;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    box-shadow 0.25s ease, background 0.2s;
+    }
+
+    .cta-btn:hover,
+    .bg-light.py-5 .btn-primary:hover {
+        background: linear-gradient(135deg, #1f62cc, #12317a);
+        border: none;
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 12px 36px rgba(52, 125, 235, 0.45) !important;
+    }
+
+    /* ---------- Admin Edit Banner (matches Index) ---------- */
+    .alert-info {
+        background: rgba(52, 125, 235, 0.09);
+        border: 1px solid rgba(52, 125, 235, 0.20);
+        border-radius: 0;
+        color: #1a3f80;
+        font-size: 0.88rem;
+        text-align: center;
+    }
+
+    .alert-info .btn-primary {
+        background: linear-gradient(135deg, #347deb, #1a3f80);
+        border: none;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 0.35rem 0.9rem;
+        animation: none;
+        box-shadow: none;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .alert-info .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(52, 125, 235, 0.30);
+    }
+
+    /* ---------- Responsive ---------- */
+    @@media (max-width: 768px) {
+        .hero-section {
+            min-height: auto;
+            padding: 3.5rem 0;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 3rem !important;
+        }
+
+        .hero-section .lead {
+            font-size: 0.95rem;
+        }
+
+        .section-heading {
+            font-size: 1.5rem;
+        }
+
+        .feature-card .bi {
+            width: 58px; height: 58px;
+            font-size: 1.6rem !important;
+        }
+
+        .pricing-card {
+            padding: 32px 24px;
+        }
+
+        .feat-item {
+            flex-direction: column;
+        }
+
+        .bg-light.py-5 h2 {
+            font-size: 1.5rem;
+        }
+    }
 </style>
-
-<div class="svc-page">
 
 @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
 {
-    <div class="alert alert-info mb-0 rounded-0">
-        <div class="container">
-            <a asp-controller="Admin" asp-action="ManageServicesPage" class="btn btn-sm btn-primary">
-                <i class="bi bi-pencil-square me-1"></i> Edit Services Content
-            </a>
-        </div>
+    <div class="alert alert-info mb-0">
+        <a asp-controller="Admin" asp-action="ManageServicesPage" class="btn btn-sm btn-primary">
+            <i class="bi bi-pencil-square me-1"></i> Edit Services Content
+        </a>
     </div>
 }
 
-<!-- ── HERO ── -->
-<section class="svc-hero">
+<!-- Hero Section -->
+<section class="hero-section bg-primary text-white py-5 d-flex align-items-center">
     <div class="container">
         <div class="row align-items-center gy-5">
-            <div class="col-lg-7 text-lg-start text-center">
+            <div class="@(!string.IsNullOrEmpty(heroImage) ? "col-lg-7" : "col-lg-8 mx-auto text-center")">
                 <div class="hero-eyebrow"><span></span> What We Offer <span></span></div>
-                <h1>@Html.Raw(heroTitle)</h1>
-                <p class="hero-lead">@Html.Raw(heroBody)</p>
+                <div class="hero-title-anim">
+                    <h1 class="display-4 fw-bold mb-4" style="font-family:'League Spartan', sans-serif; letter-spacing:-3px; font-size:4.5rem">
+                        @Html.Raw(heroTitle)
+                    </h1>
+                </div>
+                <div class="hero-body-anim">
+                    <p class="lead mb-4">@Html.Raw(heroBody)</p>
+                </div>
             </div>
             @if (!string.IsNullOrEmpty(heroImage))
             {
-                <div class="col-lg-5 text-center hero-img-wrap">
-                    <img src="@heroImage" alt="Our Services" class="img-fluid rounded-3 shadow-lg">
+                <div class="col-lg-5 text-center hero-img-anim">
+                    <img src="@heroImage" alt="Our Services" class="img-fluid rounded-3" />
                 </div>
             }
         </div>
     </div>
 </section>
 
-<!-- ── CORE SERVICES ── -->
-<section class="svc-core">
+<!-- Core Services Section -->
+<section id="core-services" class="py-5">
     <div class="container">
-        <div class="heading-center reveal">
-            <div class="section-label" style="justify-content:center;">What We Do</div>
+        <div class="section-heading-wrap mb-5 reveal text-center">
+            <div class="section-label" style="justify-content: center; margin-bottom: 10px;">What We Do</div>
             <h2 class="section-heading">@Html.Raw(coreTitle)</h2>
         </div>
         <div class="row g-4">
             <div class="col-md-4 reveal reveal-delay-1">
-                <div class="core-card">
-                    <i class="bi bi-kanban"></i>
-                    <h3>@Html.Raw(service1Title)</h3>
-                    <p>@Html.Raw(service1Body)</p>
+                <div class="card h-100 border-0 shadow-sm feature-card">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-kanban display-4 text-primary mb-3"></i>
+                        <h3 class="h5">@Html.Raw(service1Title)</h3>
+                        <p>@Html.Raw(service1Body)</p>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4 reveal reveal-delay-2">
-                <div class="core-card">
-                    <i class="bi bi-people"></i>
-                    <h3>@Html.Raw(service2Title)</h3>
-                    <p>@Html.Raw(service2Body)</p>
+                <div class="card h-100 border-0 shadow-sm feature-card">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-people display-4 text-primary mb-3"></i>
+                        <h3 class="h5">@Html.Raw(service2Title)</h3>
+                        <p>@Html.Raw(service2Body)</p>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4 reveal reveal-delay-3">
-                <div class="core-card">
-                    <i class="bi bi-graph-up"></i>
-                    <h3>@Html.Raw(service3Title)</h3>
-                    <p>@Html.Raw(service3Body)</p>
+                <div class="card h-100 border-0 shadow-sm feature-card">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-graph-up display-4 text-primary mb-3"></i>
+                        <h3 class="h5">@Html.Raw(service3Title)</h3>
+                        <p>@Html.Raw(service3Body)</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- ── PRICING ── -->
-<section class="svc-pricing">
+<!-- Pricing Section -->
+<section id="pricing" class="py-5">
     <div class="container">
-        <div class="heading-center reveal">
-            <div class="section-label" style="justify-content:center;">Plans & Pricing</div>
+        <div class="section-heading-wrap mb-5 reveal text-center">
+            <div class="section-label" style="justify-content: center; margin-bottom: 10px;">Plans &amp; Pricing</div>
             <h2 class="section-heading">@Html.Raw(pricingTitle)</h2>
         </div>
         <div class="row g-4 align-items-stretch">
 
-            <!-- STANDARD -->
+            <!-- Standard -->
             <div class="col-md-4 reveal reveal-delay-1">
                 <div class="pricing-card">
                     <div class="pricing-plan-name plan-standard">@Html.Raw(standardTitle)</div>
@@ -525,14 +762,16 @@
                         @foreach (var line in standardFeatures.Split('\n'))
                         {
                             if (!string.IsNullOrWhiteSpace(line))
-                            { <li>@line</li> }
+                            {
+                                <li>@line</li>
+                            }
                         }
                     </ul>
                     <div class="pricing-fee">@Html.Raw(standardFee)</div>
                 </div>
             </div>
 
-            <!-- ELITE -->
+            <!-- Elite -->
             <div class="col-md-4 reveal reveal-delay-2">
                 <div class="pricing-card is-featured">
                     <div class="pricing-badge">Most Popular</div>
@@ -545,14 +784,16 @@
                         @foreach (var line in eliteFeatures.Split('\n'))
                         {
                             if (!string.IsNullOrWhiteSpace(line))
-                            { <li>@line</li> }
+                            {
+                                <li>@line</li>
+                            }
                         }
                     </ul>
                     <div class="pricing-fee">@Html.Raw(eliteFee)</div>
                 </div>
             </div>
 
-            <!-- ENTERPRISE -->
+            <!-- Enterprise -->
             <div class="col-md-4 reveal reveal-delay-3">
                 <div class="pricing-card">
                     <div class="pricing-plan-name plan-enterprise">@Html.Raw(enterpriseTitle)</div>
@@ -565,7 +806,9 @@
                         @foreach (var line in enterpriseFeatures.Split('\n'))
                         {
                             if (!string.IsNullOrWhiteSpace(line))
-                            { <li>@line</li> }
+                            {
+                                <li>@line</li>
+                            }
                         }
                     </ul>
                     <div class="pricing-fee">@Html.Raw(enterpriseFee)</div>
@@ -576,11 +819,11 @@
     </div>
 </section>
 
-<!-- ── ADDITIONAL FEATURES ── -->
-<section class="svc-features">
+<!-- Additional Features Section -->
+<section id="additional-features" class="py-5">
     <div class="container">
-        <div class="heading-center reveal">
-            <div class="section-label" style="justify-content:center;">More Capabilities</div>
+        <div class="section-heading-wrap mb-5 reveal text-center">
+            <div class="section-label" style="justify-content: center; margin-bottom: 10px;">More Capabilities</div>
             <h2 class="section-heading">@Html.Raw(featuresTitle)</h2>
         </div>
         <div class="row g-4">
@@ -624,20 +867,36 @@
     </div>
 </section>
 
-</div><!-- /svc-page -->
+<!-- CTA Section -->
+<section class="bg-light py-5">
+    <div class="container text-center">
+        <h2 class="mb-4 reveal">Ready to Get Started?</h2>
+        <p class="lead mb-4 reveal reveal-delay-1">Join thousands of teams already using our platform to manage their projects.</p>
+        <div class="reveal reveal-delay-2">
+            <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg cta-btn">Create Free Account</a>
+        </div>
+    </div>
+</section>
 
 <script>
-(function () {
-    const targets = document.querySelectorAll('.reveal, .section-heading');
-    if (!targets.length) return;
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.12 });
-    targets.forEach(el => observer.observe(el));
-})();
+    (function () {
+        const targets = document.querySelectorAll('.reveal');
+        if (!targets.length) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        const heading = entry.target.querySelector('.section-heading');
+                        if (heading) heading.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            },
+            { threshold: 0.15 }
+        );
+
+        targets.forEach((el) => observer.observe(el));
+    })();
 </script>
