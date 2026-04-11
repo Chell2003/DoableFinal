@@ -84,6 +84,51 @@
         50%       { box-shadow: 0 8px 36px rgba(52, 125, 235, 0.52); }
     }
 
+    .landing-header {
+        box-shadow: 0 2px 16px rgba(52, 125, 235, 0.08) !important;
+        border-bottom: 1px solid rgba(52, 125, 235, 0.10) !important;
+    }
+
+    .landing-header .navbar-brand img {
+        transition: transform 0.2s;
+    }
+
+    .landing-header .navbar-brand img:hover {
+        transform: scale(1.04);
+    }
+
+    .landing-header .nav-link.text-dark {
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #2d3a55 !important;
+        padding: 0.4rem 0.9rem;
+        border-radius: 8px;
+        transition: background 0.18s, color 0.18s;
+        position: relative;
+    }
+
+    .landing-header .nav-link.text-dark::after {
+        content: '';
+        position: absolute;
+        bottom: 2px;
+        left: 50%;
+        transform: translateX(-50%) scaleX(0);
+        width: 60%;
+        height: 2px;
+        background: #347deb;
+        border-radius: 2px;
+        transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .landing-header .nav-link.text-dark:hover {
+        color: #347deb !important;
+        background: rgba(52, 125, 235, 0.07);
+    }
+
+    .landing-header .nav-link.text-dark:hover::after {
+        transform: translateX(-50%) scaleX(1);
+    }
+
     /* ---------- Hero Section (identical to Index) ---------- */
     .hero-section {
         background: linear-gradient(135deg, #0f2660 0%, #1a3f80 30%, #2360c8 65%, #347deb 100%) !important;
