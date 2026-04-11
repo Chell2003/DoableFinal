@@ -109,13 +109,16 @@
 </head>
 <body>
     <!-- Header -->
-    <div class="print-header">
-        <h1>Status Report</h1>
-        <div class="report-meta">
-            <strong>Project:</strong> @Model.ProjectName<br>
-            <strong>Generated:</strong> @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC<br>
-            <strong>Completion:</strong> @Math.Round(Model.CompletionPercentage, 1)%
+    <div class="print-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h1>Status Report</h1>
+            <div class="report-meta">
+                <strong>Project:</strong> @Model.ProjectName<br>
+                <strong>Generated:</strong> @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC<br>
+                <strong>Completion:</strong> @Math.Round(Model.CompletionPercentage, 1)%
+            </div>
         </div>
+        <img src="~/images/logo-combined2.png" alt="Logo" style="height: 60px; object-fit: contain;" />
     </div>
 
     <!-- Summary Section -->
