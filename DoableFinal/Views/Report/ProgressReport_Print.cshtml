@@ -150,13 +150,16 @@
 </head>
 <body>
     <!-- Header -->
-    <div class="print-header">
+    <div class="print-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
         <h1>Progress Report</h1>
         <div class="report-meta">
             <strong>Project:</strong> @Model.ProjectName<br>
             <strong>Status:</strong> @Model.ProjectStatus<br>
             <strong>Generated:</strong> @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC
         </div>
+    </div>
+    <img src="~/images/logo-combined2.png" alt="Logo" style="height: 60px; object-fit: contain;" />
     </div>
 
     <!-- Health Indicator Section -->
