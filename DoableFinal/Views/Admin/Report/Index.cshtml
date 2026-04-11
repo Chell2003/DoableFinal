@@ -149,15 +149,453 @@
 </div>
 
 <style>
-    .report-card {
-        transition: transform 0.2s, box-shadow 0.2s;
-        cursor: default;
+    /* =============================================
+   REPORTS PAGE — #347deb theme
+   ============================================= */
+
+/* ---------- Keyframes ---------- */
+@keyframes rptFadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rptIconFloat {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-5px); }
+}
+
+@keyframes rptShimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+}
+
+@keyframes rptGlow {
+    0%, 100% { box-shadow: 0 4px 20px rgba(52, 125, 235, 0.10); }
+    50%       { box-shadow: 0 8px 32px rgba(52, 125, 235, 0.22); }
+}
+
+/* ---------- Page Header ---------- */
+.container-fluid h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a3f80;
+    letter-spacing: -0.4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: rptFadeUp 0.4s ease both;
+}
+
+.container-fluid h1 .fas,
+.container-fluid h1 .fa-chart-bar {
+    color: #347deb;
+    font-size: 1.4rem;
+}
+
+/* ---------- Report Type Cards ---------- */
+.report-card {
+    border-radius: 18px !important;
+    border: none !important;
+    background: #fff;
+    box-shadow: 0 2px 18px rgba(52, 125, 235, 0.08);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+    animation: rptFadeUp 0.45s ease both;
+}
+
+.col-md-6:nth-child(1) .report-card { animation-delay: 0.05s; }
+.col-md-6:nth-child(2) .report-card { animation-delay: 0.10s; }
+.col-md-6:nth-child(3) .report-card { animation-delay: 0.15s; }
+.col-md-6:nth-child(4) .report-card { animation-delay: 0.20s; }
+
+/* Top shimmer accent per card */
+.report-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background-size: 200% auto;
+    animation: rptShimmer 3s linear infinite;
+    border-radius: 18px 18px 0 0;
+}
+
+/* Decorative background circle */
+.report-card::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; right: -30px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.08;
+}
+
+/* Status Report — blue */
+.report-card.border-primary::before {
+    background: linear-gradient(90deg, #1a3f80, #347deb, #60aaff);
+}
+.report-card.border-primary::after {
+    background: #347deb;
+}
+
+/* Time Tracking — teal/info */
+.report-card.border-info::before {
+    background: linear-gradient(90deg, #085041, #1d9e75, #5dcaa5);
+}
+.report-card.border-info::after {
+    background: #1d9e75;
+}
+
+/* Workload Report — amber */
+.report-card.border-warning::before {
+    background: linear-gradient(90deg, #633806, #ba7517, #ef9f27);
+}
+.report-card.border-warning::after {
+    background: #ba7517;
+}
+
+/* Progress Report — green */
+.report-card.border-success::before {
+    background: linear-gradient(90deg, #173404, #3b6d11, #639922);
+}
+.report-card.border-success::after {
+    background: #3b6d11;
+}
+
+.report-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 36px rgba(52, 125, 235, 0.16);
+}
+
+.report-card .card-body {
+    padding: 2rem 1.25rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Floating icon animation on hover */
+.report-card:hover .fas {
+    animation: rptIconFloat 1.4s ease-in-out infinite;
+}
+
+/* Icon colors */
+.report-card .fa-tasks      { color: #347deb !important; }
+.report-card .fa-clock      { color: #1d9e75 !important; }
+.report-card .fa-users      { color: #ba7517 !important; }
+.report-card .fa-chart-pie  { color: #3b6d11 !important; }
+
+/* Icon wrapper circle */
+.report-card .fas.fa-3x {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem !important;
+    transition: transform 0.2s;
+}
+
+.report-card.border-primary  .fas.fa-3x { background: rgba(52, 125, 235, 0.10); }
+.report-card.border-info     .fas.fa-3x { background: rgba(29, 158, 117, 0.10); }
+.report-card.border-warning  .fas.fa-3x { background: rgba(186, 117, 23, 0.10); }
+.report-card.border-success  .fas.fa-3x { background: rgba(59, 109, 17, 0.10); }
+
+.report-card:hover .fas.fa-3x {
+    transform: scale(1.10);
+}
+
+.report-card .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a3f80;
+    margin: 0;
+    text-align: center;
+}
+
+.report-card .card-text {
+    font-size: 0.82rem;
+    color: #6b84b0;
+    text-align: center;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ---------- Project Selection Card ---------- */
+.container-fluid .row.mb-4:last-of-type .card,
+.container-fluid .col-md-12 .card {
+    border: 1px solid rgba(52, 125, 235, 0.10);
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(52, 125, 235, 0.07);
+    overflow: hidden;
+    animation: rptFadeUp 0.45s 0.25s ease both;
+}
+
+.card .card-header.bg-light {
+    background: linear-gradient(90deg, #1a3f80, #2360c8, #347deb) !important;
+    border-bottom: none;
+    padding: 0.9rem 1.25rem;
+    position: relative;
+}
+
+.card .card-header.bg-light h5 {
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.card .card-body {
+    padding: 1.4rem 1.5rem;
+    background: #fff;
+}
+
+/* Form labels */
+.form-label {
+    font-size: 0.80rem;
+    font-weight: 600;
+    color: #1a3f80;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.35rem;
+}
+
+/* Select */
+.form-select {
+    border: 1.5px solid rgba(52, 125, 235, 0.20);
+    border-radius: 10px;
+    font-size: 0.88rem;
+    color: #2d3a55;
+    padding: 0.55rem 0.9rem;
+    background-color: #f8faff;
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.form-select:focus {
+    border-color: #347deb;
+    box-shadow: 0 0 0 3px rgba(52, 125, 235, 0.15);
+    background: #fff;
+    outline: none;
+}
+
+/* ---------- Primary Buttons ---------- */
+.btn-primary {
+    background: linear-gradient(135deg, #347deb, #1a3f80);
+    border: none;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.55rem 1rem;
+    box-shadow: 0 3px 12px rgba(52, 125, 235, 0.28);
+    transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1f62cc, #12317a);
+    border: none;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 125, 235, 0.36);
+}
+
+.btn-primary:disabled {
+    background: linear-gradient(135deg, #b0c8f5, #8aaee0);
+    border: none;
+    opacity: 1;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+/* ---------- Report Action Buttons ---------- */
+#reportButtons {
+    border-top: 1px solid rgba(52, 125, 235, 0.10);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+/* Shared outline button base */
+.btn-outline-primary,
+.btn-outline-info,
+.btn-outline-warning,
+.btn-outline-success {
+    border-width: 1.5px;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    padding: 0.55rem 0.9rem;
+    transition: background 0.18s, color 0.18s, transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-info:hover,
+.btn-outline-warning:hover,
+.btn-outline-success:hover {
+    transform: translateY(-2px);
+}
+
+/* Status Report */
+.btn-outline-primary {
+    border-color: #347deb;
+    color: #1a3f80;
+    background: rgba(52, 125, 235, 0.05);
+}
+.btn-outline-primary:hover {
+    background: #347deb;
+    color: #fff;
+    border-color: #347deb;
+    box-shadow: 0 4px 14px rgba(52, 125, 235, 0.30);
+}
+
+/* Time Tracking */
+.btn-outline-info {
+    border-color: #1d9e75;
+    color: #0f6e56;
+    background: rgba(29, 158, 117, 0.05);
+}
+.btn-outline-info:hover {
+    background: #1d9e75;
+    color: #fff;
+    border-color: #1d9e75;
+    box-shadow: 0 4px 14px rgba(29, 158, 117, 0.28);
+}
+
+/* Workload Report */
+.btn-outline-warning {
+    border-color: #ba7517;
+    color: #854f0b;
+    background: rgba(186, 117, 23, 0.05);
+}
+.btn-outline-warning:hover {
+    background: #ba7517;
+    color: #fff;
+    border-color: #ba7517;
+    box-shadow: 0 4px 14px rgba(186, 117, 23, 0.28);
+}
+
+/* Progress Report */
+.btn-outline-success {
+    border-color: #3b6d11;
+    color: #27500a;
+    background: rgba(59, 109, 17, 0.05);
+}
+.btn-outline-success:hover {
+    background: #3b6d11;
+    color: #fff;
+    border-color: #3b6d11;
+    box-shadow: 0 4px 14px rgba(59, 109, 17, 0.25);
+}
+
+/* ---------- Alert ---------- */
+.alert-info {
+    background: rgba(52, 125, 235, 0.08);
+    border: 1px solid rgba(52, 125, 235, 0.20);
+    border-radius: 10px;
+    color: #1a3f80;
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
+.alert-info .fas {
+    color: #347deb;
+    margin-right: 6px;
+}
+
+/* ---------- Time Tracking Modal ---------- */
+.modal-content {
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 12px 48px rgba(52, 125, 235, 0.18);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(90deg, #1a3f80, #347deb);
+    border-bottom: none;
+    padding: 1.1rem 1.4rem;
+}
+
+.modal-title {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.8;
+}
+
+.modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    background: #fff;
+}
+
+.modal-body .form-control {
+    border: 1.5px solid rgba(52, 125, 235, 0.20);
+    border-radius: 10px;
+    font-size: 0.88rem;
+    color: #2d3a55;
+    padding: 0.55rem 0.9rem;
+    background: #f8faff;
+    transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.modal-body .form-control:focus {
+    border-color: #347deb;
+    box-shadow: 0 0 0 3px rgba(52, 125, 235, 0.15);
+    background: #fff;
+    outline: none;
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(52, 125, 235, 0.10);
+    padding: 0.9rem 1.4rem;
+    gap: 8px;
+    background: #fff;
+}
+
+.modal-footer .btn-secondary {
+    background: rgba(52, 125, 235, 0.08);
+    color: #1a3f80;
+    border: 1.5px solid rgba(52, 125, 235, 0.18);
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: background 0.18s;
+}
+
+.modal-footer .btn-secondary:hover {
+    background: rgba(52, 125, 235, 0.15);
+    color: #1a3f80;
+    border-color: rgba(52, 125, 235, 0.30);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .report-card .fas.fa-3x {
+        width: 58px; height: 58px;
+        font-size: 1.5rem;
     }
 
-    .report-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    #reportButtons .row > div {
+        margin-bottom: 0.5rem;
     }
+
+    .container-fluid h1 {
+        font-size: 1.3rem;
+    }
+}
 </style>
 
 <script>
