@@ -137,43 +137,37 @@
                     {
                 
                     <li>
-                        <a asp-controller="Client" asp-action="Index"
-                           class="@IsActive("Client", "Index")">
+                        <a asp-controller="Client" asp-action="Index">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
                     <li>
-                        <a asp-controller="Client" asp-action="Projects"
-                           class="@IsActive("Client", "Projects")">
+                        <a asp-controller="Client" asp-action="Projects">
                             <i class="bi bi-folder2-open"></i>
                             <span>Projects</span>
                         </a>
                     </li>
                     <li>
-                        <a asp-controller="Report" asp-action="Index"
-                           class="@IsActive("Report", "Index")">
+                        <a asp-controller="Report" asp-action="Index">
                             <i class="bi bi-bar-chart-line"></i>
                             <span>Reports</span>
                         </a>
                     </li>
                     <li>
-                        <a asp-controller="Client" asp-action="Notifications"
-                           class="@IsActive("Client", "Notifications")">
+                        <a asp-controller="Client" asp-action="Notifications">
                             <i class="bi bi-bell"></i>
                             <span>Notifications</span>
                         </a>
                     </li>
                     <li>
-                        <a asp-controller="Client" asp-action="Tickets"
-                           class="@IsActive("Client", "Tickets")">
+                        <a asp-controller="Client" asp-action="Tickets">
                             <i class="bi bi-ticket-perforated"></i>
                             <span>Tickets</span>
                         </a>
                     </li>
                     <li>
-                        <a asp-controller="Client" asp-action="Profile"
-                           class="@IsActive("Client", "Profile")">
+                        <a asp-controller="Client" asp-action="Profile">
                             <i class="bi bi-person-badge"></i>
                             <span>Profile</span>
                         </a>
@@ -187,7 +181,7 @@
                             </a>
                         </form>
                     </li>
-                    }
+                    }*@
                     else if (User.IsInRole("Employee"))
                     {
                         <li>
