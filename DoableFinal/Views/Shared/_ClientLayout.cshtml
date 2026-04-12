@@ -39,7 +39,7 @@
             --sb-text: rgba(255,255,255,0.72);
             --sb-text-active: #ffffff;
             --sb-hover-bg: rgba(255,255,255,0.10);
-            --sb-active-bg: rgba(255,255,255,0.16);
+            --sb-active-bg: rgba(255,255,255,0.18);
             --sb-border: rgba(255,255,255,0.10);
             --sb-orb-a: rgba(255,255,255,0.055);
             --sb-orb-b: rgba(255,255,255,0.040);
@@ -52,7 +52,7 @@
             --text-2: #4b5563;
             --text-3: #9ca3af;
 
-            --r-sm: 8px;
+            --r-sm: 10px;
             --r-md: 12px;
             --r-lg: 16px;
 
@@ -65,103 +65,91 @@
         /* =============================================
            KEYFRAMES
         ============================================= */
-
-        /* Sidebar slides in */
-        @keyframes sidebarIn {
+        @@keyframes sidebarIn {
             from { transform: translateX(-100%); opacity: 0; }
             to   { transform: translateX(0);     opacity: 1; }
         }
 
-        /* Logo appears */
-        @keyframes logoIn {
+        @@keyframes logoIn {
             from { opacity: 0; transform: scale(0.82) translateY(-4px); }
             to   { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* User card rises */
-        @keyframes userCardIn {
+        @@keyframes userCardIn {
             from { opacity: 0; transform: translateY(12px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Nav items cascade in from left */
-        @keyframes navItemIn {
+        @@keyframes navItemIn {
             from { opacity: 0; transform: translateX(-18px); }
             to   { opacity: 1; transform: translateX(0); }
         }
 
-        /* Topbar drops from top */
-        @keyframes topbarIn {
+        @@keyframes topbarIn {
             from { opacity: 0; transform: translateY(-100%); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Page content rises */
-        @keyframes pageIn {
+        @@keyframes pageIn {
             from { opacity: 0; transform: translateY(16px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Alert slide in */
-        @keyframes alertIn {
+        @@keyframes alertIn {
             from { opacity: 0; transform: translateY(-10px) scaleY(0.92); }
             to   { opacity: 1; transform: translateY(0) scaleY(1); }
         }
 
-        /* Card entrance */
-        @keyframes cardIn {
+        @@keyframes cardIn {
             from { opacity: 0; transform: translateY(20px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Shimmer sweep */
-        @keyframes shimmer {
+        @@keyframes shimmer {
             0%   { background-position: -250% center; }
             100% { background-position:  250% center; }
         }
 
-        /* Floating orbs */
-        @keyframes orbDrift {
+        @@keyframes orbDrift {
             0%, 100% { transform: translate(0, 0) scale(1); }
             33%       { transform: translate(12px, -8px) scale(1.03); }
             66%       { transform: translate(-8px, 5px) scale(0.97); }
         }
 
-        /* Icon bounce on hover */
-        @keyframes iconBounce {
+        @@keyframes iconBounce {
             0%, 100% { transform: translateY(0) rotate(0deg); }
             30%       { transform: translateY(-4px) rotate(-7deg); }
             65%       { transform: translateY(2px) rotate(4deg); }
         }
 
-        /* Badge bounce */
-        @keyframes badgeBounce {
+        @@keyframes badgeBounce {
             0%, 100% { transform: scale(1); }
             40%       { transform: scale(1.28) translateY(-4px); }
             70%       { transform: scale(0.93) translateY(1px); }
         }
 
-        /* Active indicator pulse */
-        @keyframes activePulse {
-            0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); }
-            70%  { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+        @@keyframes activePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.55); }
+            70%  { box-shadow: 0 0 0 7px rgba(255,255,255,0); }
             100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
         }
 
-        /* Ripple out */
-        @keyframes rippleOut {
+        @@keyframes rippleOut {
             from { transform: scale(0); opacity: 0.45; }
             to   { transform: scale(6); opacity: 0; }
         }
 
-        /* Page title words reveal */
-        @keyframes wordReveal {
-            from { opacity: 0; transform: translateY(8px); }
+        @@keyframes onlinePulse {
+            0%, 100% { opacity: .7; box-shadow: 0 0 0 0 rgba(94,240,138,0.4); }
+            50%       { opacity: 1;  box-shadow: 0 0 0 5px rgba(94,240,138,0); }
+        }
+
+        @@keyframes subMenuSlide {
+            from { opacity: 0; transform: translateY(-8px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Spin */
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @@keyframes spin { to { transform: rotate(360deg); } }
 
         /* =============================================
            RESET & BASE
@@ -184,7 +172,7 @@
         }
 
         /* =============================================
-           SIDEBAR
+           SIDEBAR SHELL
         ============================================= */
         #sidebar {
             width: var(--sb-w);
@@ -201,43 +189,43 @@
             top: 0; left: 0;
             z-index: 1000;
             overflow: hidden;
-            /* Entry animation */
+            box-shadow: 4px 0 32px rgba(10, 31, 92, 0.22);
             animation: sidebarIn 0.42s var(--ease-spring) both;
         }
 
-        /* ── Floating orb A (top-right) ── */
+        /* ── Orb A — top-right ── */
         #sidebar::before {
             content: '';
             position: absolute;
-            width: 280px; height: 280px;
-            top: -90px; right: -90px;
+            width: 300px; height: 300px;
+            top: -100px; right: -100px;
             border-radius: 50%;
             background: var(--sb-orb-a);
             animation: orbDrift 9s ease-in-out infinite;
             pointer-events: none;
         }
 
-        /* ── Floating orb B (bottom-left) ── */
+        /* ── Orb B — bottom-left ── */
         #sidebar::after {
             content: '';
             position: absolute;
-            width: 200px; height: 200px;
-            bottom: 50px; left: -70px;
+            width: 220px; height: 220px;
+            bottom: 40px; left: -75px;
             border-radius: 50%;
             background: var(--sb-orb-b);
             animation: orbDrift 13s ease-in-out infinite reverse;
             pointer-events: none;
         }
 
-        /* ── Shimmer accent bar ── */
+        /* ── Top shimmer bar ── */
         .sidebar-shimmer {
             height: 3px;
             flex-shrink: 0;
             background: linear-gradient(90deg,
                 transparent,
-                rgba(255,255,255,0.55),
-                rgba(255,255,255,0.85),
-                rgba(255,255,255,0.55),
+                rgba(255,255,255,0.50),
+                rgba(255,255,255,0.90),
+                rgba(255,255,255,0.50),
                 transparent
             );
             background-size: 250% auto;
@@ -246,12 +234,15 @@
             z-index: 2;
         }
 
-        /* ── Logo header ── */
+        /* =============================================
+           SIDEBAR HEADER / LOGO
+        ============================================= */
         .sidebar-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 1.25rem 1.25rem 0.9rem;
+            padding: 1.15rem 1.2rem 0.85rem;
+            border-bottom: 1px solid var(--sb-border);
             position: relative;
             z-index: 2;
         }
@@ -259,28 +250,36 @@
         .logo-container {
             display: flex;
             align-items: center;
+            gap: 10px;
         }
+
+        /* White logo pill */
+        .logo-pill {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.95);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.14);
+            flex-shrink: 0;
+            transition: transform 0.2s var(--ease-bounce);
+        }
+
+        .logo-pill:hover { transform: scale(1.08) rotate(-3deg); }
 
         .logo-img {
-            max-height: 34px;
+            max-height: 24px;
             width: auto;
-            filter: brightness(0) invert(1);
-            opacity: 0.92;
-            animation: logoIn 0.5s var(--ease-bounce) 0.14s both;
-            transition: opacity var(--t), transform var(--t);
+            display: block;
         }
 
-        .logo-img:hover {
-            opacity: 1;
-            transform: scale(1.04);
-        }
-
+        /* Fallback text logo */
         .logo-text {
             font-family: 'DM Serif Display', serif;
-            font-size: 1.45rem;
+            font-size: 1.35rem;
             font-weight: 400;
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
             color: #fff;
+            animation: logoIn 0.5s var(--ease-bounce) 0.14s both;
         }
 
         .btn-sidebar-toggle {
@@ -288,68 +287,117 @@
             background: rgba(255,255,255,0.10);
             border: 1px solid rgba(255,255,255,0.15);
             color: #fff;
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             padding: 5px 9px;
             border-radius: var(--r-sm);
             cursor: pointer;
-            transition: background var(--t), transform 0.15s ease;
+            transition: background var(--t), transform 0.18s ease;
+            line-height: 1;
         }
 
         .btn-sidebar-toggle:hover {
             background: rgba(255,255,255,0.18);
-            transform: scale(1.05);
         }
 
-        #sidebarCollapse:hover { transform: rotate(90deg) scale(1.05); }
+        #sidebarCollapse:hover { transform: rotate(90deg) scale(1.08); }
 
-        /* ── User card ── */
+        /* =============================================
+           SIDEBAR USER CARD
+        ============================================= */
         .sidebar-user {
-            margin: 0 0.9rem 0.4rem;
-            padding: 0.7rem 0.95rem;
-            background: rgba(255,255,255,0.08);
+            margin: 0.85rem 0.9rem 0.3rem;
+            padding: 0.7rem 0.9rem;
+            background: rgba(255,255,255,0.09);
             border-radius: var(--r-md);
             border: 1px solid var(--sb-border);
             position: relative;
             z-index: 2;
             animation: userCardIn 0.42s ease 0.30s both;
             transition: background var(--t), border-color var(--t);
+            cursor: default;
         }
 
         .sidebar-user:hover {
-            background: rgba(255,255,255,0.12);
-            border-color: rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(255,255,255,0.20);
         }
 
         .user-info {
             display: flex;
             align-items: center;
             gap: 9px;
-            color: var(--sb-text-active);
-            font-size: 0.875rem;
-            font-weight: 500;
         }
 
-        .user-info .bi {
-            font-size: 1.25rem;
-            color: rgba(255,255,255,0.78);
+        /* Avatar circle */
+        .user-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.20);
+            border: 2px solid rgba(255,255,255,0.32);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            transition: transform 0.2s var(--ease-bounce), background 0.2s;
+        }
+
+        .sidebar-user:hover .user-avatar {
+            transform: scale(1.10);
+            background: rgba(255,255,255,0.28);
+        }
+
+        /* Legacy icon support */
+        .user-info .bi-person-circle {
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.80);
             flex-shrink: 0;
             transition: transform 0.3s var(--ease-bounce);
         }
 
-        .sidebar-user:hover .user-info .bi {
+        .sidebar-user:hover .user-info .bi-person-circle {
             transform: scale(1.12);
         }
 
         .user-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.95);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            flex: 1;
         }
 
-        /* ── Nav menu ── */
+        /* Online indicator dot */
+        .user-online-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #5ef08a;
+            flex-shrink: 0;
+            animation: onlinePulse 2.4s ease-in-out infinite;
+        }
+
+        /* =============================================
+           NAV SECTION LABEL
+        ============================================= */
+        .nav-section-label {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            color: rgba(255,255,255,0.30);
+            text-transform: uppercase;
+            padding: 1rem 1.1rem 0.35rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* =============================================
+           NAV MENU
+        ============================================= */
         .nav-menu {
             flex: 1;
-            padding: 0.4rem 0.65rem;
+            padding: 0.3rem 0.65rem 0.5rem;
             margin: 0;
             list-style: none;
             position: relative;
@@ -357,6 +405,8 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.12) transparent;
         }
 
         .nav-menu::-webkit-scrollbar { width: 3px; }
@@ -370,21 +420,24 @@
             border-top: 1px solid var(--sb-border);
         }
 
-        /* Staggered entrance */
-        .nav-menu .nav-item:nth-child(1) { animation: navItemIn 0.35s ease 0.32s both; }
-        .nav-menu .nav-item:nth-child(2) { animation: navItemIn 0.35s ease 0.38s both; }
-        .nav-menu .nav-item:nth-child(3) { animation: navItemIn 0.35s ease 0.44s both; }
-        .nav-menu .nav-item:nth-child(4) { animation: navItemIn 0.35s ease 0.50s both; }
-        .nav-menu .nav-item:nth-child(5) { animation: navItemIn 0.35s ease 0.56s both; }
-        .nav-menu .nav-item:nth-child(6) { animation: navItemIn 0.35s ease 0.62s both; }
-        .nav-menu .nav-item:nth-child(7) { animation: navItemIn 0.35s ease 0.68s both; }
+        /* ── Staggered entrance ── */
+        .nav-menu .nav-item:nth-child(1) { animation: navItemIn 0.35s ease 0.30s both; }
+        .nav-menu .nav-item:nth-child(2) { animation: navItemIn 0.35s ease 0.36s both; }
+        .nav-menu .nav-item:nth-child(3) { animation: navItemIn 0.35s ease 0.42s both; }
+        .nav-menu .nav-item:nth-child(4) { animation: navItemIn 0.35s ease 0.48s both; }
+        .nav-menu .nav-item:nth-child(5) { animation: navItemIn 0.35s ease 0.54s both; }
+        .nav-menu .nav-item:nth-child(6) { animation: navItemIn 0.35s ease 0.60s both; }
+        .nav-menu .nav-item:nth-child(7) { animation: navItemIn 0.35s ease 0.66s both; }
+        .nav-menu .nav-item:nth-child(8) { animation: navItemIn 0.35s ease 0.72s both; }
 
-        /* Nav links */
+        /* =============================================
+           NAV LINKS
+        ============================================= */
         .nav-link {
             display: flex;
             align-items: center;
             gap: 11px;
-            padding: 0.62rem 0.95rem;
+            padding: 0.64rem 0.95rem;
             border-radius: var(--r-sm);
             color: var(--sb-text) !important;
             font-size: 0.875rem;
@@ -392,15 +445,21 @@
             text-decoration: none !important;
             position: relative;
             overflow: hidden;
-            transition: background var(--t), color var(--t), transform var(--t);
+            transition: background 0.18s ease,
+                        color 0.18s ease,
+                        transform 0.15s ease,
+                        box-shadow 0.18s ease;
         }
 
+        /* Icon */
         .nav-link .bi {
             font-size: 1.05rem;
             flex-shrink: 0;
-            transition: color var(--t);
+            color: rgba(255,255,255,0.68);
+            transition: color 0.18s ease, transform 0.2s ease;
         }
 
+        /* Hover */
         .nav-link:hover {
             background: var(--sb-hover-bg);
             color: var(--sb-text-active) !important;
@@ -408,48 +467,106 @@
         }
 
         .nav-link:hover .bi {
+            color: #fff;
             animation: iconBounce 0.38s ease;
         }
 
-        /* Active state */
+        /* Active */
         .nav-link.active {
             background: var(--sb-active-bg);
             color: var(--sb-text-active) !important;
             font-weight: 600;
-            box-shadow: 0 2px 14px rgba(0,0,0,0.14);
+            box-shadow: 0 2px 16px rgba(0,0,0,0.16),
+                        inset 3px 0 0 rgba(255,255,255,0.75);
         }
 
-        .nav-link.active::before {
+        .nav-link.active .bi {
+            color: #fff;
+        }
+
+        /* Active pulse on the indicator bar */
+        .nav-link.active::after {
             content: '';
             position: absolute;
-            left: 0; top: 20%; bottom: 20%;
+            left: 0; top: 18%; bottom: 18%;
             width: 3px;
             background: rgba(255,255,255,0.88);
             border-radius: 0 3px 3px 0;
-            animation: activePulse 2.2s ease-out 0.8s 2;
+            animation: activePulse 2.2s ease-out 0.6s 2;
         }
 
         /* Ripple */
         .nav-ripple {
             position: absolute;
             border-radius: 50%;
-            background: rgba(255,255,255,0.28);
+            background: rgba(255,255,255,0.26);
             width: 8px; height: 8px;
             pointer-events: none;
             animation: rippleOut 0.55s ease-out forwards;
         }
 
-        /* Logout link */
+        /* Logout */
         .nav-item.mt-auto .nav-link {
-            color: rgba(255,200,200,0.70) !important;
+            color: rgba(255,180,180,0.72) !important;
+        }
+
+        .nav-item.mt-auto .nav-link .bi {
+            color: rgba(255,180,180,0.72);
         }
 
         .nav-item.mt-auto .nav-link:hover {
-            background: rgba(255,100,100,0.12);
-            color: rgba(255,180,180,0.95) !important;
+            background: rgba(255,80,80,0.13);
+            color: rgba(255,190,190,0.95) !important;
         }
 
-        /* Bottom shimmer bar */
+        .nav-item.mt-auto .nav-link:hover .bi {
+            color: rgba(255,200,200,0.95);
+        }
+
+        /* =============================================
+           SUBMENU (collapse)
+        ============================================= */
+        .nav-submenu {
+            list-style: none;
+            padding: 2px 0 4px 32px;
+            margin: 0;
+            background: rgba(0,0,0,0.10);
+            border-radius: 0 0 var(--r-sm) var(--r-sm);
+            overflow: hidden;
+        }
+
+        .nav-submenu.show {
+            animation: subMenuSlide 0.22s var(--ease-spring);
+        }
+
+        .nav-submenu .nav-link {
+            font-size: 0.83rem;
+            padding: 0.52rem 0.85rem;
+            border-radius: 8px;
+            color: rgba(255,255,255,0.60) !important;
+        }
+
+        .nav-submenu .nav-link:hover {
+            color: #fff !important;
+            background: rgba(255,255,255,0.10);
+        }
+
+        /* Dropdown arrow */
+        .nav-link .submenu-arrow {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.35);
+            transition: transform 0.25s ease, color 0.2s;
+        }
+
+        .nav-link[aria-expanded="true"] .submenu-arrow {
+            transform: rotate(90deg);
+            color: rgba(255,255,255,0.75);
+        }
+
+        /* =============================================
+           BOTTOM SHIMMER
+        ============================================= */
         .sidebar-footer-shimmer {
             height: 2px;
             flex-shrink: 0;
@@ -526,7 +643,7 @@
         /* =============================================
            MOBILE
         ============================================= */
-        @media (max-width: 767px) {
+        @@media (max-width: 767px) {
             #sidebar {
                 transform: translateX(-100%);
                 animation: none;
@@ -535,12 +652,22 @@
             #sidebar.active {
                 transform: translateX(0);
                 animation: sidebarIn 0.34s var(--ease-spring) both;
-                box-shadow: 6px 0 36px rgba(10,31,92,0.30);
+                box-shadow: 6px 0 40px rgba(10,31,92,0.32);
             }
 
             #content { margin-left: 0; }
 
             .btn-sidebar-toggle { display: block; }
+
+            /* Backdrop when sidebar is open on mobile */
+            #sidebar.active ~ #content::before {
+                content: '';
+                position: fixed;
+                inset: 0;
+                background: rgba(10, 25, 60, 0.38);
+                z-index: 999;
+                backdrop-filter: blur(2px);
+            }
 
             .content-wrapper { padding: 1.2rem; }
         }
@@ -553,8 +680,13 @@
         .card {
             border: 1px solid rgba(52,125,235,0.09);
             border-radius: var(--r-lg);
-            box-shadow: none;
+            box-shadow: 0 2px 16px rgba(52,125,235,0.06);
             animation: cardIn 0.42s var(--ease-spring) both;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 6px 28px rgba(52,125,235,0.12);
         }
 
         .card:nth-child(1) { animation-delay: 0.10s; }
@@ -570,6 +702,17 @@
             font-weight: 600;
             font-size: 14.5px;
             color: var(--accent-dark);
+            position: relative;
+        }
+
+        /* Left accent on card headers */
+        .card-header::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 22%; bottom: 22%;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--accent-dark), var(--accent));
+            border-radius: 0 2px 2px 0;
         }
 
         .card-body { padding: 20px; }
@@ -597,13 +740,17 @@
         .btn:active { transform: scale(0.96); }
 
         .btn-primary {
-            background: var(--accent);
-            border-color: var(--accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            border: none;
+            box-shadow: 0 3px 12px rgba(52,125,235,0.28);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s;
         }
 
         .btn-primary:hover {
-            background: #1a6fda;
-            border-color: #1a6fda;
+            background: linear-gradient(135deg, #1f62cc, #12317a);
+            border: none;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(52,125,235,0.36);
         }
 
         /* Tables */
@@ -624,12 +771,15 @@
             border-color: rgba(52,125,235,0.15);
             font-size: 14px;
             font-family: var(--font);
-            transition: border-color var(--t), box-shadow var(--t);
+            background: #f8faff;
+            transition: border-color var(--t), box-shadow var(--t), background var(--t);
         }
 
         .form-control:focus, .form-select:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(52,125,235,0.12);
+            background: #fff;
+            outline: none;
         }
 
         /* Badges */
@@ -652,7 +802,7 @@
         .spin { animation: spin 0.8s linear infinite; display: inline-block; }
 
         /* Reduced motion */
-        @media (prefers-reduced-motion: reduce) {
+        @@media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
@@ -664,68 +814,101 @@
 <body>
     <div class="wrapper client-dashboard">
 
-        <!-- Sidebar -->
+        <!-- ═══════════════════════════════════
+             SIDEBAR
+        ═══════════════════════════════════ -->
         <nav id="sidebar">
+
+            <!-- Top shimmer accent -->
             <div class="sidebar-shimmer"></div>
 
+            <!-- Logo -->
             <div class="sidebar-header">
                 <div class="logo-container">
-                    <img src="~/images/logo-combined2.png" alt="Qonnec" class="logo-img"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                    <span class="logo-text" style="display:none;">QONNEC</span>
+                    <div class="logo-pill">
+                        <img src="~/images/logo-combined2.png" alt="Qonnec" class="logo-img"
+                             onerror="this.style.display='none';" />
+                    </div>
+                    <span class="logo-text">QONNEC</span>
                 </div>
-                <button id="sidebarCollapse" class="btn-sidebar-toggle d-md-none">
+                <button id="sidebarCollapse" class="btn-sidebar-toggle d-md-none" aria-label="Close sidebar">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
 
+            <!-- User card -->
             <div class="sidebar-user">
                 @{
                     var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
-                    var displayName = currentUser?.FirstName ?? User.Identity?.Name ?? "Guest";
-                    var initials = (currentUser?.FirstName?.Length > 0 ? currentUser.FirstName[0].ToString() : "") +
-                                   (currentUser?.LastName?.Length  > 0 ? currentUser.LastName[0].ToString()  : "");
+                    var displayName = currentUser != null
+                        ? $"{currentUser.FirstName} {currentUser.LastName}".Trim()
+                        : User.Identity?.Name ?? "Guest";
+                    var initials = ((currentUser?.FirstName?.Length > 0 ? currentUser.FirstName[0].ToString() : "")
+                                  + (currentUser?.LastName?.Length  > 0 ? currentUser.LastName[0].ToString()  : ""))
+                                  .ToUpper();
+                    if (string.IsNullOrEmpty(initials)) initials = "U";
                 }
                 <div class="user-info">
-                    <i class="bi bi-person-circle"></i>
+                    <div class="user-avatar" title="@displayName">@initials</div>
                     <span class="user-name">@displayName</span>
+                    <div class="user-online-dot" title="Online"></div>
                 </div>
             </div>
 
+            <!-- Nav section label -->
+            <div class="nav-section-label">Main Menu</div>
+
+            <!-- Navigation -->
             <ul class="list-unstyled nav-menu">
                 <li class="nav-item">
-                    <a asp-controller="Client" asp-action="Index" class="nav-link @IsActive("Client", "Index")">
+                    <a asp-controller="Client" asp-action="Index"
+                       class="nav-link @IsActive("Client", "Index")">
                         <i class="bi bi-speedometer2"></i>
                         <span>Dashboard</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a asp-controller="Client" asp-action="Projects" class="nav-link @IsActive("Client", "Projects")">
+                    <a asp-controller="Client" asp-action="Projects"
+                       class="nav-link @IsActive("Client", "Projects")">
                         <i class="bi bi-folder2-open"></i>
                         <span>Projects</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a asp-controller="Client" asp-action="Notifications" class="nav-link @IsActive("Client", "Notifications")">
+                    <a asp-controller="Report" asp-action="Index"
+                       class="nav-link @IsActive("Report", "Index")">
+                        <i class="bi bi-bar-chart-line"></i>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-controller="Client" asp-action="Notifications"
+                       class="nav-link @IsActive("Client", "Notifications")">
                         <i class="bi bi-bell"></i>
                         <span>Notifications</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a asp-controller="Client" asp-action="Tickets" class="nav-link @IsActive("Client", "Tickets")">
+                    <a asp-controller="Client" asp-action="Tickets"
+                       class="nav-link @IsActive("Client", "Tickets")">
                         <i class="bi bi-ticket-perforated"></i>
                         <span>Tickets</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a asp-controller="Client" asp-action="Profile" class="nav-link @IsActive("Client", "Profile")">
+                    <a asp-controller="Client" asp-action="Profile"
+                       class="nav-link @IsActive("Client", "Profile")">
                         <i class="bi bi-person-badge"></i>
                         <span>Profile</span>
                     </a>
                 </li>
+
+                <!-- Logout pushed to bottom -->
                 <li class="nav-item mt-auto">
                     <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
-                        <a href="javascript:void(0)" onclick="document.getElementById('logoutForm').submit()" class="nav-link">
+                        <a href="javascript:void(0)"
+                           onclick="document.getElementById('logoutForm').submit()"
+                           class="nav-link">
                             <i class="bi bi-box-arrow-right"></i>
                             <span>Logout</span>
                         </a>
@@ -733,16 +916,20 @@
                 </li>
             </ul>
 
+            <!-- Bottom shimmer bar -->
             <div class="sidebar-footer-shimmer"></div>
+
         </nav>
 
-        <!-- Page Content -->
+        <!-- ═══════════════════════════════════
+             PAGE CONTENT
+        ═══════════════════════════════════ -->
         <div id="content">
 
-            <!-- Top Navbar -->
+            <!-- Topbar -->
             <nav class="top-navbar">
                 <div class="top-navbar-left">
-                    <button id="sidebarCollapseShow" class="btn-sidebar-toggle d-md-none">
+                    <button id="sidebarCollapseShow" class="btn-sidebar-toggle d-md-none" aria-label="Open sidebar">
                         <i class="bi bi-list"></i>
                     </button>
                     <span class="top-page-title" id="pageTitle">@ViewData["Title"]</span>
@@ -758,7 +945,7 @@
                 </div>
             </nav>
 
-            <!-- Main Content -->
+            <!-- Main content -->
             <main role="main" class="content-wrapper">
                 @await Html.PartialAsync("_Alerts")
                 @RenderBody()
@@ -767,6 +954,7 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
@@ -783,7 +971,7 @@
                 $('#sidebar').addClass('active');
             });
 
-            // Close sidebar on outside click (mobile)
+            // Close on outside click (mobile)
             $(document).on('click', function (e) {
                 if ($(window).width() < 768 &&
                     !$(e.target).closest('#sidebar, #sidebarCollapseShow').length) {
@@ -791,37 +979,30 @@
                 }
             });
 
-            // ── Ripple effect on nav link clicks ───────────────
+            // ── Active link highlight ───────────────────────────
+            var path = window.location.pathname;
+            $('.nav-menu .nav-link').each(function () {
+                var href = $(this).attr('href');
+                if (href && href !== '/' && path.startsWith(href)) {
+                    $(this).addClass('active');
+                }
+            });
+
+            // ── Ripple on nav click ─────────────────────────────
             $('.nav-menu .nav-link').on('click', function (e) {
                 var $link = $(this);
-                var offset = $link.offset();
-                var $r = $('<span class="nav-ripple">').css({
-                    left: e.pageX - offset.left - 4,
-                    top:  e.pageY - offset.top  - 4
+                var off   = $link.offset();
+                var $r    = $('<span class="nav-ripple">').css({
+                    left: e.pageX - off.left - 4,
+                    top:  e.pageY - off.top  - 4
                 });
                 $link.append($r);
                 setTimeout(function () { $r.remove(); }, 600);
             });
 
-            // ── Page transition fade ────────────────────────────
-            var $overlay = $('<div id="page-transition-overlay">').appendTo('body');
-            $(document).on('click', 'a[href]', function (e) {
-                var href = $(this).attr('href');
-                var skip = /^(https?:\/\/|javascript:|#|mailto:)/.test(href)
-                           || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-                if (!skip && href && href !== window.location.href) {
-                    e.preventDefault();
-                    $overlay.css({
-                        background: 'rgba(244,247,253,0.75)',
-                        transition: 'background 0.18s ease'
-                    });
-                    setTimeout(function () { window.location.href = href; }, 170);
-                }
-            });
-
-            // ── Page title word-by-word reveal ─────────────────
+            // ── Page title word-reveal ──────────────────────────
             var $title = $('#pageTitle');
-            var raw = $title.text().trim();
+            var raw    = $title.text().trim();
             if (raw) {
                 $title.html(
                     raw.split(' ').map(function (w, i) {
@@ -835,6 +1016,19 @@
                     $title.find('span').css({ opacity: 1, transform: 'translateY(0)' });
                 }, 40);
             }
+
+            // ── Page transition fade ────────────────────────────
+            var $overlay = $('<div id="page-transition-overlay">').appendTo('body');
+            $(document).on('click', 'a[href]', function (e) {
+                var href = $(this).attr('href');
+                var skip = /^(https?:\/\/|javascript:|#|mailto:)/.test(href)
+                           || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+                if (!skip && href && href !== window.location.href) {
+                    e.preventDefault();
+                    $overlay.css({ background: 'rgba(244,247,253,0.78)', transition: 'background 0.18s ease' });
+                    setTimeout(function () { window.location.href = href; }, 170);
+                }
+            });
 
             // ── Badge bounce on dynamic insertion ──────────────
             var observer = new MutationObserver(function (mutations) {
