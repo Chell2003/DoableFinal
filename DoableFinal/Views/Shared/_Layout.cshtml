@@ -161,25 +161,10 @@
                         </a>
                     </li>
                     <li>
-                        <a asp-controller="Client" asp-action="Tickets">
-                            <i class="bi bi-ticket-perforated"></i>
-                            <span>Tickets</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a asp-controller="Client" asp-action="Profile">
+                        <a asp-controller="" asp-action="Profile">
                             <i class="bi bi-person-badge"></i>
                             <span>Profile</span>
                         </a>
-                    </li>
-                    <li>
-                        <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
-                            <a href="javascript:void(0)"
-                               onclick="document.getElementById('logoutForm').submit()">
-                                <i class="bi bi-box-arrow-right"></i>
-                                <span>Logout</span>
-                            </a>
-                        </form>
                     </li>
                     }
                     else if (User.IsInRole("Employee"))
