@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "My Tickets";
-    Layout = "_ClientLayout";
+    Layout = "_Layout";
     var dateTimeFormat = "MMM dd, yyyy HH:mm";
     var query = Context.Request.Query["q"].ToString();
     var statusFilter = Context.Request.Query["statusFilter"].ToString();
