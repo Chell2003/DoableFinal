@@ -9,381 +9,764 @@
     var toDate = Context.Request.Query["toDate"].ToString();
 }
 
+<style>
+    /* =============================================
+       MY PROJECTS PAGE — #347deb theme (matches Index)
+       ============================================= */
+
+    @@keyframes heroFadeUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @@keyframes shimmerMove {
+        0%   { background-position: -200% center; }
+        100% { background-position:  200% center; }
+    }
+
+    /* ---------- Page Header ---------- */
+    .dash-header {
+        margin-bottom: 1.8rem;
+        animation: heroFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .dash-header h1 {
+        font-family: 'League Spartan', sans-serif;
+        font-size: 1.9rem;
+        font-weight: 900;
+        letter-spacing: -1.5px;
+        color: #1a3f80;
+        margin-bottom: 0.2rem;
+    }
+
+    .dash-header p {
+        font-size: 0.88rem;
+        color: #6b84b0;
+        margin: 0;
+    }
+
+    .count-pill {
+        display: inline-block;
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        background: rgba(52, 125, 235, 0.10);
+        color: #347deb;
+        border: 1px solid rgba(52, 125, 235, 0.20);
+        border-radius: 20px;
+        padding: 3px 10px;
+        vertical-align: middle;
+        margin-left: 8px;
+    }
+
+    /* ---------- Shared Card ---------- */
+    .dash-card {
+        background: #fff;
+        border-radius: 18px;
+        border: 1px solid rgba(52, 125, 235, 0.08);
+        box-shadow: 0 2px 18px rgba(52, 125, 235, 0.07);
+        overflow: hidden;
+        animation: heroFadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+    }
+
+    .dash-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(52, 125, 235, 0.08);
+        background: linear-gradient(135deg, #0f2660 0%, #1a3f80 40%, #2360c8 75%, #347deb 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dash-card-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        background-size: 200% auto;
+        animation: shimmerMove 3s linear infinite;
+    }
+
+    .dash-card-header h5,
+    .dash-card-header h6 {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.92);
+        margin: 0;
+    }
+
+    .dash-card-header .bi {
+        font-size: 1rem;
+        color: rgba(255,255,255,0.75);
+    }
+
+    .dash-card-body {
+        padding: 1.4rem 1.5rem;
+    }
+
+    /* ---------- Filter Form ---------- */
+    .filter-card {
+        background: #fff;
+        border-radius: 18px;
+        border: 1px solid rgba(52, 125, 235, 0.08);
+        box-shadow: 0 2px 18px rgba(52, 125, 235, 0.07);
+        overflow: hidden;
+        margin-bottom: 1.25rem;
+        animation: heroFadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+    }
+
+    .filter-form .form-label {
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #1a3f80;
+        margin-bottom: 5px;
+    }
+
+    .filter-form .form-control,
+    .filter-form .form-select {
+        border: 1px solid rgba(52, 125, 235, 0.20);
+        border-radius: 10px;
+        padding: 9px 13px;
+        font-size: .9rem;
+        color: #0d1117;
+        background: #f4f7fd;
+        transition: border-color .25s, box-shadow .25s, background .25s;
+    }
+
+    .filter-form .form-control:focus,
+    .filter-form .form-select:focus {
+        border-color: #347deb;
+        box-shadow: 0 0 0 3px rgba(52, 125, 235, 0.12);
+        background: #fff;
+        outline: none;
+    }
+
+    .filter-form hr {
+        border-color: rgba(52, 125, 235, 0.10);
+        margin: 0.75rem 0;
+    }
+
+    /* ---------- Buttons ---------- */
+    .btn-brand {
+        background: linear-gradient(135deg, #347deb, #1a3f80);
+        border: none;
+        border-radius: 10px;
+        font-size: .88rem;
+        font-weight: 700;
+        color: #fff;
+        padding: 9px 16px;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    box-shadow 0.2s ease, background 0.2s;
+    }
+
+    .btn-brand:hover {
+        background: linear-gradient(135deg, #1f62cc, #12317a);
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 8px 24px rgba(52, 125, 235, 0.35);
+        color: #fff;
+    }
+
+    .btn-outline-brand {
+        background: transparent;
+        border: 1.5px solid rgba(52, 125, 235, 0.40);
+        border-radius: 10px;
+        font-size: .88rem;
+        font-weight: 600;
+        color: #347deb;
+        padding: 9px 16px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-outline-brand:hover {
+        background: rgba(52, 125, 235, 0.08);
+        border-color: #347deb;
+        color: #1a3f80;
+        transform: translateY(-1px);
+    }
+
+    .btn-reset {
+        background: transparent;
+        border: 1px solid rgba(52, 125, 235, 0.20);
+        border-radius: 8px;
+        font-size: .8rem;
+        font-weight: 500;
+        color: #6b84b0;
+        padding: 6px 14px;
+        transition: all 0.2s;
+    }
+
+    .btn-reset:hover {
+        background: rgba(52, 125, 235, 0.06);
+        border-color: rgba(52, 125, 235, 0.35);
+        color: #347deb;
+    }
+
+    /* ---------- Controls Row ---------- */
+    .controls-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-bottom: 0.75rem;
+        animation: heroFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+    }
+
+    .rows-label {
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #6b84b0;
+    }
+
+    .page-size-select {
+        border: 1px solid rgba(52, 125, 235, 0.20);
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: .85rem;
+        color: #1a3f80;
+        background: #f4f7fd;
+        width: 80px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .page-size-select:focus {
+        border-color: #347deb;
+        box-shadow: 0 0 0 3px rgba(52, 125, 235, 0.12);
+        outline: none;
+    }
+
+    /* ---------- Table ---------- */
+    .dash-table {
+        width: 100%;
+        font-size: .875rem;
+        margin: 0;
+        border-collapse: collapse;
+    }
+
+    .dash-table thead th {
+        font-size: .68rem;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #6b84b0;
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid rgba(52, 125, 235, 0.10);
+        white-space: nowrap;
+        background: #fff;
+    }
+
+    .dash-table thead th.sortable {
+        cursor: pointer;
+        transition: color .2s, background .2s;
+        border-radius: 6px;
+    }
+
+    .dash-table thead th.sortable:hover {
+        color: #347deb;
+        background: rgba(52, 125, 235, 0.05);
+    }
+
+    .dash-table tbody tr {
+        border-bottom: 1px solid rgba(52, 125, 235, 0.06);
+        transition: background 0.18s;
+        cursor: pointer;
+    }
+
+    .dash-table tbody tr:last-child { border-bottom: none; }
+
+    .dash-table tbody tr:hover {
+        background: rgba(52, 125, 235, 0.04);
+    }
+
+    .dash-table tbody td {
+        padding: 0.8rem 0.75rem;
+        color: #0d1117;
+        vertical-align: middle;
+    }
+
+    .dash-table a {
+        color: #347deb;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color .2s;
+    }
+
+    .dash-table a:hover { color: #1a3f80; }
+
+    /* ---------- Status / Priority Badges ---------- */
+    .status-badge {
+        display: inline-block;
+        font-size: .65rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+
+    .badge-secondary { background: rgba(107,132,176,.12); color: #6b84b0; }
+    .badge-primary   { background: rgba(52,125,235,.12);  color: #347deb; }
+    .badge-warning   { background: rgba(245,158,11,.12);  color: #d97706; }
+    .badge-success   { background: rgba(16,185,129,.12);  color: #059669; }
+    .badge-danger    { background: rgba(239,68,68,.12);   color: #dc2626; }
+    .badge-info      { background: rgba(6,182,212,.12);   color: #0891b2; }
+    .badge-overdue   { background: rgba(239,68,68,.10);   color: #dc2626;
+                       border: 1px solid rgba(239,68,68,.25); }
+
+    /* ---------- Progress bars ---------- */
+    .dash-progress {
+        height: 7px;
+        border-radius: 10px;
+        background: rgba(52, 125, 235, 0.10);
+        overflow: hidden;
+        min-width: 90px;
+    }
+
+    .dash-progress-bar {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .progress-bar-success { background: linear-gradient(90deg, #10b981, #34d399); }
+    .progress-bar-info    { background: linear-gradient(90deg, #06b6d4, #67e8f9); }
+    .progress-bar-primary { background: linear-gradient(90deg, #347deb, #60aaff); }
+    .progress-bar-warning { background: linear-gradient(90deg, #f59e0b, #fcd34d); }
+    .progress-bar-danger  { background: linear-gradient(90deg, #ef4444, #fca5a5); }
+
+    .progress-pct {
+        font-size: .7rem;
+        color: #6b84b0;
+        margin-bottom: 3px;
+    }
+
+    /* ---------- Action buttons in table ---------- */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: .75rem;
+        font-weight: 600;
+        padding: 5px 11px;
+        border-radius: 8px;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        border: 1.5px solid transparent;
+    }
+
+    .action-btn-details {
+        color: #347deb;
+        border-color: rgba(52,125,235,.30);
+        background: rgba(52,125,235,.06);
+    }
+    .action-btn-details:hover {
+        background: rgba(52,125,235,.14);
+        border-color: #347deb;
+        color: #1a3f80;
+        transform: translateY(-1px);
+    }
+
+    .action-btn-tasks {
+        color: #0891b2;
+        border-color: rgba(6,182,212,.30);
+        background: rgba(6,182,212,.06);
+    }
+    .action-btn-tasks:hover {
+        background: rgba(6,182,212,.14);
+        border-color: #06b6d4;
+        color: #0e7490;
+        transform: translateY(-1px);
+    }
+
+    .action-btn-reports {
+        color: #059669;
+        border-color: rgba(16,185,129,.30);
+        background: rgba(16,185,129,.06);
+    }
+    .action-btn-reports:hover {
+        background: rgba(16,185,129,.14);
+        border-color: #10b981;
+        color: #047857;
+        transform: translateY(-1px);
+    }
+
+    /* ---------- Pagination ---------- */
+    .pagination-wrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0.25rem 0;
+        border-top: 1px solid rgba(52,125,235,.07);
+        margin-top: 0.25rem;
+    }
+
+    .page-btn {
+        background: transparent;
+        border: 1.5px solid rgba(52,125,235,.25);
+        border-radius: 8px;
+        color: #347deb;
+        font-size: .8rem;
+        font-weight: 600;
+        padding: 5px 14px;
+        transition: all 0.2s;
+    }
+
+    .page-btn:hover:not(:disabled) {
+        background: rgba(52,125,235,.10);
+        border-color: #347deb;
+    }
+
+    .page-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+    .pagination-info {
+        font-size: .78rem;
+        color: #6b84b0;
+    }
+
+    /* ---------- Empty / Loading states ---------- */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6b84b0;
+    }
+
+    .empty-state .bi {
+        font-size: 3rem;
+        color: rgba(52, 125, 235, 0.18);
+        display: block;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h5 {
+        font-weight: 600;
+        color: #1a3f80;
+        margin-bottom: 0.4rem;
+    }
+
+    .empty-state p {
+        font-size: .88rem;
+        max-width: 380px;
+        margin: 0 auto;
+    }
+
+    /* ---------- Modal ---------- */
+    .modal-content {
+        border-radius: 18px;
+        border: 1px solid rgba(52,125,235,.10);
+        box-shadow: 0 20px 60px rgba(52,125,235,.15);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #0f2660 0%, #1a3f80 40%, #2360c8 75%, #347deb 100%);
+        border-bottom: none;
+        padding: 1.1rem 1.5rem;
+    }
+
+    .modal-title {
+        font-family: 'League Spartan', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -.5px;
+        color: #fff;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.7;
+    }
+
+    .modal-footer {
+        border-top: 1px solid rgba(52,125,235,.10);
+        padding: 0.9rem 1.5rem;
+    }
+
+    .modal-footer .btn-secondary {
+        background: transparent;
+        border: 1.5px solid rgba(52,125,235,.30);
+        border-radius: 10px;
+        color: #347deb;
+        font-weight: 600;
+        transition: all .2s;
+    }
+
+    .modal-footer .btn-secondary:hover {
+        background: rgba(52,125,235,.08);
+        border-color: #347deb;
+        color: #1a3f80;
+    }
+</style>
+
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex align-items-center gap-2 mb-1">
-                <h1 class="h3 mb-0">My Projects</h1>
-                @if (Model != null && Model.Any())
-                {
-                    <span class="badge bg-secondary">@Model.Count()</span>
-                }
-            </div>
-            <p class="text-muted">View and manage your project portfolio</p>
-        </div>
+
+    <!-- Page Header -->
+    <div class="dash-header">
+        <h1>
+            My Projects
+            @if (Model != null && Model.Any())
+            {
+                <span class="count-pill">@Model.Count()</span>
+            }
+        </h1>
+        <p>View and manage your project portfolio</p>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters & Search</h5>
+    <!-- Filters -->
+    <div class="filter-card">
+        <div class="dash-card-header">
+            <i class="bi bi-funnel"></i>
+            <h5>Filters &amp; Search</h5>
         </div>
-        <div class="card-body">
+        <div class="dash-card-body filter-form">
             <form method="get" class="row g-3" role="search" aria-label="Project search and filter">
                 <div class="col-md-6">
                     <label for="searchInput" class="form-label">Search</label>
-                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by project name..." value="@query" aria-label="Search projects" />
+                    <input type="search" id="searchInput" name="q" class="form-control"
+                           placeholder="Search by project name..." value="@query" />
                 </div>
-
                 <div class="col-md-3">
                     <label for="statusFilter" class="form-label">Status</label>
                     <select id="statusFilter" name="statusFilter" class="form-select">
                         <option value="">All statuses</option>
                         <option value="Not Started" selected="@(statusFilter == "Not Started" ? "selected" : null)">Not Started</option>
-                        <option value="In Progress" selected="@(statusFilter == "In Progress" ? "selected" : null)">In Progress</option>
-                        <option value="On Hold" selected="@(statusFilter == "On Hold" ? "selected" : null)">On Hold</option>
-                        <option value="Completed" selected="@(statusFilter == "Completed" ? "selected" : null)">Completed</option>
+                        <option value="In Progress"  selected="@(statusFilter == "In Progress"  ? "selected" : null)">In Progress</option>
+                        <option value="On Hold"      selected="@(statusFilter == "On Hold"      ? "selected" : null)">On Hold</option>
+                        <option value="Completed"    selected="@(statusFilter == "Completed"    ? "selected" : null)">Completed</option>
                     </select>
                 </div>
-
-                <div class="col-md-3">
-                    <label for="applyBtn" class="form-label">&nbsp;</label>
-                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
-                        <i class="bi bi-search"></i> Apply Filters
+                <div class="col-md-3 d-flex flex-column justify-content-end">
+                    <button class="btn-brand w-100" type="submit">
+                        <i class="bi bi-search me-1"></i> Apply Filters
                     </button>
                 </div>
 
-                <div class="col-12">
-                    <hr class="my-2" />
-                </div>
+                <div class="col-12"><hr /></div>
 
                 <div class="col-md-4">
-                    <label for="fromDate" class="form-label"><i class="bi bi-calendar-event"></i> From Date</label>
-                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" aria-label="From date" />
+                    <label for="fromDate" class="form-label"><i class="bi bi-calendar-event me-1"></i>From Date</label>
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" />
                 </div>
-
                 <div class="col-md-4">
-                    <label for="toDate" class="form-label"><i class="bi bi-calendar-event"></i> To Date</label>
-                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" aria-label="To date" />
+                    <label for="toDate" class="form-label"><i class="bi bi-calendar-event me-1"></i>To Date</label>
+                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" />
                 </div>
-
-                <div class="col-md-4">
-                    <label for="applyDateBtn" class="form-label">&nbsp;</label>
-                    <button id="applyDateBtn" class="btn btn-outline-primary w-100" type="submit">
-                        <i class="bi bi-calendar3"></i> Apply Date Range
+                <div class="col-md-4 d-flex flex-column justify-content-end">
+                    <button class="btn-outline-brand w-100" type="submit">
+                        <i class="bi bi-calendar3 me-1"></i> Apply Date Range
                     </button>
                 </div>
 
                 <div class="col-12 text-end">
-                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Projects", "Client")">
-                        <i class="bi bi-x-circle"></i> Reset Filters
+                    <a class="btn-reset" href="@Url.Action("Projects", "Client")">
+                        <i class="bi bi-x-circle me-1"></i> Reset Filters
                     </a>
                 </div>
             </form>
         </div>
     </div>
 
-        <style>
-            .avatar-circle {
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.875rem;
-                font-weight: 500;
-            }
-
-            .sortable { cursor: pointer; }
-            .sortable:hover { background-color: rgba(0, 0, 0, 0.03); }
-
-            /* make rows clearly clickable */
-            .table-row-clickable { cursor: pointer; }
-            .table-row-clickable:hover { background-color: rgba(0,0,0,0.02); }
-
-            /* progress contrast */
-            .progress { height: 20px; }
-            .progress-bar { font-weight: 600; color: #fff; }
-            .progress-bar.bg-info { color: #fff; }
-            .progress-bar.bg-warning { color: #212529; }
-
-            .controls-row { gap: 8px; }
-        </style>
-
-
-    <div class="row g-3 mb-3 controls-row align-items-center">
-            <div class="col-md-4 col-lg-2 text-lg-end">
-                <div class="input-group justify-content-end">
-                    <label class="input-group-text" for="pageSize">Rows</label>
-                    <select id="pageSize" class="form-select" style="width:90px;" aria-label="Rows per page">
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="25">25</option>
-                    </select>
-                </div>
-            </div>
+    <!-- Controls Row -->
+    <div class="controls-row">
+        <span class="rows-label">Rows</span>
+        <select id="pageSize" class="page-size-select" aria-label="Rows per page">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+        </select>
     </div>
 
-    <div class="row">
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                        <div id="loading-indicator" class="text-center py-5 d-none">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-2 text-muted">Loading projects...</p>
-                        </div>
-                    @if (Model != null && Model.Any())
-                    {
-                        <div class="table-responsive">
-                                <table class="table table-hover align-middle" id="projectsTable">
-                                <thead class="table-light">
-                                    <tr class="text-nowrap">
-                                            <th class="sortable" data-sort="name">Name <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                            <th>Description <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" data-bs-title="Truncated to 50 characters"></i></th>
-                                            <th>Project Manager <i class="bi bi-person ms-1"></i></th>
-                                            <th class="sortable" data-sort="startDate">Start Date <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                            <th class="sortable" data-sort="endDate">End Date <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                            <th>Status <i class="bi bi-flag ms-1"></i></th>
-                                            <th class="sortable" data-sort="progress">Progress <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                            <th>Actions <i class="bi bi-gear ms-1"></i></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var project in Model)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <div>
-                                                    <a asp-action="ProjectDetails" asp-route-id="@project.Id" class="text-decoration-none fw-medium">
-                                                        @project.Name
-                                                    </a>
-                                                    @if (project.EndDate.HasValue && project.EndDate.Value < DateTime.Now && project.Status != "Completed")
-                                                    {
-                                                           <span class="badge bg-danger-subtle text-danger ms-2" data-bs-toggle="tooltip" data-bs-title="Project is past its due date">Overdue</span>
-                                                    }
-                                                </div>
-                                            </td>
-                                            <td>@(project.Description?.Length > 50 ? project.Description.Substring(0, 47) + "..." : project.Description)</td>
-                                            <td>@($"{project.ProjectManager?.FirstName} {project.ProjectManager?.LastName}")</td>
-                                            <td>@project.StartDate.ToShortDateString()</td>
-                                            <td>@(project.EndDate?.ToShortDateString() ?? "Not set")</td>
-                                            <td>
-                                                <span class="badge bg-@(project.Status switch {
-                                                    "Not Started" => "secondary",
-                                                    "In Progress" => "primary",
-                                                    "On Hold" => "warning",
-                                                    "Completed" => "success",
-                                                    _ => "secondary"
-                                                })">@project.Status</span>
-                                            </td>
-                                            <td>
-                                                @{
-                                                    var progress = ViewBag.ProjectProgress != null && ViewBag.ProjectProgress.ContainsKey(project.Id)
-                                                        ? ViewBag.ProjectProgress[project.Id]
-                                                        : 0;
-                                                       var progressClass = progress switch {
-                                                           >= 100 => "bg-success",
-                                                           >= 75 => "bg-info",
-                                                           >= 50 => "bg-primary",
-                                                           >= 25 => "bg-warning",
-                                                           _ => "bg-danger"
-                                                       };
-                                                }
-                                                    <div class="progress" style="height: 20px;">
-                                                        <div class="progress-bar @progressClass" role="progressbar" 
-                                                             style="width: @progress%"
-                                                             aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"
-                                                             data-bs-toggle="tooltip" data-bs-title="@progress% complete">
-                                                             @progress%
-                                                        </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex gap-2">
-                                                    <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@project.Id" 
-                                                           class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="View project details">
-                                                       <i class="bi bi-info-circle me-1"></i> Details
-                                                    </a>
-                                                    <a asp-controller="Client" asp-action="Tasks" asp-route-projectId="@project.Id" 
-                                                           class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" data-bs-title="View project tasks">
-                                                        <i class="bi bi-list-task me-1"></i> Tasks
-                                                    </a>
-                                                    <a asp-controller="Report" asp-action="Index" asp-route-projectId="@project.Id"
-                                                           class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" data-bs-title="View project reports">
-                                                        <i class="bi bi-bar-chart me-1"></i> Reports
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <div>
-                                    <button id="prevPage" class="btn btn-sm btn-outline-secondary" aria-label="Previous page" disabled>&lt;</button>
-                                    <button id="nextPage" class="btn btn-sm btn-outline-secondary ms-1" aria-label="Next page">&gt;</button>
-                                </div>
-                                <div class="text-muted small" id="paginationInfo">1 of 1</div>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-5">
-                            <div class="mb-4">
-                                <i class="bi bi-briefcase-fill display-1 text-muted opacity-50"></i>
-                            </div>
-                            <h5 class="fw-light">No Projects Found</h5>
-                            <p class="text-muted mb-4">There are currently no projects assigned to you.<br>Projects will appear here once they are created and assigned.</p>
-                        </div>
-                    }
+    <!-- Projects Table -->
+    <div class="dash-card">
+        <div class="dash-card-body" style="padding:0;">
+            <div id="loading-indicator" class="text-center py-5 d-none">
+                <div class="spinner-border" role="status" style="color:#347deb;">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
+                <p class="mt-2" style="font-size:.88rem; color:#6b84b0;">Loading projects…</p>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="dash-table" id="projectsTable">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="name" style="padding-left:1.25rem;">Name <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                <th>Description</th>
+                                <th>Project Manager</th>
+                                <th class="sortable" data-sort="startDate">Start Date <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                <th class="sortable" data-sort="endDate">End Date <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                <th>Status</th>
+                                <th class="sortable" data-sort="progress">Progress <i class="bi bi-arrow-down-up ms-1"></i></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var project in Model)
+                            {
+                                var progress = ViewBag.ProjectProgress != null && ViewBag.ProjectProgress.ContainsKey(project.Id)
+                                    ? ViewBag.ProjectProgress[project.Id] : 0;
+
+                                var statusBadge = project.Status switch {
+                                    "Not Started" => "badge-secondary",
+                                    "In Progress"  => "badge-primary",
+                                    "On Hold"      => "badge-warning",
+                                    "Completed"    => "badge-success",
+                                    _              => "badge-secondary"
+                                };
+
+                                var barClass = progress switch {
+                                    >= 100 => "progress-bar-success",
+                                    >= 75  => "progress-bar-info",
+                                    >= 50  => "progress-bar-primary",
+                                    >= 25  => "progress-bar-warning",
+                                    _      => "progress-bar-danger"
+                                };
+
+                                <tr>
+                                    <td style="padding-left:1.25rem;">
+                                        <a asp-action="ProjectDetails" asp-route-id="@project.Id">
+                                            @project.Name
+                                        </a>
+                                        @if (project.EndDate.HasValue && project.EndDate.Value < DateTime.Now && project.Status != "Completed")
+                                        {
+                                            <span class="status-badge badge-overdue ms-2"
+                                                  data-bs-toggle="tooltip" data-bs-title="Past due date">Overdue</span>
+                                        }
+                                    </td>
+                                    <td style="color:#6b84b0; font-size:.85rem;">
+                                        @(project.Description?.Length > 50 ? project.Description.Substring(0, 47) + "…" : project.Description)
+                                    </td>
+                                    <td>@($"{project.ProjectManager?.FirstName} {project.ProjectManager?.LastName}")</td>
+                                    <td style="font-size:.85rem; color:#6b84b0;">@project.StartDate.ToShortDateString()</td>
+                                    <td style="font-size:.85rem; color:#6b84b0;">@(project.EndDate?.ToShortDateString() ?? "Not set")</td>
+                                    <td>
+                                        <span class="status-badge @statusBadge">@project.Status</span>
+                                    </td>
+                                    <td style="min-width:120px;">
+                                        <div class="progress-pct">@progress%</div>
+                                        <div class="dash-progress">
+                                            <div class="dash-progress-bar @barClass"
+                                                 style="width:@progress%"
+                                                 aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"
+                                                 data-bs-toggle="tooltip" data-bs-title="@progress% complete">
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@project.Id"
+                                               class="action-btn action-btn-details"
+                                               data-bs-toggle="tooltip" data-bs-title="View details">
+                                                <i class="bi bi-info-circle"></i> Details
+                                            </a>
+                                            <a asp-controller="Client" asp-action="Tasks" asp-route-projectId="@project.Id"
+                                               class="action-btn action-btn-tasks"
+                                               data-bs-toggle="tooltip" data-bs-title="View tasks">
+                                                <i class="bi bi-list-task"></i> Tasks
+                                            </a>
+                                            <a asp-controller="Report" asp-action="Index" asp-route-projectId="@project.Id"
+                                               class="action-btn action-btn-reports"
+                                               data-bs-toggle="tooltip" data-bs-title="View reports">
+                                                <i class="bi bi-bar-chart"></i> Reports
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-wrap px-3 pb-3">
+                    <div class="d-flex gap-2">
+                        <button id="prevPage" class="page-btn" aria-label="Previous page" disabled>&lsaquo; Prev</button>
+                        <button id="nextPage" class="page-btn" aria-label="Next page">Next &rsaquo;</button>
+                    </div>
+                    <div class="pagination-info" id="paginationInfo">1 of 1</div>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-briefcase"></i>
+                    <h5>No Projects Found</h5>
+                    <p>There are currently no projects assigned to you. Projects will appear here once they are created and assigned.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Modal -->
+<div class="modal fade" id="projectTimelineModal" tabindex="-1" aria-labelledby="projectTimelineModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="projectTimelineModalLabel">
+                    <i class="bi bi-calendar3 me-2"></i>Project Timeline
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="modalGanttChart" style="min-height:300px;"></div>
+            </div>
+            <div class="modal-footer">
+                <span id="modalTimelineInfo" class="me-auto" style="font-size:.82rem; color:#6b84b0;"></span>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
-</div> 
-
-                <!-- Modal for project timeline -->
-                <div class="modal fade" id="projectTimelineModal" tabindex="-1" aria-labelledby="projectTimelineModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-xl modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="projectTimelineModalLabel">Project Timeline</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div id="modalGanttChart" style="min-height:300px;"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <span id="modalTimelineInfo" class="me-auto text-muted"></span>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+</div>
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            // Initialize tooltips
-            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+        $(document).ready(function () {
 
-            // central helper: show/hide no-results
+            // Tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            [...tooltipTriggerList].map(el => new bootstrap.Tooltip(el));
+
+            // Hidden current-page tracker
+            if (!$('#currentPage').length) {
+                $('body').append('<input type="hidden" id="currentPage" value="1" />');
+            }
+
+            // Empty state helper
             function updateEmptyState() {
-                const visibleRows = $("#projectsTable tbody tr:visible").length;
-                if (visibleRows === 0) {
-                    if ($("#no-results-message").length === 0) {
-                        const message = `
+                const visible = $("#projectsTable tbody tr:visible").not('#no-results-message').length;
+                if (visible === 0) {
+                    if (!$("#no-results-message").length) {
+                        $("#projectsTable tbody").append(`
                             <tr id="no-results-message">
-                                <td colspan="8" class="text-center py-4">
-                                    <div class="mb-3">
-                                        <i class="bi bi-search display-4 text-muted opacity-50"></i>
+                                <td colspan="8">
+                                    <div class="empty-state">
+                                        <i class="bi bi-search"></i>
+                                        <h5>No matching projects</h5>
+                                        <p>Try adjusting your search or filter criteria.</p>
                                     </div>
-                                    <h5 class="fw-light">No matching projects found</h5>
-                                    <p class="text-muted">Try adjusting your search or filter criteria</p>
                                 </td>
-                            </tr>
-                        `;
-                        $("#projectsTable tbody").append(message);
+                            </tr>`);
                     }
                 } else {
                     $("#no-results-message").remove();
                 }
             }
 
-            // Search functionality (client-side filter)
-            $("#projectSearch").on("input", function() {
-                const value = $(this).val().toLowerCase();
-                $("#projectsTable tbody tr").each(function() {
-                    const text = $(this).text().toLowerCase();
-                    $(this).toggle(text.indexOf(value) > -1);
-                });
-                paginate();
-                updateEmptyState();
-            });
-
-            // Clear search button
-            $("#clearSearch").on("click", function(e) {
-                e.preventDefault();
-                $("#projectSearch").val('');
-                $("#projectSearch").trigger('input');
-            });
-
-            // Filter dropdown
-            $("#statusFilterSelect").on('change', function() {
-                const value = $(this).val();
-                $("#projectsTable tbody tr").each(function() {
-                    const status = $(this).find("td:nth-child(6) .badge").text().trim();
-                    $(this).toggle(!value || status === value);
-                });
-                paginate();
-                updateEmptyState();
-            });
-
-            // Reset filters (search + filter + sort + page)
-            $("#resetFilters").on('click', function(e) {
-                e.preventDefault();
-                $("#projectSearch").val('');
-                $("#projectSort").val('name');
-                $("#statusFilterSelect").val('');
-                $("#pageSize").val('10');
-                $("#projectsTable tbody tr").show();
-                $("#projectSort").trigger('change');
-                paginate();
-                updateEmptyState();
-            });
-
-            // Sort functionality
-            $("#projectSort").on("change", function() {
-                const value = $(this).val();
-                const rows = $("#projectsTable tbody tr").get();
-
-                rows.sort(function(a, b) {
-                    let aValue, bValue;
-                    switch(value) {
-                        case "name":
-                            aValue = $(a).find("td:first-child a").text().toLowerCase();
-                            bValue = $(b).find("td:first-child a").text().toLowerCase();
-                            return aValue.localeCompare(bValue);
-                        case "startDate":
-                            aValue = new Date($(a).find("td:nth-child(4)").text());
-                            bValue = new Date($(b).find("td:nth-child(4)").text());
-                            break;
-                        case "endDate":
-                            aValue = $(a).find("td:nth-child(5)").text();
-                            bValue = $(b).find("td:nth-child(5)").text();
-                            if (aValue === "Not set") aValue = new Date(9999, 11, 31);
-                            if (bValue === "Not set") bValue = new Date(9999, 11, 31);
-                            aValue = new Date(aValue);
-                            bValue = new Date(bValue);
-                            break;
-                        case "progress":
-                            aValue = parseInt($(a).find(".progress-bar").attr("aria-valuenow")) || 0;
-                            bValue = parseInt($(b).find(".progress-bar").attr("aria-valuenow")) || 0;
-                            break;
-                    }
-                    if (aValue < bValue) return -1;
-                    if (aValue > bValue) return 1;
-                    return 0;
-                });
-
-                $("#projectsTable tbody").append(rows);
-                paginate();
-            });
-
-            // Make rows clickable: navigate to details when clicking row (except on buttons/links)
-            $(document).on('click', '#projectsTable tbody tr', function(e) {
-                if ($(e.target).is('a, button, i, .btn')) return; // ignore clicks on actionable controls
-                const link = $(this).find('a[asp-action="ProjectDetails"]').first();
-                if (link.length) {
-                    window.location = link.attr('href');
-                }
-            });
-
-            // Simple client-side pagination
+            // Pagination
             function paginate() {
                 const pageSize = parseInt($('#pageSize').val()) || 10;
                 const rows = $('#projectsTable tbody tr:visible').not('#no-results-message');
@@ -393,74 +776,114 @@
                 if (current > totalPages) current = 1;
 
                 rows.hide();
-                rows.slice((current-1)*pageSize, current*pageSize).show();
+                rows.slice((current - 1) * pageSize, current * pageSize).show();
 
                 $('#paginationInfo').text(current + ' of ' + totalPages);
-                // render simple prev/next
                 $('#prevPage').prop('disabled', current <= 1);
                 $('#nextPage').prop('disabled', current >= totalPages);
                 $('#currentPage').val(current);
             }
 
-            $('#prevPage').on('click', function(e){ e.preventDefault(); let p = parseInt($('#currentPage').val())||1; if (p>1) { $('#currentPage').val(p-1); paginate(); }});
-            $('#nextPage').on('click', function(e){ e.preventDefault(); let p = parseInt($('#currentPage').val())||1; $('#currentPage').val(p+1); paginate(); });
-            $('#pageSize').on('change', function(){ $('#currentPage').val(1); paginate(); });
+            $('#prevPage').on('click', function (e) {
+                e.preventDefault();
+                let p = parseInt($('#currentPage').val()) || 1;
+                if (p > 1) { $('#currentPage').val(p - 1); paginate(); }
+            });
+            $('#nextPage').on('click', function (e) {
+                e.preventDefault();
+                let p = parseInt($('#currentPage').val()) || 1;
+                $('#currentPage').val(p + 1); paginate();
+            });
+            $('#pageSize').on('change', function () { $('#currentPage').val(1); paginate(); });
 
-            // initialize defaults
-            if (!$('#currentPage').length) {
-                $('body').append('<input type="hidden" id="currentPage" value="1" />');
-            }
+            // Column sort
+            $('.sortable').on('click', function () {
+                const col = $(this).data('sort');
+                const rows = $('#projectsTable tbody tr').not('#no-results-message').get();
+                rows.sort(function (a, b) {
+                    let av, bv;
+                    switch (col) {
+                        case 'name':
+                            av = $(a).find('td:first-child a').text().toLowerCase();
+                            bv = $(b).find('td:first-child a').text().toLowerCase();
+                            return av.localeCompare(bv);
+                        case 'startDate':
+                            av = new Date($(a).find('td:nth-child(4)').text());
+                            bv = new Date($(b).find('td:nth-child(4)').text());
+                            break;
+                        case 'endDate':
+                            av = $(a).find('td:nth-child(5)').text();
+                            bv = $(b).find('td:nth-child(5)').text();
+                            av = av === 'Not set' ? new Date(9999, 11, 31) : new Date(av);
+                            bv = bv === 'Not set' ? new Date(9999, 11, 31) : new Date(bv);
+                            break;
+                        case 'progress':
+                            av = parseInt($(a).find('.dash-progress-bar').attr('aria-valuenow')) || 0;
+                            bv = parseInt($(b).find('.dash-progress-bar').attr('aria-valuenow')) || 0;
+                            break;
+                    }
+                    return av < bv ? -1 : av > bv ? 1 : 0;
+                });
+                $('#projectsTable tbody').append(rows);
+                $('#currentPage').val(1);
+                paginate();
+            });
+
+            // Row click → navigate (ignore action buttons)
+            $(document).on('click', '#projectsTable tbody tr', function (e) {
+                if ($(e.target).closest('a, button').length) return;
+                const link = $(this).find('a.action-btn-details').first();
+                if (link.length) window.location = link.attr('href');
+            });
+
+            // Init
             paginate();
             updateEmptyState();
 
-            // Timeline modal functionality
-            $(document).on('click', '.timeline-btn', function(e){
+            // Timeline modal
+            $(document).on('click', '.timeline-btn', function (e) {
                 e.preventDefault();
                 const href = $(this).data('href');
-                const modalEl = document.getElementById('projectTimelineModal');
-                const modal = new bootstrap.Modal(modalEl);
-                // fetch project details page HTML
-                $.get(href).done(function(html){
+                const modal = new bootstrap.Modal(document.getElementById('projectTimelineModal'));
+                $.get(href).done(function (html) {
                     const $resp = $(html);
-                    let tasksJson = $resp.find('#project-tasks-data').html();
-                    if (!tasksJson) tasksJson = $resp.filter('#project-tasks-data').html();
+                    let tasksJson = $resp.find('#project-tasks-data').html() || $resp.filter('#project-tasks-data').html();
                     let projectStart = $resp.find('#project-start').text() || $resp.filter('#project-start').text();
-                    let projectEnd = $resp.find('#project-end').text() || $resp.filter('#project-end').text();
-
+                    let projectEnd   = $resp.find('#project-end').text()   || $resp.filter('#project-end').text();
                     let tasks = [];
-                    try { tasks = tasksJson ? JSON.parse(tasksJson) : []; } catch (ex) { tasks = []; }
+                    try { tasks = tasksJson ? JSON.parse(tasksJson) : []; } catch (ex) {}
 
-                    const seriesData = tasks.map(function(task){
-                        return {
-                            name: task.name,
-                            data: [{ x: ' ', y: [new Date(task.start).getTime(), new Date(task.end).getTime()], status: task.status, assignee: task.assignee }]
-                        };
-                    });
-
-                    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB'];
+                    const seriesData = tasks.map(t => ({
+                        name: t.name,
+                        data: [{ x: ' ', y: [new Date(t.start).getTime(), new Date(t.end).getTime()], status: t.status, assignee: t.assignee }]
+                    }));
 
                     const options = {
                         series: seriesData,
                         chart: { height: Math.max(300, seriesData.length * 50), type: 'rangeBar', toolbar: { show: false } },
                         plotOptions: { bar: { horizontal: true, barHeight: '50%', rangeBarGroupRows: true, borderRadius: 4 } },
                         dataLabels: { enabled: false },
-                        colors: colors,
+                        colors: ['#347deb','#10b981','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#ec4899','#1a3f80'],
                         xaxis: { type: 'datetime', min: projectStart ? new Date(projectStart).getTime() : undefined, max: projectEnd ? new Date(projectEnd).getTime() : undefined },
                         yaxis: { show: false },
-                        tooltip: { custom: function({series, seriesIndex, dataPointIndex, w}) { var t = w.config.series[seriesIndex].data[0]; var s = new Date(t.y[0]).toLocaleDateString(); var e = new Date(t.y[1]).toLocaleDateString(); return '<div class="px-3 py-2"><div class="mb-2"><strong>'+ w.config.series[seriesIndex].name +'</strong></div><div class="text-muted small">Duration: '+s+' - '+e+'</div><div class="mt-2"><span class="badge bg-'+(t.status==='Completed'?'success': t.status==='In Progress'?'primary': t.status==='On Hold'?'warning':'secondary')+' me-1">'+t.status+'</span>' + (t.assignee && t.assignee!=='Unassigned' ? '<span class="badge bg-info ms-1"><i class="bi bi-person me-1"></i>'+t.assignee+'</span>': '') + '</div></div>'; } }
+                        tooltip: {
+                            custom: function ({ seriesIndex, w }) {
+                                const t = w.config.series[seriesIndex].data[0];
+                                const s = new Date(t.y[0]).toLocaleDateString();
+                                const e = new Date(t.y[1]).toLocaleDateString();
+                                const sc = t.status === 'Completed' ? 'badge-success' : t.status === 'In Progress' ? 'badge-primary' : t.status === 'On Hold' ? 'badge-warning' : 'badge-secondary';
+                                return `<div class="px-3 py-2"><div class="mb-1 fw-bold" style="color:#1a3f80;">${w.config.series[seriesIndex].name}</div><div style="font-size:.8rem;color:#6b84b0;">Duration: ${s} – ${e}</div><div class="mt-2"><span class="status-badge ${sc}">${t.status}</span></div></div>`;
+                            }
+                        }
                     };
 
-                    // render chart
                     $('#modalGanttChart').empty();
-                    try { window._modalGantt && window._modalGantt.destroy(); } catch(e){}
-                    window._modalGantt = new ApexCharts(document.querySelector("#modalGanttChart"), options);
+                    try { window._modalGantt && window._modalGantt.destroy(); } catch (ex) {}
+                    window._modalGantt = new ApexCharts(document.querySelector('#modalGanttChart'), options);
                     window._modalGantt.render();
-                    // set info
-                    $('#modalTimelineInfo').text(seriesData.length + ' tasks — ' + (projectStart || '') + (projectEnd ? ' to ' + projectEnd : ''));
+                    $('#modalTimelineInfo').text(seriesData.length + ' tasks' + (projectStart ? ' — ' + projectStart : '') + (projectEnd ? ' to ' + projectEnd : ''));
                     modal.show();
-                }).fail(function(){
-                    alert('Unable to load project timeline.');
-                });
+                }).fail(function () { alert('Unable to load project timeline.'); });
             });
         });
     </script>
