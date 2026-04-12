@@ -135,30 +135,58 @@
                     }
                     else if (User.IsInRole("Client"))
                     {
-                        <li>
-                            <a asp-controller="Client" asp-action="Index">
-                                <i class="bi bi-speedometer2"></i>
-                                <span>Dashboard</span>
+                
+                    <li>
+                        <a asp-controller="Client" asp-action="Index"
+                           class="@IsActive("Client", "Index")">
+                            <i class="bi bi-speedometer2"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Client" asp-action="Projects"
+                           class="@IsActive("Client", "Projects")">
+                            <i class="bi bi-folder2-open"></i>
+                            <span>Projects</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Report" asp-action="Index"
+                           class="@IsActive("Report", "Index")">
+                            <i class="bi bi-bar-chart-line"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Client" asp-action="Notifications"
+                           class="@IsActive("Client", "Notifications")">
+                            <i class="bi bi-bell"></i>
+                            <span>Notifications</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Client" asp-action="Tickets"
+                           class="@IsActive("Client", "Tickets")">
+                            <i class="bi bi-ticket-perforated"></i>
+                            <span>Tickets</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a asp-controller="Client" asp-action="Profile"
+                           class="@IsActive("Client", "Profile")">
+                            <i class="bi bi-person-badge"></i>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+                    <li>
+                        <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
+                            <a href="javascript:void(0)"
+                               onclick="document.getElementById('logoutForm').submit()">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Logout</span>
                             </a>
-                        </li>
-                        <li>
-                            <a asp-controller="Client" asp-action="Projects">
-                                <i class="bi bi-folder"></i>
-                                <span>Projects</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a asp-controller="Report" asp-action="Index">
-                                <i class="bi bi-bar-chart"></i>
-                                <span>Reports</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a asp-controller="Client" asp-action="Profile">
-                                <i class="bi bi-person"></i>
-                                <span>Profile</span>
-                            </a>
-                        </li>
+                        </form>
+                    </li>
                     }
                     else if (User.IsInRole("Employee"))
                     {
