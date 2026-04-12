@@ -3,97 +3,369 @@
     Layout = "_ClientLayout";
 }
 
+<style>
+    /* =============================================
+       CLIENT DASHBOARD — #347deb theme (matches Index)
+       ============================================= */
+
+    @@keyframes heroFadeUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @@keyframes shimmerMove {
+        0%   { background-position: -200% center; }
+        100% { background-position:  200% center; }
+    }
+
+    @@keyframes ctaPulse {
+        0%, 100% { box-shadow: 0 4px 20px rgba(52, 125, 235, 0.20); }
+        50%       { box-shadow: 0 8px 28px rgba(52, 125, 235, 0.38); }
+    }
+
+    /* ---------- Page Header ---------- */
+    .dash-header {
+        margin-bottom: 2rem;
+        animation: heroFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .dash-header h1 {
+        font-family: 'League Spartan', sans-serif;
+        font-size: 1.9rem;
+        font-weight: 900;
+        letter-spacing: -1.5px;
+        color: #1a3f80;
+        margin-bottom: 0.2rem;
+    }
+
+    .dash-header p {
+        font-size: 0.88rem;
+        color: #6b84b0;
+        margin: 0;
+    }
+
+    /* ---------- Stat Cards ---------- */
+    .stat-card {
+        background: #fff;
+        border-radius: 18px;
+        border: 1px solid rgba(52, 125, 235, 0.08);
+        box-shadow: 0 2px 18px rgba(52, 125, 235, 0.08);
+        padding: 1.5rem 1.6rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    box-shadow 0.3s ease;
+        animation: heroFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #1a3f80, #347deb, #60aaff);
+        background-size: 200% auto;
+        animation: shimmerMove 3.5s linear infinite;
+        border-radius: 18px 18px 0 0;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .stat-card:hover::before { opacity: 1; }
+
+    .stat-card:hover {
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: 0 18px 44px rgba(52, 125, 235, 0.14);
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.12s; }
+    .stat-card:nth-child(3) { animation-delay: 0.19s; }
+    .stat-card:nth-child(4) { animation-delay: 0.26s; }
+
+    .stat-label {
+        font-size: .68rem;
+        font-weight: 600;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+        color: #6b84b0;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-family: 'League Spartan', sans-serif;
+        font-size: 2rem;
+        font-weight: 900;
+        letter-spacing: -1px;
+        color: #1a3f80;
+        line-height: 1;
+    }
+
+    .stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px; height: 52px;
+        border-radius: 50%;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s;
+    }
+
+    .stat-card:hover .stat-icon {
+        transform: rotate(10deg) scale(1.15);
+    }
+
+    .stat-icon-blue   { background: rgba(52, 125, 235, 0.10); color: #347deb; }
+    .stat-icon-green  { background: rgba(16, 185, 129, 0.10); color: #10b981; }
+    .stat-icon-teal   { background: rgba(6, 182, 212, 0.10);  color: #06b6d4; }
+    .stat-icon-amber  { background: rgba(245, 158, 11, 0.10); color: #f59e0b; }
+
+    .stat-card:hover .stat-icon-blue  { background: rgba(52, 125, 235, 0.18); }
+    .stat-card:hover .stat-icon-green { background: rgba(16, 185, 129, 0.18); }
+    .stat-card:hover .stat-icon-teal  { background: rgba(6, 182, 212, 0.18); }
+    .stat-card:hover .stat-icon-amber { background: rgba(245, 158, 11, 0.18); }
+
+    /* ---------- Section Cards ---------- */
+    .dash-card {
+        background: #fff;
+        border-radius: 18px;
+        border: 1px solid rgba(52, 125, 235, 0.08);
+        box-shadow: 0 2px 18px rgba(52, 125, 235, 0.07);
+        overflow: hidden;
+        animation: heroFadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+    }
+
+    .dash-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid rgba(52, 125, 235, 0.08);
+        background: linear-gradient(135deg, #0f2660 0%, #1a3f80 40%, #2360c8 75%, #347deb 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dash-card-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        background-size: 200% auto;
+        animation: shimmerMove 3s linear infinite;
+    }
+
+    .dash-card-header h6 {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.92);
+        margin: 0;
+    }
+
+    .dash-card-header .bi {
+        font-size: 1rem;
+        color: rgba(255,255,255,0.75);
+    }
+
+    .dash-card-body {
+        padding: 1.2rem 1.5rem;
+    }
+
+    /* ---------- Tables ---------- */
+    .dash-table {
+        width: 100%;
+        font-size: .875rem;
+        margin: 0;
+        border-collapse: collapse;
+    }
+
+    .dash-table thead th {
+        font-size: .68rem;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #6b84b0;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid rgba(52, 125, 235, 0.10);
+    }
+
+    .dash-table tbody tr {
+        border-bottom: 1px solid rgba(52, 125, 235, 0.06);
+        transition: background 0.18s;
+    }
+
+    .dash-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .dash-table tbody tr:hover {
+        background: rgba(52, 125, 235, 0.04);
+    }
+
+    .dash-table tbody td {
+        padding: 0.75rem;
+        color: #0d1117;
+        vertical-align: middle;
+    }
+
+    .dash-table a {
+        color: #347deb;
+        font-weight: 500;
+        text-decoration: none;
+        transition: color .2s;
+    }
+
+    .dash-table a:hover {
+        color: #1a3f80;
+    }
+
+    /* ---------- Progress bars ---------- */
+    .dash-progress {
+        height: 6px;
+        border-radius: 10px;
+        background: rgba(52, 125, 235, 0.10);
+        overflow: hidden;
+    }
+
+    .dash-progress-bar {
+        height: 100%;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #347deb, #60aaff);
+        transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .progress-label {
+        font-size: .72rem;
+        color: #6b84b0;
+        margin-bottom: 4px;
+    }
+
+    /* ---------- Badges ---------- */
+    .status-badge {
+        display: inline-block;
+        font-size: .68rem;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 20px;
+    }
+
+    .badge-secondary { background: rgba(107, 132, 176, 0.12); color: #6b84b0; }
+    .badge-primary   { background: rgba(52, 125, 235, 0.12);  color: #347deb; }
+    .badge-warning   { background: rgba(245, 158, 11, 0.12);  color: #d97706; }
+    .badge-success   { background: rgba(16, 185, 129, 0.12);  color: #059669; }
+
+    /* ---------- Empty state ---------- */
+    .empty-state {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: #6b84b0;
+        font-size: .88rem;
+    }
+
+    .empty-state .bi {
+        font-size: 2.5rem;
+        color: rgba(52, 125, 235, 0.20);
+        display: block;
+        margin-bottom: 0.75rem;
+    }
+
+    /* ---------- Avatar circle for team ---------- */
+    .member-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        background: rgba(52, 125, 235, 0.10);
+        color: #347deb;
+        font-size: .72rem;
+        font-weight: 700;
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
+</style>
+
 <div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="h3">Client Dashboard</h1>
-            <p class="text-muted">Welcome to your project management dashboard</p>
+
+    <!-- Page Header -->
+    <div class="dash-header">
+        <div class="d-flex align-items-center gap-3">
+            <div>
+                <h1>Dashboard</h1>
+                <p>Welcome back — here's what's happening with your projects</p>
+            </div>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Statistics Cards -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Projects</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.ProjectCount</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-folder fs-2 text-gray-300"></i>
-                        </div>
-                    </div>
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon stat-icon-blue">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Total Projects</div>
+                    <div class="stat-value">@ViewBag.ProjectCount</div>
                 </div>
             </div>
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Tasks</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.TotalTasks</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-list-task fs-2 text-gray-300"></i>
-                        </div>
-                    </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon stat-icon-teal">
+                    <i class="bi bi-list-task"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Total Tasks</div>
+                    <div class="stat-value">@ViewBag.TotalTasks</div>
                 </div>
             </div>
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Completed Tasks</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.CompletedTasks</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-check-circle fs-2 text-gray-300"></i>
-                        </div>
-                    </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon stat-icon-green">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Completed Tasks</div>
+                    <div class="stat-value">@ViewBag.CompletedTasks</div>
                 </div>
             </div>
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Overdue Tasks</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.OverdueTasks</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-exclamation-circle fs-2 text-gray-300"></i>
-                        </div>
-                    </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon stat-icon-amber">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Overdue Tasks</div>
+                    <div class="stat-value">@ViewBag.OverdueTasks</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
+    <!-- Projects & Team -->
+    <div class="row g-3">
+
         <!-- My Projects -->
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h6 class="m-0 font-weight-bold text-white">My Projects</h6>
+        <div class="col-lg-6">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <i class="bi bi-folder"></i>
+                    <h6>My Projects</h6>
                 </div>
-                <div class="card-body">
+                <div class="dash-card-body">
                     @if (ViewBag.MyProjects != null && ViewBag.MyProjects.Count > 0)
                     {
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="dash-table">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
@@ -104,6 +376,17 @@
                                 <tbody>
                                     @foreach (var project in ViewBag.MyProjects)
                                     {
+                                        var progress = ViewBag.ProjectProgress != null && ViewBag.ProjectProgress.ContainsKey(project.Id)
+                                            ? ViewBag.ProjectProgress[project.Id] : 0;
+
+                                        var badgeClass = project.Status switch {
+                                            "Not Started" => "badge-secondary",
+                                            "In Progress"  => "badge-primary",
+                                            "On Hold"      => "badge-warning",
+                                            "Completed"    => "badge-success",
+                                            _              => "badge-secondary"
+                                        };
+
                                         <tr>
                                             <td>
                                                 <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@project.Id">
@@ -111,25 +394,12 @@
                                                 </a>
                                             </td>
                                             <td>
-                                                <span class="badge bg-@(project.Status switch {
-                                                    "Not Started" => "secondary",
-                                                    "In Progress" => "primary",
-                                                    "On Hold" => "warning",
-                                                    "Completed" => "success",
-                                                    _ => "secondary"
-                                                })">@project.Status</span>
+                                                <span class="status-badge @badgeClass">@project.Status</span>
                                             </td>
-                                            <td>
-                                                @{
-                                                    var progress = ViewBag.ProjectProgress != null && ViewBag.ProjectProgress.ContainsKey(project.Id)
-                                                        ? ViewBag.ProjectProgress[project.Id]
-                                                        : 0;
-                                                }
-                                                <div class="progress">
-                                                    <div class="progress-bar" role="progressbar" style="width: @progress%"
-                                                         aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100">
-                                                        @progress%
-                                                    </div>
+                                            <td style="min-width:110px;">
+                                                <div class="progress-label">@progress%</div>
+                                                <div class="dash-progress">
+                                                    <div class="dash-progress-bar" style="width:@progress%"></div>
                                                 </div>
                                             </td>
                                         </tr>
@@ -140,23 +410,27 @@
                     }
                     else
                     {
-                        <p class="text-muted mb-0">No projects found.</p>
+                        <div class="empty-state">
+                            <i class="bi bi-folder-x"></i>
+                            No projects found.
+                        </div>
                     }
                 </div>
             </div>
         </div>
 
         <!-- Project Team -->
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h6 class="m-0 font-weight-bold text-white">Project Team</h6>
+        <div class="col-lg-6">
+            <div class="dash-card h-100">
+                <div class="dash-card-header">
+                    <i class="bi bi-people"></i>
+                    <h6>Project Team</h6>
                 </div>
-                <div class="card-body">
+                <div class="dash-card-body">
                     @if (ViewBag.ProjectTeam != null && ViewBag.ProjectTeam.Count > 0)
                     {
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="dash-table">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
@@ -167,10 +441,23 @@
                                 <tbody>
                                     @foreach (var member in ViewBag.ProjectTeam)
                                     {
+                                        var initials = $"{member.FirstName?[0]}{member.LastName?[0]}".ToUpper();
+                                        var taskCount = ViewBag.MemberTaskCounts != null && ViewBag.MemberTaskCounts.ContainsKey(member.Id)
+                                            ? ViewBag.MemberTaskCounts[member.Id] : 0;
+
                                         <tr>
-                                            <td>@member.FirstName @member.LastName</td>
-                                            <td>@member.Role</td>
-                                            <td>@(ViewBag.MemberTaskCounts != null && ViewBag.MemberTaskCounts.ContainsKey(member.Id) ? ViewBag.MemberTaskCounts[member.Id] : 0)</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="member-avatar">@initials</span>
+                                                    @member.FirstName @member.LastName
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge badge-primary">@member.Role</span>
+                                            </td>
+                                            <td>
+                                                <span class="fw-600" style="color:#1a3f80; font-weight:700;">@taskCount</span>
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -179,79 +466,65 @@
                     }
                     else
                     {
-                        <p class="text-muted mb-0">No team members found.</p>
+                        <div class="empty-state">
+                            <i class="bi bi-people"></i>
+                            No team members found.
+                        </div>
                     }
                 </div>
             </div>
         </div>
+
     </div>
 
-    <!-- Recent Tasks -->
-    @* <div class="row"> *@
-    @*     <div class="col-12"> *@
-    @*         <div class="card"> *@
-    @*             <div class="card-header bg-white"> *@
-    @*                 <h6 class="m-0 font-weight-bold text-primary">Recent Tasks</h6> *@
-    @*             </div> *@
-    @*             <div class="card-body"> *@
-    @*                 @if (ViewBag.ProjectTasks != null && ViewBag.ProjectTasks.Count > 0) *@
-    @*                 { *@
-    @*                     <div class="table-responsive"> *@
-    @*                         <table class="table table-hover"> *@
-    @*                             <thead> *@
-    @*                                 <tr> *@
-    @*                                     <th>Title</th> *@
-    @*                                     <th>Project</th> *@
-    @*                                     <th>Assigned To</th> *@
-    @*                                     <th>Due Date</th> *@
-    @*                                     <th>Status</th> *@
-    @*                                     <th>Priority</th> *@
-    @*                                 </tr> *@
-    @*                             </thead> *@
-    @*                             <tbody> *@
-    @*                                 @foreach (var task in ViewBag.ProjectTasks) *@
-    @*                                 { *@
-    @*                                     <tr> *@
-    @*                                         <td> *@
-    @*                                             <a asp-controller="Client" asp-action="TaskDetails" asp-route-id="@task.Id"> *@
-    @*                                                 @task.Title *@
-    @*                                             </a> *@
-    @*                                         </td> *@
-    @*                                         <td>@task.Project.Name</td> *@
-    @*                                         <td>@(task.TaskAssignments != null && task.TaskAssignments.Any() *@
-    @*                                             ? string.Join(", ", task.TaskAssignments.Select(a => a.Employee.FirstName)) *@
-    @*                                             : "Unassigned") *@
-    @*                                         </td> *@
-    @*                                         <td>@task.DueDate.ToString("MMM dd, yyyy")</td> *@
-    @*                                         <td> *@
-    @*                                             <span class="badge bg-@(task.Status switch { *@
-    @*                                                 "Not Started" => "secondary", *@
-    @*                                                 "In Progress" => "primary", *@
-    @*                                                 "On Hold" => "warning", *@
-    @*                                                 "Completed" => "success", *@
-    @*                                                 _ => "secondary" *@
-    @*                                             })">@task.Status</span> *@
-    @*                                         </td> *@
-    @*                                         <td> *@
-    @*                                             <span class="badge bg-@(task.Priority switch { *@
-    @*                                                 "Low" => "success", *@
-    @*                                                 "Medium" => "warning", *@
-    @*                                                 "High" => "danger", *@
-    @*                                                 _ => "secondary" *@
-    @*                                             })">@task.Priority</span> *@
-    @*                                         </td> *@
-    @*                                     </tr> *@
-    @*                                 } *@
-    @*                             </tbody> *@
-    @*                         </table> *@
-    @*                     </div> *@
-    @*                 } *@
-    @*                 else *@
-    @*                 { *@
-    @*                     <p class="text-muted mb-0">No tasks found.</p> *@
-    @*                 } *@
-    @*             </div> *@
-    @*         </div> *@
-    @*     </div> *@
-    @* </div> *@
-</div> 
+</div>
+
+{{-- Commented-out Recent Tasks section preserved below --}}
+@* <div class="row mt-3"> *@
+@*     <div class="col-12"> *@
+@*         <div class="dash-card"> *@
+@*             <div class="dash-card-header"> *@
+@*                 <i class="bi bi-list-task"></i> *@
+@*                 <h6>Recent Tasks</h6> *@
+@*             </div> *@
+@*             <div class="dash-card-body"> *@
+@*                 @if (ViewBag.ProjectTasks != null && ViewBag.ProjectTasks.Count > 0) *@
+@*                 { *@
+@*                     <div class="table-responsive"> *@
+@*                         <table class="dash-table"> *@
+@*                             <thead> *@
+@*                                 <tr> *@
+@*                                     <th>Title</th> *@
+@*                                     <th>Project</th> *@
+@*                                     <th>Assigned To</th> *@
+@*                                     <th>Due Date</th> *@
+@*                                     <th>Status</th> *@
+@*                                     <th>Priority</th> *@
+@*                                 </tr> *@
+@*                             </thead> *@
+@*                             <tbody> *@
+@*                                 @foreach (var task in ViewBag.ProjectTasks) *@
+@*                                 { *@
+@*                                     <tr> *@
+@*                                         <td><a asp-controller="Client" asp-action="TaskDetails" asp-route-id="@task.Id">@task.Title</a></td> *@
+@*                                         <td>@task.Project.Name</td> *@
+@*                                         <td>@(task.TaskAssignments != null && task.TaskAssignments.Any() *@
+@*                                             ? string.Join(", ", task.TaskAssignments.Select(a => a.Employee.FirstName)) *@
+@*                                             : "Unassigned")</td> *@
+@*                                         <td>@task.DueDate.ToString("MMM dd, yyyy")</td> *@
+@*                                         <td><span class="status-badge badge-@(task.Status switch { "Not Started" => "secondary", "In Progress" => "primary", "On Hold" => "warning", "Completed" => "success", _ => "secondary" })">@task.Status</span></td> *@
+@*                                         <td><span class="status-badge badge-@(task.Priority switch { "Low" => "success", "Medium" => "warning", "High" => "danger", _ => "secondary" })">@task.Priority</span></td> *@
+@*                                     </tr> *@
+@*                                 } *@
+@*                             </tbody> *@
+@*                         </table> *@
+@*                     </div> *@
+@*                 } *@
+@*                 else *@
+@*                 { *@
+@*                     <div class="empty-state"><i class="bi bi-inbox"></i>No tasks found.</div> *@
+@*                 } *@
+@*             </div> *@
+@*         </div> *@
+@*     </div> *@
+@* </div> *@
