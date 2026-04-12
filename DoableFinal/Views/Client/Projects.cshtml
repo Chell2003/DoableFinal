@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "My Projects";
-    Layout = "_ClientLayout";
+    Layout = "_Layout";
     var query = Context.Request.Query["q"].ToString();
     var statusFilter = Context.Request.Query["statusFilter"].ToString();
     var fromDate = Context.Request.Query["fromDate"].ToString();
