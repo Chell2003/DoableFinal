@@ -26,6 +26,8 @@
     <!-- Charts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
     <script src="~/js/scripts.js"></script>
+    <!-- Page-specific styles -->
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     @if (User.Identity?.IsAuthenticated == true)
@@ -370,7 +372,6 @@
                 });
 
                 // Sidebar toggle functionality
-                // Handle sidebar toggle
                 $('#sidebarCollapse').on('click', function () {
                     $('#sidebar').removeClass('active');
                     $('#content').removeClass('active');
@@ -385,7 +386,6 @@
                 $('.sidebar ul li a').each(function() {
                     if ($(this).attr('href') === window.location.pathname) {
                         $(this).addClass('active');
-                        // If it's a submenu item, expand the parent
                         if ($(this).closest('.collapse').length) {
                             $(this).closest('.collapse').addClass('show');
                             $(this).closest('.collapse').prev('.dropdown-toggle').attr('aria-expanded', 'true');
