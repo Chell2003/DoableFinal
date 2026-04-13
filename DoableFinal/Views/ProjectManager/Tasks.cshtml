@@ -113,9 +113,9 @@
                         @foreach (var task in Model)
                         {
                             <tr>
-                                <td>@task.Title</td>
-                                <td>@task.Project.Name</td>
-                                <td>
+                                <td data-label="Title">@task.Title</td>
+                                <td data-label="Project">@task.Project.Name</td>
+                                <td data-label="Assigned To">
                                     @if (task.TaskAssignments != null && task.TaskAssignments.Any())
                                     {
                                         <ul class="list-unstyled mb-0">
@@ -130,7 +130,7 @@
                                         <span class="text-muted">Unassigned</span>
                                     }
                                 </td>
-                                <td>
+                                <td data-label="Status">
                                     <span class="badge bg-@(task.Status switch {
                                         "Not Started" => "secondary",
                                         "In Progress" => "primary",
@@ -139,7 +139,7 @@
                                         _ => "secondary"
                                     })">@task.Status</span>
                                 </td>
-                                <td>
+                                <td data-label="Priority">
                                     <span class="badge bg-@(task.Priority switch {
                                         "Low" => "info",
                                         "Medium" => "warning",
@@ -147,8 +147,8 @@
                                         _ => "secondary"
                                     })">@task.Priority</span>
                                 </td>
-                                <td>@task.DueDate.ToString("MMM dd, yyyy")</td>
-                                <td>
+                                <td data-label="Due Date">@task.DueDate.ToString("MMM dd, yyyy")</td>
+                                <td data-label="Actions">
                                     <a asp-controller="ProjectManager" asp-action="TaskDetails" asp-route-id="@task.Id" class="btn btn-sm btn-outline-primary">
                                         View Details
                                     </a>
