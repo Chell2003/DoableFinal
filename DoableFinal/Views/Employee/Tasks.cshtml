@@ -112,17 +112,17 @@
                                     @foreach (var task in Model)
                                     {
                                         <tr data-task-id="@task.Id">
-                                            <td>
+                                            <td data-label="Task">
                                                 <div>
                                                     <h6 class="mb-0">@task.Title</h6>
                                                     <small class="text-muted">@task.Description</small>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="Project">
                                                 <a asp-controller="Projects" asp-action="Details" asp-route-id="@task.ProjectId" 
                                                    class="text-decoration-none">@task.Project?.Name</a>
                                             </td>
-                                            <td>
+                                            <td data-label="Status">
                                                 <span class="badge bg-@(task.Status == "Completed" ? "success" : 
                                                             task.Status == "For Review" ? "info" :
                                                             task.Status == "In Progress" ? "primary" : 
@@ -130,18 +130,18 @@
                                                     @task.Status
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td data-label="Priority">
                                                 <span class="badge bg-@(task.Priority == "High" ? "danger" : 
                                                             task.Priority == "Medium" ? "warning" : "info")">
                                                     @task.Priority
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td data-label="Due Date">
                                                 <span class="@(task.DueDate < DateTime.Now && task.Status != "Completed" ? "text-danger" : "")">
                                                     @task.DueDate.ToString("MMM dd, yyyy")
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td data-label="Actions">
                                                 <a asp-controller="Employee" asp-action="TaskDetails" asp-route-id="@task.Id" 
                                                    class="btn btn-sm btn-outline-primary">View</a>
                                             </td>

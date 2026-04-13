@@ -102,11 +102,9 @@
                 </div>
             </div>
 
-            <!-- Project Team is moved to sidebar right column -->
-
             <!-- My Tasks in this Project -->
             <div class="card mb-4">
-                <div class="card-header" style="color: white;" >
+                <div class="card-header" style="color: white;">
                     <i class="fas fa-tasks me-1"></i>
                     My Tasks in this Project
                 </div>
@@ -126,13 +124,13 @@
                                @foreach (var task in Model.Tasks.Where(t => t.TaskAssignments.Any(a => a.EmployeeId == ViewBag.CurrentUserId)))
                                 {
                                     <tr>
-                                        <td>@task.Title</td>
-                                        <td>
+                                        <td data-label="Title">@task.Title</td>
+                                        <td data-label="Due Date">
                                             <span class="@(task.DueDate < DateTime.Now && task.Status != "Completed" ? "text-danger" : "")">
                                                 @task.DueDate.ToString(dateFormat)
                                             </span>
                                         </td>
-                                        <td>
+                                        <td data-label="Status">
                                             <span class="badge bg-@(task.Status switch {
                                                 "Not Started" => "secondary",
                                                 "In Progress" => "primary",
@@ -141,7 +139,7 @@
                                                 _ => "secondary"
                                             })">@task.Status</span>
                                         </td>
-                                        <td>
+                                        <td data-label="Priority">
                                             <span class="badge bg-@(task.Priority switch {
                                                 "Low" => "info",
                                                 "Medium" => "warning",
@@ -149,7 +147,7 @@
                                                 _ => "secondary"
                                             })">@task.Priority</span>
                                         </td>
-                                        <td>
+                                        <td data-label="Actions">
                                             <a asp-controller="Employee" asp-action="TaskDetails" asp-route-id="@task.Id" 
                                                class="btn btn-sm btn-outline-primary">View</a>
                                         </td>
@@ -161,8 +159,9 @@
                 </div>
             </div>
         </div>
+
         <div class="col-xl-4">
-            <!-- Project Team (moved to the right sidebar) -->
+            <!-- Project Team -->
             <div class="card mb-4">
                 <div class="card-header" style="color: white;">
                     <i class="fas fa-users me-1"></i>
@@ -180,7 +179,7 @@
                             <tbody>
                                 <!-- Project Manager -->
                                 <tr>
-                                    <td>
+                                    <td data-label="Name">
                                         @($"{Model.ProjectManager.FirstName} {Model.ProjectManager.LastName}")
                                         @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
                                         {
@@ -189,23 +188,21 @@
                                             </a>
                                         }
                                     </td>
-                                    <td>Project Manager</td>
+                                    <td data-label="Role">Project Manager</td>
                                 </tr>
                                 <!-- Client -->
                                 <tr>
-                                    <td>
+                                    <td data-label="Name">
                                         @($"{Model.Client.FirstName} {Model.Client.LastName}")
-                                        @* Client message button removed: only Project Manager should be message recipient *@
                                     </td>
-                                    <td>Client</td>
+                                    <td data-label="Role">Client</td>
                                 </tr>
                                 <!-- Team Members -->
                                 @foreach (var member in Model.ProjectTeams)
                                 {
                                     <tr>
-                                        <td>
+                                        <td data-label="Name">
                                             @($"{member.User.FirstName} {member.User.LastName}")
-                                            @* Message button for team members (employees) only; do not show for client or for the current user *@
                                             @if (member.User != null && member.User.Id != ViewBag.CurrentUserId && member.User.Role != "Client")
                                             {
                                                 <a asp-controller="Message" asp-action="Index" asp-route-userId="@member.User.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
@@ -213,7 +210,7 @@
                                                 </a>
                                             }
                                         </td>
-                                        <td>@member.Role</td>
+                                        <td data-label="Role">@member.Role</td>
                                     </tr>
                                 }
                             </tbody>
@@ -229,11 +226,9 @@
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Get project start and end dates
             var projectStart = new Date("@Model.StartDate.ToString("yyyy-MM-dd")").getTime();
             var projectEnd = new Date("@Model.EndDate?.ToString("yyyy-MM-dd")").getTime();
 
-            // Prepare task data
             var tasks = @Html.Raw(Json.Serialize(Model.Tasks?.Select(t => new {
                 id = t.Id,
                 name = t.Title ?? "Untitled Task",
@@ -245,10 +240,8 @@
                     : "Unassigned"
             }) ?? Enumerable.Empty<object>()));
 
-            // Configure colors array
             const colors = ['#FF5733', '#4834d4', '#6ab04c', '#be2edd', '#22a6b3', '#eb4d4b', '#f0932b', '#686de0', '#badc58', '#130f40'];
 
-            // Create series data
             const seriesData = tasks.map((task, index) => ({
                 name: task.name,
                 data: [{
@@ -259,7 +252,6 @@
                 }]
             }));
 
-            // Configure the Gantt chart
             var options = {
                 series: seriesData,
                 chart: {
@@ -284,7 +276,7 @@
                     },
                     fontFamily: 'inherit'
                 },
-                colors: ['#FF5733'],
+                colors: colors,
                 plotOptions: {
                     bar: {
                         horizontal: true,
@@ -296,7 +288,6 @@
                 dataLabels: {
                     enabled: false
                 },
-                colors: colors,
                 xaxis: {
                     type: 'datetime',
                     min: projectStart,
@@ -370,7 +361,6 @@
                 }
             };
 
-            // Render the chart
             var chart = new ApexCharts(document.querySelector("#ganttChart"), options);
             chart.render();
         });
