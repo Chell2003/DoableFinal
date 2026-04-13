@@ -98,9 +98,9 @@
                         @foreach (var user in Model)
                         {
                             <tr>
-                                <td><strong>@($"{user.FirstName} {user.LastName}")</strong></td>
-                                <td><small>@user.Email</small></td>
-                                <td>
+                                <td data-label="Name"><strong>@($"{user.FirstName} {user.LastName}")</strong></td>
+                                <td data-label="Email"><small>@user.Email</small></td>
+                                <td data-label="Role">
                                     <span class="badge bg-@(user.Role switch {
                                         "Admin" => "danger",
                                         "Project Manager" => "success",
@@ -109,13 +109,13 @@
                                         _ => "secondary"
                                     })">@user.Role</span>
                                 </td>
-                                <td>
+                                <td data-label="Status">
                                     <span class="badge bg-@(user.IsActive ? "success" : "danger")">
                                         @(user.IsActive ? "Active" : "Inactive")
                                     </span>
                                 </td>
-                                <td><small class="text-muted">@user.CreatedAt.ToString("MMM dd, yyyy")</small></td>
-                                <td class="text-end">
+                                <td data-label="Created At"><small class="text-muted">@user.CreatedAt.ToString("MMM dd, yyyy")</small></td>
+                                <td data-label="Actions" class="text-end">
                                     <div class="btn-group btn-group-sm" role="group">
                                         <a asp-action="UserDetails" asp-route-id="@user.Id" class="btn btn-outline-info" title="View details">
                                             <i class="bi bi-eye"></i>
@@ -174,4 +174,4 @@
             modal.show();
         }
     </script>
-} 
+}
