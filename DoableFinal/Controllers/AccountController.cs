@@ -117,7 +117,7 @@ namespace DoableFinal.Controllers
                         {
                             // No roles assigned, add the one from custom Role property
                             await _userManager.AddToRoleAsync(user, user.Role);
-                            
+
                             // Refresh the security principal to include the new role
                             await _signInManager.RefreshSignInAsync(user);
                         }
@@ -326,5 +326,81 @@ namespace DoableFinal.Controllers
         {
             return View();
         }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist
+                return RedirectToAction(nameof(ForgotPasswordConfirmation));
+            }
+
+            // Generate password reset token and send email (omitted for brevity)
+
+            return RedirectToAction(nameof(ForgotPasswordConfirmation));
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPasswordConfirmation()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string code = null, string email = null)
+        {
+            if (code == null || email == null)
+            {
+                return BadRequest("A code and email must be supplied for password reset.");
+            }
+            var model = new ResetPasswordViewModel { Code = code, Email = email };
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Don't reveal that the user does not exist
+                return RedirectToAction("ResetPasswordConfirmation");
+            }
+            var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
+            if (result.Succeeded)
+            {
+                return RedirectToAction("ResetPasswordConfirmation");
+            }
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+            return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult ResetPasswordConfirmation()
+        {
+            return View();
+        }
     }
-} 
+}
