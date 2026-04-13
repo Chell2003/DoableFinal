@@ -99,12 +99,12 @@
                         @foreach (var project in Model)
                         {
                             <tr>
-                                <td><strong>@project.Name</strong></td>
-                                <td><small>@($"{project.Client.FirstName} {project.Client.LastName}")</small></td>
-                                <td><small>@($"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}")</small></td>
-                                <td><small>@project.StartDate.ToString("MMM dd, yyyy")</small></td>
-                                <td><small>@(project.EndDate?.ToString("MMM dd, yyyy") ?? "-")</small></td>
-                                <td>
+                                <td data-label="Name"><strong>@project.Name</strong></td>
+                                <td data-label="Client"><small>@($"{project.Client.FirstName} {project.Client.LastName}")</small></td>
+                                <td data-label="Project Manager"><small>@($"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}")</small></td>
+                                <td data-label="Start Date"><small>@project.StartDate.ToString("MMM dd, yyyy")</small></td>
+                                <td data-label="Due Date"><small>@(project.EndDate?.ToString("MMM dd, yyyy") ?? "-")</small></td>
+                                <td data-label="Status">
                                     <span class="badge bg-@(project.Status switch {
                                         "Not Started" => "secondary",
                                         "In Progress" => "primary",
@@ -113,7 +113,7 @@
                                         _ => "secondary"
                                     })">@project.Status</span>
                                 </td>
-                                <td class="text-end">
+                                <td data-label="Actions" class="text-end">
                                     <div class="btn-group btn-group-sm" role="group">
                                         <a asp-action="EditProject" asp-route-id="@project.Id" class="btn btn-outline-primary" title="Edit project">
                                             <i class="bi bi-pencil"></i>
@@ -171,4 +171,4 @@
             modal.show();
         }
     </script>
-} 
+}
