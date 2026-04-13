@@ -432,7 +432,6 @@
 
     .pricing-badge {
         position: absolute;
-        top: -14px;
         left: 50%;
         transform: translateX(-50%);
         background: linear-gradient(135deg, #347deb, #1a3f80);
@@ -814,6 +813,7 @@
             <!-- Elite -->
             <div class="col-md-4 reveal reveal-delay-2">
                 <div class="pricing-card is-featured">
+                    <div class="pricing-badge">Most Popular</div>
                     <div class="pricing-plan-name plan-elite">@Html.Raw(eliteTitle)</div>
                     <div class="pricing-price">@Html.Raw(elitePrice)</div>
                     <div class="pricing-users">@Html.Raw(eliteUsers)</div>
@@ -829,7 +829,7 @@
                         }
                     </ul>
                     <div class="pricing-fee">@Html.Raw(eliteFee)</div>
-                    <div class="pricing-badge">Most Popular</div>
+                    
                 </div>
             </div>
 
