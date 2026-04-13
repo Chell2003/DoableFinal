@@ -149,10 +149,10 @@
                             @foreach (var t in Model)
                             {
                                 <tr class="@GetRowHighlight(t.Status)">
-                                    <td>
+                                    <td data-label="Title">
                                         <strong>@t.Title</strong>
                                     </td>
-                                    <td>
+                                    <td data-label="Project">
                                         @if (t.Project != null)
                                         {
                                             <span class="badge bg-light text-dark">@t.Project.Name</span>
@@ -162,13 +162,13 @@
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
-                                    <td>
+                                    <td data-label="Priority">
                                         <span class="@GetPriorityBadge(t.Priority)">@t.Priority</span>
                                     </td>
-                                    <td>
+                                    <td data-label="Status">
                                         <span class="@GetStatusBadge(t.Status)">@t.Status</span>
                                     </td>
-                                    <td>
+                                    <td data-label="Created By">
                                         @if (t.CreatedBy != null)
                                         {
                                             <small>@t.CreatedBy.FirstName @t.CreatedBy.LastName</small>
@@ -178,10 +178,10 @@
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
-                                    <td>
+                                    <td data-label="Created At">
                                         <small class="text-muted">@t.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small>
                                     </td>
-                                    <td class="text-end">
+                                    <td data-label="Actions" class="text-end">
                                         <div class="btn-group btn-group-sm" role="group">
                                             <a class="btn btn-outline-primary" href="@Url.Action("EditTicket", "Admin", new { id = t.Id })" title="Edit ticket">
                                                 <i class="bi bi-pencil"></i>
