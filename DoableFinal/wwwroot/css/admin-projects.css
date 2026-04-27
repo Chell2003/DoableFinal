@@ -251,7 +251,7 @@
 /* bg-primary → In Progress */
 .badge.bg-primary {
     background: rgba(52, 125, 235, 0.13) !important;
-    color: #1a3f80 !important;
+    color: white !important;
 }
 
 /* bg-warning → On Hold */
