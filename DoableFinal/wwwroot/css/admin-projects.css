@@ -62,12 +62,15 @@
     animation: projFadeUp 0.45s 0.06s ease both;
 }
 
-.card.mb-4 .card-header {
-    background: linear-gradient(90deg, #1a3f80, #2360c8, #347deb) !important;
-    border-bottom: none;
-    padding: 0.9rem 1.25rem;
-    position: relative;
-}
+    .card.mb-4 .card-header {
+        background: linear-gradient(90deg, #1a3f80, #2360c8, #347deb) !important;
+        border-bottom: none;
+        padding: 0.9rem 1.25rem;
+        position: relative;
+        color: White;
+        margin-left: -15px;
+        margin-right: -15px;
+    }
 
 .card.mb-4 .card-header h5 {
     color: #fff;
@@ -401,6 +404,9 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 14px rgba(255, 193, 7, 0.35);
 }
+.text-custom-blue {
+    color: #1a3f80
+}
 
 /* ---------- Responsive ---------- */
 @media (max-width: 768px) {
@@ -442,4 +448,8 @@
         text-transform: uppercase;
         letter-spacing: 0.4px;
     }
+   
+
+    
+    
 }
