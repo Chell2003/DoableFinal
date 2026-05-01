@@ -1,0 +1,294 @@
+/* =============================================
+   GLOBAL AUTH THEME — QONNEC (#347deb)
+============================================= */
+
+@keyframes heroFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmerMove {
+    0% {
+        background-position: -200% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
+@keyframes orbDrift {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(18px, -12px) scale(1.04);
+    }
+
+    66% {
+        transform: translate(-10px, 8px) scale(0.97);
+    }
+}
+
+/* PAGE */
+.auth-page {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #eef3fc 0%, #f8faff 50%, #e6eef9 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 3rem 0 4rem;
+}
+
+    .auth-page::before,
+    .auth-page::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .auth-page::before {
+        width: 420px;
+        height: 420px;
+        top: -140px;
+        right: -100px;
+        background: rgba(52,125,235,0.07);
+        animation: orbDrift 9s ease-in-out infinite;
+    }
+
+    .auth-page::after {
+        width: 280px;
+        height: 280px;
+        bottom: -80px;
+        left: -60px;
+        background: rgba(52,125,235,0.05);
+        animation: orbDrift 12s ease-in-out infinite reverse;
+    }
+
+/* CARD */
+.auth-card {
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid rgba(52,125,235,0.10);
+    box-shadow: 0 4px 40px rgba(52,125,235,0.10);
+    padding: 2.5rem 2.2rem;
+    position: relative;
+    animation: heroFadeUp 0.6s ease both;
+}
+
+    .auth-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg,#0f2660,#347deb,#60aaff);
+        background-size: 200% auto;
+        animation: shimmerMove 3s linear infinite;
+    }
+
+/* TEXT */
+.auth-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #1a3f80;
+}
+
+.auth-subtitle {
+    font-size: 0.9rem;
+    color: #6b84b0;
+}
+
+/* FORM */
+.form-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #1a3f80;
+}
+
+.form-control {
+    border-radius: 10px;
+    background: #f4f7fd;
+    border: 1px solid rgba(52,125,235,0.2);
+}
+
+    .form-control:focus {
+        border-color: #347deb;
+        box-shadow: 0 0 0 3px rgba(52,125,235,0.12);
+        background: #fff;
+    }
+
+/* BUTTON */
+.btn-auth {
+    background: linear-gradient(135deg,#347deb,#1a3f80);
+    border-radius: 12px;
+    font-weight: 700;
+    color: #fff;
+    width: 100%;
+    padding: 0.75rem;
+}
+
+    .btn-auth:hover {
+        background: linear-gradient(135deg,white,#1f62cc);
+        color:white;
+    }
+
+/* FOOTER */
+.auth-footer {
+    font-size: 0.85rem;
+    color: #6b84b0;
+}
+
+    .auth-footer a {
+        color: #347deb;
+        font-weight: 600;
+    }
+/* =============================================
+   ICONS + PASSWORD TOGGLE + ANIMATIONS
+============================================= */
+
+@keyframes iconPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.6) rotate(-10deg);
+    }
+
+    60% {
+        transform: scale(1.15) rotate(3deg);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.auth-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(52,125,235,0.10);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    animation: iconPop 0.5s ease;
+}
+
+    .auth-icon i {
+        font-size: 1.8rem;
+        color: #347deb;
+    }
+
+/* PASSWORD TOGGLE */
+.input-group .btn-toggle {
+    border: 1px solid rgba(52,125,235,0.2);
+    border-left: none;
+    background: #f4f7fd;
+}
+
+    .input-group .btn-toggle:hover {
+        background: rgba(52,125,235,0.1);
+    }
+
+.input-group .form-control {
+    border-right: none;
+}
+/* =============================================
+   MOBILE OPTIMIZATION (AUTH PAGES)
+============================================= */
+
+@media (max-width: 768px) {
+
+    .auth-page {
+        padding: 1.5rem 0;
+    }
+
+    .auth-card {
+        padding: 1.6rem 1.2rem 1.4rem;
+        border-radius: 16px;
+    }
+
+    .auth-title {
+        font-size: 1.4rem;
+    }
+
+    .auth-subtitle {
+        font-size: 0.82rem;
+    }
+
+    .form-label {
+        font-size: 0.72rem;
+    }
+
+    .form-control {
+        font-size: 0.88rem;
+        padding: 10px 12px;
+    }
+
+    .btn-auth {
+        font-size: 0.9rem;
+        padding: 0.7rem;
+    }
+
+    .auth-icon {
+        width: 56px;
+        height: 56px;
+    }
+
+        .auth-icon i {
+            font-size: 1.5rem;
+        }
+
+    .auth-footer {
+        font-size: 0.8rem;
+    }
+}
+
+/* EXTRA SMALL DEVICES */
+@media (max-width: 480px) {
+
+    .auth-card {
+        padding: 1.4rem 1rem 1.2rem;
+    }
+
+    .auth-title {
+        font-size: 1.25rem;
+    }
+
+    .auth-subtitle {
+        font-size: 0.78rem;
+    }
+
+    .btn-auth {
+        font-size: 0.85rem;
+        padding: 0.65rem;
+    }
+}
+/* Fix input group alignment on mobile */
+.input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+    .input-group .form-control {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .input-group .btn-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 12px;
+    }

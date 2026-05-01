@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using DoableFinal.Models;
 using DoableFinal.ViewModels;
-
+using System.Net;
+using System.Net.Mail;
 namespace DoableFinal.Controllers
 {
     public class AccountController : Controller
@@ -327,6 +328,7 @@ namespace DoableFinal.Controllers
             return View();
         }
 
+        //--------->Forgot Password Section <-----
         [HttpGet]
         public IActionResult ForgotPassword()
         {
@@ -338,18 +340,36 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
             if (!ModelState.IsValid)
-            {
                 return View(model);
-            }
 
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                // Don't reveal that the user does not exist
-                return RedirectToAction(nameof(ForgotPasswordConfirmation));
-            }
 
-            // Generate password reset token and send email (omitted for brevity)
+            // 🔐 Do NOT reveal if user exists
+            if (user == null)
+                return RedirectToAction(nameof(ForgotPasswordConfirmation));
+
+            // 🔥 IMPORTANT: invalidate all previous tokens
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
+
+            var resetLink = Url.Action(
+                "ResetPassword",
+                "Account",
+                new { code = encodedToken, email = user.Email },
+                protocol: HttpContext.Request.Scheme
+            );
+
+            var body = $@"
+        <h2>Reset Your Password</h2>
+        <p>Click the link below:</p>
+        <a href='{resetLink}'>Reset Password</a>
+        <br/><br/>
+        <small>If you did not request this, ignore this email.</small>
+    ";
+
+            await SendEmail(user.Email, "Doable Password Reset", body);
 
             return RedirectToAction(nameof(ForgotPasswordConfirmation));
         }
@@ -359,16 +379,47 @@ namespace DoableFinal.Controllers
         {
             return View();
         }
-
         [HttpGet]
-        public IActionResult ResetPassword(string code = null, string email = null)
+        public async Task<IActionResult> ResetPassword(string code = null, string email = null)
         {
-            if (code == null || email == null)
+            if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(email))
             {
                 return BadRequest("A code and email must be supplied for password reset.");
             }
-            var model = new ResetPasswordViewModel { Code = code, Email = email };
-            return View(model);
+
+            // ✅ Optional: prevent logged-in users from using reset link
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                return RedirectToAction("ResetPasswordInvalid");
+            }
+
+            var decodedToken = WebUtility.UrlDecode(code);
+
+            var isValidToken = await _userManager.VerifyUserTokenAsync(
+                user,
+                _userManager.Options.Tokens.PasswordResetTokenProvider,
+                "ResetPassword",
+                decodedToken
+            );
+
+            if (!isValidToken)
+            {
+                TempData["ResetEmail"] = email;
+                return RedirectToAction("ResetPasswordInvalid");
+            }
+
+            return View(new ResetPasswordViewModel
+            {
+                Email = email,
+                Code = code
+            });
         }
 
         [HttpPost]
@@ -376,31 +427,121 @@ namespace DoableFinal.Controllers
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {
             if (!ModelState.IsValid)
-            {
                 return View(model);
-            }
+
             var user = await _userManager.FindByEmailAsync(model.Email);
+
             if (user == null)
-            {
-                // Don't reveal that the user does not exist
                 return RedirectToAction("ResetPasswordConfirmation");
-            }
-            var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
+
+            var decodedToken = WebUtility.UrlDecode(model.Code);
+
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.Password);
+
             if (result.Succeeded)
             {
+                // ✅ Optional but recommended
+                await _signInManager.SignOutAsync();
+
                 return RedirectToAction("ResetPasswordConfirmation");
             }
+
+            bool isTokenError = false;
+
             foreach (var error in result.Errors)
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                if (error.Code == "InvalidToken")
+                {
+                    isTokenError = true;
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
             }
+
+            if (isTokenError)
+            {
+                TempData["ResetEmail"] = model.Email;
+                return RedirectToAction("ResetPasswordInvalid");
+            }
+
             return View(model);
         }
-
         [HttpGet]
         public IActionResult ResetPasswordConfirmation()
         {
             return View();
         }
+
+        [HttpGet]
+        public IActionResult ResetPasswordInvalid()
+        {
+            return View();
+        }
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> ResendResetLink(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("ForgotPassword");
+
+            var user = await _userManager.FindByEmailAsync(email);
+
+            // 🔐 Do NOT reveal if user exists
+            if (user == null)
+                return RedirectToAction("ForgotPasswordConfirmation");
+
+            // 🔥 IMPORTANT: invalidate previous tokens
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
+
+            var resetLink = Url.Action(
+                "ResetPassword",
+                "Account",
+                new { code = encodedToken, email = user.Email },
+                protocol: HttpContext.Request.Scheme
+            );
+
+            var body = $@"
+        <h2>Reset Your Password</h2>
+        <p>Click the link below:</p>
+        <a href='{resetLink}'>Reset Password</a>
+    ";
+
+            await SendEmail(user.Email, "Doable Password Reset", body);
+
+            return RedirectToAction("ForgotPasswordConfirmation");
+        }
+        private async Task SendEmail(string toEmail, string subject, string body)
+        {
+            var smtp = new SmtpClient("smtp.gmail.com")
+            {
+                Port = 587, 
+                Credentials = new NetworkCredential(
+                    "doablemailsender@gmail.com",
+                    "wsib ogpp entn urnn"
+                ),
+                EnableSsl = true 
+            };
+
+            var message = new MailMessage
+            {
+                From = new MailAddress("doablemailsender@gmail.com", "Doable System"),
+                Subject = subject,
+                Body = body,
+                IsBodyHtml = true
+            };
+
+            message.To.Add(toEmail);
+
+            await smtp.SendMailAsync(message);
+        }
+
+
     }
 }
