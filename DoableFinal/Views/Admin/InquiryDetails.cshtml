@@ -74,14 +74,40 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Quick Actions</h5>
+            <div class="card shadow-sm border-0 sticky-actions">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning-charge"></i> Quick Actions
+                    </h6>
                 </div>
+
                 <div class="card-body">
-                    <a href="mailto:@Model.Email" class="btn btn-outline-primary w-100">
-                        <i class="bi bi-envelope"></i> Reply via Email
+
+                    <!-- Reply Form -->
+                    <form asp-action="ReplyToInquiry" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Send Reply</label>
+                            <textarea name="replyMessage"
+                                      class="form-control custom-textarea"
+                                      rows="4"
+                                      placeholder="Type your reply..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 btn-send-reply mb-2">
+                            <i class="bi bi-send"></i> Send Reply
+                        </button>
+                    </form>
+
+                    <!-- Divider -->
+                    <hr class="my-3" />
+
+                    <!-- Fallback Email --> 
+                    <a href="mailto:@Model.Email" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-envelope"></i> Open in External Email App (Optional)
                     </a>
+
                 </div>
             </div>
         </div>

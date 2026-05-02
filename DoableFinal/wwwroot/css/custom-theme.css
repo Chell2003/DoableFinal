@@ -115,3 +115,50 @@ a:hover {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.25rem var(--primary-border);
 }
+
+
+/* Inquiry Reply - Quick Actions */
+
+.custom-textarea {
+    border-radius: 10px;
+    border: 1px solid #e4e6ef;
+    padding: 12px;
+    font-size: 14px;
+    transition: 0.2s ease-in-out;
+    resize: none;
+}
+
+    .custom-textarea:focus {
+        border-color: #347deb;
+        box-shadow: 0 0 0 0.2rem rgba(52, 125, 235, 0.15);
+    }
+
+.btn-send-reply {
+    background: linear-gradient(135deg, #347deb, #5a9cff);
+    border: none;
+    font-weight: 500;
+    padding: 10px;
+    border-radius: 10px;
+    transition: 0.2s ease-in-out;
+}
+
+    .btn-send-reply:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(52, 125, 235, 0.25);
+    }
+
+.sticky-actions {
+    position: sticky;
+    top: 90px;
+}
+
+@media (max-width: 991px) {
+    .sticky-actions {
+        position: static;
+        margin-top: 20px;
+    }
+
+    .custom-textarea {
+        font-size: 16px;
+    }
+}

@@ -24,7 +24,7 @@ namespace DoableFinal.Services
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(_config["Smtp:From"]),
+                From = new MailAddress(_config["Smtp:From"], _config["Smtp:DisplayName"]),
                 Subject = subject,
                 Body = htmlMessage,
                 IsBodyHtml = true,

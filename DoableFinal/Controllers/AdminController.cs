@@ -24,8 +24,9 @@ namespace DoableFinal.Controllers
         private readonly NotificationService _notificationService;
         private readonly HomePageService _homePageService;
         private readonly ILogger<AdminController> _logger;
+        private readonly EmailSender _emailSender;
 
-        public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, TimelineAdjustmentService timelineAdjustmentService, NotificationService notificationService, HomePageService homePageService, ILogger<AdminController> logger)
+        public AdminController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, TimelineAdjustmentService timelineAdjustmentService, NotificationService notificationService, HomePageService homePageService, ILogger<AdminController> logger, EmailSender emailSender)
         {
             _context = context;
             _userManager = userManager;
@@ -34,6 +35,7 @@ namespace DoableFinal.Controllers
             _notificationService = notificationService;
             _homePageService = homePageService;
             _logger = logger;
+            _emailSender = emailSender;
         }
 
         // Map display role names to the actual identity role (seeded roles)
@@ -172,6 +174,40 @@ namespace DoableFinal.Controllers
             TempData["InquiryMessage"] = "Inquiry marked as handled.";
             return RedirectToAction(nameof(Inquiries));
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReplyToInquiry(int id, string replyMessage)
+        {
+            var inquiry = await _context.Inquiries.FindAsync(id);
+            if (inquiry == null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(replyMessage))
+            {
+                TempData["InquiryError"] = "Reply message cannot be Empty.";
+                return RedirectToAction("InquiryDetails", new { id });
+            }
+            var subject = "Re: " + inquiry.Subject;
+
+            var body = $@"<p>Hello {inquiry.Name},</p>
+            <p>{replyMessage}</p>
+            <br/><p>Best regards,<br/>Doable Team</p> ";
+
+            await _emailSender.SendEmailAsync(inquiry.Email,subject,body);
+            inquiry.IsHandled = true;
+            await _context.SaveChangesAsync();
+
+            TempData["InquiryMessage"] = "Reply sent successfully.";
+
+            return RedirectToAction("InquiryDetails", new { id });
+
+
+
+        }
+      
+
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

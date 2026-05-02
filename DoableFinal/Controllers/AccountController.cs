@@ -4,19 +4,21 @@ using DoableFinal.Models;
 using DoableFinal.ViewModels;
 using System.Net;
 using System.Net.Mail;
+using DoableFinal.Services;
 namespace DoableFinal.Controllers
 {
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-
+        private readonly EmailSender _emailSender;
         public AccountController(
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            SignInManager<ApplicationUser> signInManager,EmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailSender = emailSender;
         }
 
         [HttpGet]
@@ -369,7 +371,7 @@ namespace DoableFinal.Controllers
         <small>If you did not request this, ignore this email.</small>
     ";
 
-            await SendEmail(user.Email, "Doable Password Reset", body);
+            await _emailSender.SendEmailAsync(user.Email, "Doable Password Reset", body);
 
             return RedirectToAction(nameof(ForgotPasswordConfirmation));
         }
@@ -513,34 +515,11 @@ namespace DoableFinal.Controllers
         <a href='{resetLink}'>Reset Password</a>
     ";
 
-            await SendEmail(user.Email, "Doable Password Reset", body);
+            await _emailSender.SendEmailAsync(user.Email, "Doable Password Reset", body);
 
             return RedirectToAction("ForgotPasswordConfirmation");
         }
-        private async Task SendEmail(string toEmail, string subject, string body)
-        {
-            var smtp = new SmtpClient("smtp.gmail.com")
-            {
-                Port = 587, 
-                Credentials = new NetworkCredential(
-                    "doablemailsender@gmail.com",
-                    "wsib ogpp entn urnn"
-                ),
-                EnableSsl = true 
-            };
-
-            var message = new MailMessage
-            {
-                From = new MailAddress("doablemailsender@gmail.com", "Doable System"),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true
-            };
-
-            message.To.Add(toEmail);
-
-            await smtp.SendMailAsync(message);
-        }
+      
 
 
     }
