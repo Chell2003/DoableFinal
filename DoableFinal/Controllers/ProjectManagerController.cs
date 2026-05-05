@@ -345,7 +345,7 @@ namespace DoableFinal.Controllers
                 AvailableEmployees = employees.Select(e => new
                 {
                     id = e.Id,
-                    text = e.UserName, // or e.Email or full name if available
+                    text = $"{e.FirstName} {e.LastName} ({e.Email})", // or e.Email or full name if available
                     projectAssignments = projectTaskAssignments
                         .Where(pta => pta.EmployeeId == e.Id)
                         .Select(pta => pta.ProjectId)
@@ -548,7 +548,7 @@ namespace DoableFinal.Controllers
                 .Select(u => new
                 {
                     Id = u.Id,
-                    FullName = $"{u.FirstName} {u.LastName}",
+                    FullName = $"{u.FirstName} {u.LastName} ({u.Email})",
                     IncompleteTasks = _context.TaskAssignments
                         .Where(ta => ta.EmployeeId == u.Id)
                         .Join(_context.Tasks,
