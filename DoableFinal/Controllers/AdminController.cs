@@ -855,6 +855,15 @@ namespace DoableFinal.Controllers
 
                 _context.Projects.Add(project);
                 await _context.SaveChangesAsync();
+                if (!string.IsNullOrEmpty(project.ProjectManagerId))
+                {
+                    await _notificationService.CreateNotification(
+                        project.ProjectManagerId,
+                        "New Project Assigned",
+                        $"You have been assigned as Project Manager for project: {project.Name}",
+                        $"/ProjectManager/ProjectDetails/{project.Id}"
+                    );
+                }
 
                 // If tickets were selected, assign them to the newly created project
                 if (model.SelectedTicketIds != null && model.SelectedTicketIds.Any())

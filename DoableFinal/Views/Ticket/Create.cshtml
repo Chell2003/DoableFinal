@@ -11,13 +11,7 @@
         </div>
     </div>
 
-    @if (TempData["Debug"] != null)
-    {
-        <div class="alert alert-info">
-            <pre>@TempData["Debug"]</pre>
-        </div>
-    }
-
+    
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger">
@@ -25,13 +19,7 @@
         </div>
     }
 
-    <div class="alert alert-info">
-        <strong>Debug Info:</strong><br/>
-        Is User Authenticated: @User.Identity?.IsAuthenticated<br/>
-        User Name: @User.Identity?.Name<br/>
-        Is Client Role: @User.IsInRole("Client")<br/>
-        Current Time: @DateTime.Now
-    </div>
+   
 
     <div class="card">
         <div class="card-body">
@@ -88,15 +76,7 @@
                             <span asp-validation-for="ProjectId" class="text-danger"></span>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label asp-for="AssignedToId" class="form-label">Assign To</label>
-                            <select asp-for="AssignedToId" asp-items="Model.Assignees" class="form-select">
-                                <option value="">Select Assignee</option>
-                            </select>
-                            <span asp-validation-for="AssignedToId" class="text-danger"></span>
-                        </div>
-                    </div>
+                 
                 </div>
 
                 <div class="mt-4">

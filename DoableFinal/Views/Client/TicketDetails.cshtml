@@ -171,29 +171,6 @@
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <!-- Assigned To -->
-            @if (Model.Ticket.AssignedTo != null)
-            {
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="fas fa-user me-1"></i>
-                        Assigned Support Staff
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-circle">
-                                <span class="initials">@Model.Ticket.AssignedTo.FirstName.FirstOrDefault()</span>
-                            </div>
-                            <div class="ms-3">
-                                <h6 class="mb-0">@($"{Model.Ticket.AssignedTo.FirstName} {Model.Ticket.AssignedTo.LastName}")</h6>
-                                <small class="text-muted">Support Staff</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-
             <!-- Timeline -->
             <div class="card">
                 <div class="card-header">

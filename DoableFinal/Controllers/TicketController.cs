@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -20,40 +20,6 @@ namespace DoableFinal.Controllers
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly NotificationService _notificationService;
 
-        private async Task ReloadFormData(CreateTicketViewModel model)
-        {
-            var projects = await _context.Projects.ToListAsync();
-            var employees = await _userManager.GetUsersInRoleAsync("Employee");
-            
-            model.Projects = projects.Select(p => new SelectListItem
-            {
-                Value = p.Id.ToString(),
-                Text = p.Name
-            }).ToList();
-            
-            model.Assignees = employees.Select(e => new SelectListItem
-            {
-                Value = e.Id,
-                Text = $"{e.FirstName} {e.LastName}"
-            }).ToList();
-
-            model.PriorityLevels = new List<SelectListItem>
-            {
-                new SelectListItem { Value = "Low", Text = "Low" },
-                new SelectListItem { Value = "Medium", Text = "Medium" },
-                new SelectListItem { Value = "High", Text = "High" },
-                new SelectListItem { Value = "Critical", Text = "Critical" }
-            };
-
-            model.TicketTypes = new List<SelectListItem>
-            {
-                new SelectListItem { Value = "Bug", Text = "Bug" },
-                new SelectListItem { Value = "Feature Request", Text = "Feature Request" },
-                new SelectListItem { Value = "Support", Text = "Support" },
-                new SelectListItem { Value = "Other", Text = "Other" }
-            };
-        }
-
         public TicketController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
@@ -65,6 +31,36 @@ namespace DoableFinal.Controllers
             _webHostEnvironment = webHostEnvironment;
             _notificationService = notificationService;
         }        [Authorize(Roles = "Client,Admin,Project Manager")]
+
+        private async Task ReloadFormData(CreateTicketViewModel model)
+        {
+            var projects = await _context.Projects.ToListAsync();
+
+            model.Projects = projects.Select(p => new SelectListItem
+            {
+                Value = p.Id.ToString(),
+                Text = p.Name
+            }).ToList();
+
+          
+            model.Assignees = new List<SelectListItem>();
+
+            model.PriorityLevels = new List<SelectListItem>
+    {
+        new SelectListItem { Value = "Low", Text = "Low" },
+        new SelectListItem { Value = "Medium", Text = "Medium" },
+        new SelectListItem { Value = "High", Text = "High" },
+        new SelectListItem { Value = "Critical", Text = "Critical" }
+    };
+
+            model.TicketTypes = new List<SelectListItem>
+    {
+        new SelectListItem { Value = "Bug", Text = "Bug" },
+        new SelectListItem { Value = "Feature Request", Text = "Feature Request" },
+        new SelectListItem { Value = "Support", Text = "Support" },
+        new SelectListItem { Value = "Other", Text = "Other" }
+    };
+        }
         public async Task<IActionResult> Index()
         {
             var currentUser = await _userManager.GetUserAsync(User);
@@ -131,183 +127,126 @@ namespace DoableFinal.Controllers
             };
 
             return View(viewModel);
-        }        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Client")]
-        public async Task<IActionResult> Create(CreateTicketViewModel model)
+        }      
+        
+        [HttpPost]
+[ValidateAntiForgeryToken]
+[Authorize(Roles = "Client")]
+public async Task<IActionResult> Create(CreateTicketViewModel model)
+{
+    var debugInfo = new System.Text.StringBuilder();
+    debugInfo.AppendLine($"ModelState.IsValid: {ModelState.IsValid}");
+
+ 
+    ModelState.Remove("AssignedToId");
+    ModelState.Remove("Assignees");
+
+    if (!ModelState.IsValid)
+    {
+        debugInfo.AppendLine("Model validation failed");
+        await ReloadFormData(model);
+        TempData["Debug"] = debugInfo.ToString();
+        return View(model);
+    }
+
+    var user = await _userManager.GetUserAsync(User);
+    if (user == null)
+    {
+        TempData["Error"] = "User not found.";
+        return RedirectToAction("Login", "Account");
+    }
+
+    try
+    {
+        debugInfo.AppendLine("Starting ticket creation process...");
+
+       
+        var ticket = new Ticket
         {
-            var debugInfo = new System.Text.StringBuilder();
-            debugInfo.AppendLine($"ModelState.IsValid: {ModelState.IsValid}");
-            debugInfo.AppendLine($"Form Data: Title={model.Title}, Description={model.Description}, ProjectId={model.ProjectId}");
+            Title = model.Title,
+            Description = model.Description,
+            Priority = string.IsNullOrEmpty(model.Priority) ? "Medium" : model.Priority,
+            Status = "Open",
+            Type = model.Type,
+            ProjectId = model.ProjectId,
+            CreatedById = user.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        debugInfo.AppendLine($"Created ticket object with Title: {ticket.Title}");
+
+        await _context.Tickets.AddAsync(ticket);
+        debugInfo.AppendLine("Added ticket to context");
+
+        var saveResult = await _context.SaveChangesAsync();
+
             
-            if (!ModelState.IsValid)
+                debugInfo.AppendLine($"SaveChangesAsync result: {saveResult}");
+
+        if (saveResult <= 0)
+        {
+            throw new Exception("Failed to save ticket to database");
+        }
+
+        debugInfo.AppendLine($"Ticket saved successfully. ID: {ticket.Id}");
+
+       
+        debugInfo.AppendLine("Beginning notification process...");
+
+      
+        if (ticket.ProjectId.HasValue)
+        {
+            var project = await _context.Projects
+                .FirstOrDefaultAsync(p => p.Id == ticket.ProjectId);
+
+            if (project?.ProjectManagerId != null)
             {
-                debugInfo.AppendLine("\nValidation Errors:");
-                foreach (var modelState in ModelState)
-                {
-                    foreach (var error in modelState.Value.Errors)
-                    {
-                        debugInfo.AppendLine($"- {modelState.Key}: {error.ErrorMessage}");
-                    }
-                }
-                TempData["Debug"] = debugInfo.ToString();
-                await ReloadFormData(model);
-                return View(model);
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null || !User.IsInRole("Client"))
-            {
-                TempData["Error"] = "You must be logged in as a client to create tickets.";
-                return RedirectToAction("Login", "Account");
-            }
-
-            try
-            {
-                debugInfo.AppendLine("Starting ticket creation process...");
-                Ticket? ticket = null;
-                
-                using (var transaction = await _context.Database.BeginTransactionAsync())
-                {
-                    try
-                    {
-                        ticket = new Ticket
-                        {
-                            Title = model.Title,
-                            Description = model.Description,
-                            Priority = model.Priority,
-                            Status = "Open",
-                            Type = model.Type,
-                            ProjectId = model.ProjectId,
-                            AssignedToId = model.AssignedToId,
-                            CreatedById = user.Id,
-                            CreatedAt = DateTime.UtcNow
-                        };
-
-                        debugInfo.AppendLine($"Created ticket object with Title: {ticket.Title}");
-                        
-                        await _context.Tickets.AddAsync(ticket);
-                        debugInfo.AppendLine("Added ticket to context");
-                        
-                        var saveResult = await _context.SaveChangesAsync();
-                        debugInfo.AppendLine($"SaveChangesAsync result: {saveResult}");
-
-                        if (saveResult <= 0)
-                        {
-                            throw new Exception("Failed to save ticket to database - no rows affected");
-                        }
-
-                        await transaction.CommitAsync();
-                        debugInfo.AppendLine($"Transaction committed successfully. New ticket ID: {ticket.Id}");
-                    }
-                    catch (Exception ex)
-                    {
-                        await transaction.RollbackAsync();
-                        throw new Exception($"Failed to save ticket: {ex.Message}");
-                    }
-                }
-
-                debugInfo.AppendLine("Beginning notification process...");
-                
-                if (ticket == null)
-                {
-                    throw new Exception("Ticket was not properly created");
-                }
-                if (ticket.AssignedToId != null)
-                {
-                    await _notificationService.CreateNotification(
-                        ticket.AssignedToId,
-                        "New Ticket Assigned",
-                        $"You have been assigned to ticket: {ticket.Title}",
-                        $"/Ticket/Details/{ticket.Id}"
-                    );
-                }
-
-                // Get Project Manager if project is selected
-                if (ticket.ProjectId.HasValue)
-                {
-                    var project = await _context.Projects
-                        .FirstOrDefaultAsync(p => p.Id == ticket.ProjectId);
-                    if (project?.ProjectManagerId != null)
-                    {
-                        await _notificationService.CreateNotification(
-                            project.ProjectManagerId,
-                            "New Ticket Created",
-                            $"A new ticket has been created for project {project.Name}: {ticket.Title}",
-                            $"/Ticket/Details/{ticket.Id}"
-                        );
-                    }
-                }
-
-                // Notify all admins
-                var admins = await _userManager.GetUsersInRoleAsync("Admin");
-                foreach (var admin in admins)
-                {
-                    await _notificationService.CreateNotification(
-                        admin.Id,
-                        "New Ticket Created",
-                        $"A new ticket has been created: {ticket.Title}",
-                        $"/Ticket/Details/{ticket.Id}"
-                    );
-                }
-
-                TempData["TicketMessage"] = "Ticket created successfully.";
-                // Persist debug info to temp file for diagnostics
-                try
-                {
-                    System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "doable_ticket_debug.log"), debugInfo.ToString() + System.Environment.NewLine);
-                }
-                catch { }
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                debugInfo.AppendLine($"Error: {ex.Message}");                
-                TempData["Error"] = "An error occurred while creating the ticket: " + ex.Message;
-                TempData["Debug"] = debugInfo.ToString();
-                // Persist debug info to temp file for diagnostics
-                try
-                {
-                    System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "doable_ticket_debug.log"), debugInfo.ToString() + System.Environment.NewLine);
-                }
-                catch { }
-                
-                // Reload select lists before returning to view
-                var projects = await _context.Projects.ToListAsync();
-                var employees = await _userManager.GetUsersInRoleAsync("Employee");
-                
-                model.Projects = projects.Select(p => new SelectListItem
-                {
-                    Value = p.Id.ToString(),
-                    Text = p.Name
-                }).ToList();
-                
-                model.Assignees = employees.Select(e => new SelectListItem
-                {
-                    Value = e.Id,
-                    Text = $"{e.FirstName} {e.LastName}"
-                }).ToList();
-
-                model.PriorityLevels = new List<SelectListItem>
-                {
-                    new SelectListItem { Value = "Low", Text = "Low" },
-                    new SelectListItem { Value = "Medium", Text = "Medium" },
-                    new SelectListItem { Value = "High", Text = "High" },
-                    new SelectListItem { Value = "Critical", Text = "Critical" }
-                };
-
-                model.TicketTypes = new List<SelectListItem>
-                {
-                    new SelectListItem { Value = "Bug", Text = "Bug" },
-                    new SelectListItem { Value = "Feature Request", Text = "Feature Request" },
-                    new SelectListItem { Value = "Support", Text = "Support" },
-                    new SelectListItem { Value = "Other", Text = "Other" }
-                };
-                
-                return View(model);
+                await _notificationService.CreateNotification(
+                    project.ProjectManagerId,
+                    "New Ticket Created",
+                    $"New ticket for project {project.Name}: {ticket.Title}",
+                    $"/Ticket/Details/{ticket.Id}"
+                );
             }
         }
+
+        // ✅ Notify Admins
+        var admins = await _userManager.GetUsersInRoleAsync("Admin");
+        foreach (var admin in admins)
+        {
+            await _notificationService.CreateNotification(
+                admin.Id,
+                "New Ticket Created",
+                $"A new ticket has been created: {ticket.Title}",
+                $"/Ticket/Details/{ticket.Id}"
+            );
+        }
+                await _context.SaveChangesAsync();
+                TempData["TicketMessage"] = "Ticket created successfully.";
+
+        // ✅ Keep debug logging
+        try
+        {
+            System.IO.File.AppendAllText(
+                Path.Combine(Path.GetTempPath(), "doable_ticket_debug.log"),
+                debugInfo.ToString() + Environment.NewLine
+            );
+        }
+        catch { }
+
+        return RedirectToAction(nameof(Index));
+    }
+    catch (Exception ex)
+    {
+        debugInfo.AppendLine($"Error: {ex.Message}");
+
+        TempData["Error"] = "An error occurred: " + ex.Message;
+        TempData["Debug"] = debugInfo.ToString();
+
+        await ReloadFormData(model);
+        return View(model);
+    }
+}
 
         [Authorize(Roles = "Client,Admin,Project Manager")]
         public async Task<IActionResult> Details(int id)
@@ -402,7 +341,8 @@ namespace DoableFinal.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]        public async Task<IActionResult> AddAttachment(int ticketId, IFormFile file)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAttachment(int ticketId, IFormFile file)
         {
             if (file == null || file.Length == 0)
             {

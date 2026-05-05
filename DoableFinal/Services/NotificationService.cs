@@ -1,4 +1,4 @@
-using DoableFinal.Data;
+﻿using DoableFinal.Data;
 using DoableFinal.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -103,9 +103,19 @@ namespace DoableFinal.Services
             await _context.SaveChangesAsync();
             return true;
         }
-
-        public async Task CreateNotification(string userId, string title, string message, string? link = default)
+      
+        public async Task CreateNotification(string userId, string title, string message, string? link = null)
         {
+            var exists = await _context.Notifications.AnyAsync(n =>
+                n.UserId == userId &&
+                n.Title == title &&
+                n.Message == message &&
+                n.Link == link &&
+                n.CreatedAt > DateTime.UtcNow.AddSeconds(-5) 
+            );
+
+            if (exists) return;
+
             var notification = new Notification
             {
                 UserId = userId,
@@ -120,7 +130,6 @@ namespace DoableFinal.Services
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
         }
-
         public async Task SendEmailNotificationAsync(string email, string subject, string message)
         {
             try
