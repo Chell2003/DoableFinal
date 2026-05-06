@@ -284,7 +284,7 @@
                         <span class="navbar-text flex-grow-1 text-truncate" style="min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                             @ViewData["Title"]
                         </span>
-                        <div class="d-flex align-items-center ms-auto" style="gap:1rem;">
+                        <div class="d-flex align-items-center ms-auto" style="gap:2rem;">
                             @if (User.Identity?.IsAuthenticated == true)
                             {
                                 @await Html.PartialAsync("_MessagesBadge")
