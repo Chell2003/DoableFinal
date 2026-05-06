@@ -97,6 +97,8 @@
                     </div>
 
                     <!-- Actions -->
+                    @if (User.IsInRole("Admin"))
+                    {
                     <div class="mb-4">
                         <h5>Actions</h5>
                         <form asp-action="UpdateStatus" method="post" class="d-inline">
@@ -110,7 +112,7 @@
                             </div>
                         </form>
                     </div>
-
+                    }
                     <!-- Comments Section -->
                     <div class="mb-4">
                         <h5>Comments</h5>
