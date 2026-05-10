@@ -173,6 +173,13 @@ namespace DoableFinal.Controllers
 
             var allUsers = await allUsersQuery.OrderBy(u => u.FirstName).ToListAsync();
 
+            if (await _userManager.IsInRoleAsync(currentUser, "Admin"))
+            {
+                allUsers = allUsers
+                    .Where(u => u.Role != "Client")
+                    .ToList();
+            }
+
             // Get all messages ordered by most recent first, optionally filtered by project
             var messagesQuery = _context.Messages
                 .Include(m => m.Sender)
@@ -330,7 +337,10 @@ namespace DoableFinal.Controllers
             else if (await _userManager.IsInRoleAsync(currentUser, "Admin"))
             {
                 // Admins can message anyone except themselves
-                var allUsers = await _userManager.Users.Select(u => u.Id).ToListAsync();
+                var allUsers = await _userManager.Users
+        .Where(u => u.Role != "Client")
+        .Select(u => u.Id)
+        .ToListAsync();
                 allowedRecipientIds = new HashSet<string>(allUsers);
             }
 

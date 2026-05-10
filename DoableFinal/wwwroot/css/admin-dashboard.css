@@ -241,8 +241,8 @@
 }
 
 .badge.bg-danger {
-    background: #fde8e8 !important;
-    color: #991f1f !important;
+    background: #991f1f !important;
+    color: #FFFFFF !important;
     font-size: 0.75rem;
     font-weight: 600;
     padding: 0.35em 0.75em;
