@@ -1,13 +1,14 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 using DoableFinal.Data;
 using DoableFinal.Models;
+using DoableFinal.Services;
 using DoableFinal.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Task = System.Threading.Tasks.Task;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Security.Claims;
+using Task = System.Threading.Tasks.Task;
 
 namespace DoableFinal.Controllers
 {
@@ -17,12 +18,14 @@ namespace DoableFinal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly TimelineAdjustmentService _timelineAdjustmentService;
+        private readonly NotificationService _notificationService;
 
-        public EmployeeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, TimelineAdjustmentService timelineAdjustmentService)
+        public EmployeeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, TimelineAdjustmentService timelineAdjustmentService, NotificationService notificationService)
         {
             _context = context;
             _userManager = userManager;
             _timelineAdjustmentService = timelineAdjustmentService;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Notifications()
@@ -515,18 +518,11 @@ namespace DoableFinal.Controllers
             await _context.SaveChangesAsync();
 
             // Create notification for project manager
-            var notification = new Notification
-            {
-                UserId = task.Project.ProjectManagerId,
-                Title = "Task Proof Submitted",
-                Message = $"New proof submitted for task: {task.Title}",
-                CreatedAt = DateTime.UtcNow,
-                IsRead = false,
-                Link = $"/ProjectManager/TaskDetails/{task.Id}"
-            };
-
-            _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync();
+            await _notificationService.CreateNotification(
+                    task.Project.ProjectManagerId,
+                      "Task Proof Submitted",
+                       $"New proof submitted for task: {task.Title}",
+                        $"/ProjectManager/TaskDetails/{task.Id}");
 
             TempData["Success"] = "Proof has been submitted for approval.";
             return RedirectToAction(nameof(TaskDetails), new { id = taskId });

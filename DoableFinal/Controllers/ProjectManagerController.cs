@@ -140,9 +140,9 @@ namespace DoableFinal.Controllers
                 .Include(t => t.Project)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
-                .Where(t => t.Project != null && 
-                           t.Project.ProjectManagerId != null && 
-                           t.Project.ProjectManagerId == currentUser.Id && 
+                .Where(t => t.Project != null &&
+                           t.Project.ProjectManagerId != null &&
+                           t.Project.ProjectManagerId == currentUser.Id &&
                            !t.IsArchived)
                 .AsQueryable();
 
@@ -150,7 +150,7 @@ namespace DoableFinal.Controllers
             if (!string.IsNullOrEmpty(q))
             {
                 var searchTerm = q.ToLower();
-                query = query.Where(t => 
+                query = query.Where(t =>
                     t.Title.ToLower().Contains(searchTerm) ||
                     (t.Project != null && t.Project.Name.ToLower().Contains(searchTerm))
                 );
@@ -185,9 +185,9 @@ namespace DoableFinal.Controllers
             return View(tasks);
         }
 
-                [HttpPost]
-                [ValidateAntiForgeryToken]
-                public async Task<IActionResult> CompleteProject(int id)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CompleteProject(int id)
         {
             var project = await _context.Projects
                 .Include(p => p.Tasks)
@@ -294,13 +294,13 @@ namespace DoableFinal.Controllers
 
         [HttpGet]
         public async Task<IActionResult> CreateTask()
-        {            
+        {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
                 return RedirectToAction("Login", "Account");
             }
-            
+
             // Get projects managed by this project manager
             var projects = await _context.Projects
                 .Where(p => p.ProjectManagerId == user.Id)
@@ -317,13 +317,14 @@ namespace DoableFinal.Controllers
             var employees = await _userManager.Users
                 .Where(u => u.Role == "Employee" && !u.IsArchived)
                 .ToListAsync();
-            
+
             // Get task assignments including incomplete tasks for each employee
             var projectTaskAssignments = await _context.TaskAssignments
                 .Include(ta => ta.ProjectTask)
                 .Where(ta => ta.ProjectTask.Project.ProjectManagerId == user.Id)
-                .Select(ta => new { 
-                    ta.EmployeeId, 
+                .Select(ta => new
+                {
+                    ta.EmployeeId,
                     ta.ProjectTask.ProjectId,
                     IsCompleted = ta.ProjectTask.Status == "Completed"
                 })
@@ -351,8 +352,8 @@ namespace DoableFinal.Controllers
                         .Select(pta => pta.ProjectId)
                         .Distinct()
                         .ToList(),
-                    incompleteTaskProjects = employeesWithIncompleteTasks.ContainsKey(e.Id) 
-                        ? employeesWithIncompleteTasks[e.Id] 
+                    incompleteTaskProjects = employeesWithIncompleteTasks.ContainsKey(e.Id)
+                        ? employeesWithIncompleteTasks[e.Id]
                         : new List<int>()
                 }).ToList()
             };
@@ -728,38 +729,13 @@ namespace DoableFinal.Controllers
             task.Status = "Needs Revision";
             task.CompletedAt = null;
             task.UpdatedAt = DateTime.UtcNow;
-
+            await _context.SaveChangesAsync();
             // Create notifications for all assigned employees
             foreach (var assignment in task.TaskAssignments)
             {
-                var notification = new Notification
-                {
-                    UserId = assignment.EmployeeId,
-                    Title = "Task Proof Disapproved",
-                    Message = $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}. Reason: {task.DisapprovalRemark}",
-                    CreatedAt = DateTime.UtcNow,
-                    IsRead = false,
-                    Link = $"/Employee/TaskDetails/{task.Id}"
-                };
-
-                _context.Notifications.Add(notification);
+                await _notificationService.CreateNotification(assignment.EmployeeId,"Task Proof Disapproved",
+                     $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}.Reason: {task.DisapprovalRemark}", $"/Employee/TaskDetails/{task.Id}");
             }
-
-            await _context.SaveChangesAsync();
-
-            // Send email notifications if enabled
-            foreach (var assignment in task.TaskAssignments)
-            {
-                if (assignment.Employee != null && assignment.Employee.EmailNotificationsEnabled && !string.IsNullOrWhiteSpace(assignment.Employee.Email))
-                {
-                    await _notificationService.SendEmailNotificationAsync(
-                        assignment.Employee.Email,
-                        "Task Proof Disapproved",
-                        $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}. Reason: {task.DisapprovalRemark}\n\nPlease review and submit a new proof. View details at: /Employee/TaskDetails/{task.Id}"
-                    );
-                }
-            }
-
             TempData["TaskMessage"] = "Task proof has been disapproved. The task needs revision.";
             return RedirectToAction(nameof(TaskDetails), new { id = taskId });
         }
@@ -787,38 +763,13 @@ namespace DoableFinal.Controllers
             task.Status = "Completed";
             task.CompletedAt = DateTime.UtcNow;
             task.UpdatedAt = DateTime.UtcNow;
-
+            await _context.SaveChangesAsync();
             // Create notifications for all assigned employees
             foreach (var assignment in task.TaskAssignments)
             {
-                var notification = new Notification
-                {
-                    UserId = assignment.EmployeeId,
-                    Title = "Task Proof Approved",
-                    Message = $"Your proof for task '{task.Title}' has been approved by {user.FirstName} {user.LastName}",
-                    CreatedAt = DateTime.UtcNow,
-                    IsRead = false,
-                    Link = $"/Employee/TaskDetails/{task.Id}"
-                };
-
-                _context.Notifications.Add(notification);
+                await _notificationService.CreateNotification( assignment.EmployeeId,"Task Proof Approved", $"Your proof for task '{task.Title}' has been approved by {user.FirstName} {user.LastName}",
+                    $"/Employee/TaskDetails/{task.Id}");
             }
-
-            await _context.SaveChangesAsync();
-
-            // Send email notifications if enabled
-            foreach (var assignment in task.TaskAssignments)
-            {
-                if (assignment.Employee != null && assignment.Employee.EmailNotificationsEnabled && !string.IsNullOrWhiteSpace(assignment.Employee.Email))
-                {
-                    await _notificationService.SendEmailNotificationAsync(
-                        assignment.Employee.Email,
-                        "Task Proof Approved",
-                        $"Your proof for task '{task.Title}' has been approved by {user.FirstName} {user.LastName}. View details at: /Employee/TaskDetails/{task.Id}"
-                    );
-                }
-            }
-
             TempData["TaskMessage"] = "Task proof has been approved and marked as completed.";
             return RedirectToAction(nameof(TaskDetails), new { id = taskId });
         }
@@ -843,7 +794,7 @@ namespace DoableFinal.Controllers
             if (!string.IsNullOrEmpty(q))
             {
                 var searchTerm = q.ToLower();
-                query = query.Where(p => 
+                query = query.Where(p =>
                     p.Name.ToLower().Contains(searchTerm) ||
                     (p.Client != null && (
                         p.Client.FirstName.ToLower().Contains(searchTerm) ||
@@ -1177,7 +1128,7 @@ namespace DoableFinal.Controllers
             if (!string.IsNullOrEmpty(q))
             {
                 var searchTerm = q.ToLower();
-                query = query.Where(p => 
+                query = query.Where(p =>
                     p.Name.ToLower().Contains(searchTerm) ||
                     (p.Client != null && (
                         p.Client.FirstName.ToLower().Contains(searchTerm) ||
@@ -1282,7 +1233,7 @@ namespace DoableFinal.Controllers
             if (!string.IsNullOrEmpty(q))
             {
                 var searchTerm = q.ToLower();
-                query = query.Where(t => 
+                query = query.Where(t =>
                     t.Title.ToLower().Contains(searchTerm) ||
                     (t.Project != null && t.Project.Name.ToLower().Contains(searchTerm))
                 );
@@ -1532,18 +1483,12 @@ namespace DoableFinal.Controllers
                 // Notify all assigned employees about the task update
                 foreach (var employeeId in model.AssignedToIds ?? new List<string>())
                 {
-                    var notification = new Notification
-                    {
-                        UserId = employeeId,
-                        Title = "Task Updated",
-                        Message = $"Task '{task.Title}' has been updated by {currentUser.FirstName} {currentUser.LastName}",
-                        CreatedAt = DateTime.UtcNow,
-                        IsRead = false,
-                        Link = $"/Employee/TaskDetails/{task.Id}"
-                    };
-                    _context.Notifications.Add(notification);
+                    await _notificationService.CreateNotification(
+                          employeeId,
+                          "Task Updated",
+                             $"Task '{task.Title}' has been updated by {currentUser.FirstName} {currentUser.LastName}",
+                               $"/Employee/TaskDetails/{task.Id}");
                 }
-                await _context.SaveChangesAsync();
 
                 TempData["TaskMessage"] = "Task updated successfully.";
                 return RedirectToAction(nameof(TaskDetails), new { id = model.Id });

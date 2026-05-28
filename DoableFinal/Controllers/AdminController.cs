@@ -394,21 +394,12 @@ namespace DoableFinal.Controllers
                 var admins = await _userManager.GetUsersInRoleAsync("Admin");
                 foreach (var admin in admins)
                 {
-                    var notification = new Notification
-                    {
-                        UserId = admin.Id,
-                        Title = "User Management Update",
-                        Message = $"User {user.FirstName} {user.LastName} has been archived.",
-                        Link = "/Admin/ArchivedUsers",
-                        CreatedAt = DateTime.UtcNow,
-                        IsRead = false,
-                        Type = NotificationType.General
-                    };
-                    _context.Notifications.Add(notification);
+                    await _notificationService.CreateNotification(
+                          admin.Id, "User Management Update", $"User {user.FirstName} {user.LastName} has been archived.",
+        "/Admin/ArchivedUsers"
+    );
                 }
-                await _context.SaveChangesAsync();
-                
-                TempData["UserManagementMessage"] = $"User {user.FirstName} {user.LastName} has been archived.";
+                    TempData["UserManagementMessage"] = $"User {user.FirstName} {user.LastName} has been archived.";
             }
             return RedirectToAction(nameof(Users));
         }
@@ -985,33 +976,18 @@ namespace DoableFinal.Controllers
             task.CompletedAt = DateTime.UtcNow;
             task.UpdatedAt = DateTime.UtcNow;
 
-            // Create notifications for both employee and project manager
-            var notifications = new List<Notification>
-            {
-                // Notify the employee
-                new Notification
-                {
-                    UserId = task.CreatedById,
-                    Title = "Task Proof Approved by Admin",
-                    Message = $"Your proof for task '{task.Title}' has been approved by admin",
-                    CreatedAt = DateTime.UtcNow,
-                    IsRead = false,
-                    Link = $"/Employee/TaskDetails/{task.Id}"
-                },
-                // Notify the project manager
-                new Notification
-                {
-                    UserId = task.Project.ProjectManagerId,
-                    Title = "Task Proof Approved by Admin",
-                    Message = $"Task proof for '{task.Title}' has been approved by admin",
-                    CreatedAt = DateTime.UtcNow,
-                    IsRead = false,
-                    Link = $"/ProjectManager/TaskDetails/{task.Id}"
-                }
-            };
+            //// Create notifications for both employee and project manager
+           
+            await _notificationService.CreateNotification(task.CreatedById,"Task Proof Approved by Admin", 
+                $"Your proof for task '{task.Title}' has been approved by admin", 
+                $"/Employee/TaskDetails/{task.Id}");
 
-            _context.Notifications.AddRange(notifications);
-            await _context.SaveChangesAsync();
+            await _notificationService.CreateNotification(
+                task.Project.ProjectManagerId,
+                "Task Proof Approved by Admin",
+                $"Task proof for '{task.Title}' has been approved by admin",
+                $"/ProjectManager/TaskDetails/{task.Id}"
+            );
 
             TempData["Success"] = "Task proof has been approved and marked as completed.";
             return RedirectToAction(nameof(Tasks));
@@ -2389,19 +2365,15 @@ namespace DoableFinal.Controllers
 
                 foreach (var userId in recipients.Distinct())
                 {
-                    var notification = new Notification
-                    {
-                        UserId = userId,
-                        Title = "Ticket Status Updated",
-                        Message = $"Ticket '{ticket.Title}' status changed from {oldStatus} to {ticket.Status}.",
-                        Link = $"/Admin/EditTicket/{ticket.Id}",
-                        CreatedAt = DateTime.UtcNow,
-                        IsRead = false,
-                        Type = NotificationType.General
-                    };
-                    _context.Notifications.Add(notification);
+                   
+                    await _notificationService.CreateNotification(
+    userId,
+    "Ticket Status Updated",
+    $"Ticket '{ticket.Title}' status changed from {oldStatus} to {ticket.Status}.",
+    $"/Admin/EditTicket/{ticket.Id}"
+);
                 }
-                await _context.SaveChangesAsync();
+                
             }
 
             TempData["TicketMessage"] = "Ticket status updated successfully.";
@@ -2436,22 +2408,11 @@ namespace DoableFinal.Controllers
                 if (!string.IsNullOrEmpty(ticket.AssignedToId)) recipients.Add(ticket.AssignedToId);
                     foreach (var userId in recipients.Distinct())
                     {
-                        // Use the public ticket details route by default. Client JS or views will remap accordingly.
-                        var notification = new Notification
-                        {
-                            UserId = userId,
-                            Title = "Ticket Status Updated",
-                            Message = $"Ticket '{ticket.Title}' status changed from {oldStatus} to {ticket.Status}.",
-                            Link = $"/Ticket/Details/{ticket.Id}",
-                            CreatedAt = DateTime.UtcNow,
-                            IsRead = false,
-                            Type = NotificationType.General
-                        };
-                        _context.Notifications.Add(notification);
-                    }
-                await _context.SaveChangesAsync();
+                    // Use the public ticket details route by default. Client JS or views will remap accordingly.
+                    await _notificationService.CreateNotification( userId, "Ticket Status Updated", $"Ticket '{ticket.Title}' status changed from {oldStatus} to {ticket.Status}.", 
+                        $"/Ticket/Details/{ticket.Id}");
+                }
             }
-
             TempData["TicketMessage"] = "Ticket status updated successfully.";
             return RedirectToAction("TicketDetails", new { id = Id });
         }

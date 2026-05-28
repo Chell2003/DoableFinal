@@ -25,7 +25,9 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-body">
-                    <form asp-action="Profile" method="post">
+                    <form asp-action="Profile"
+                          method="post"
+                          id="profileForm">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="row mb-3">
@@ -96,7 +98,7 @@
                                 <span asp-validation-for="TinNumber" class="text-danger"></span>
                             </div>
                         </div>
-
+                       
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save"></i> Save Changes
@@ -196,7 +198,7 @@
                 </div>
             </div>
 
-            <div class="card mt-4">
+          @*   <div class="card mt-4">
                 <div class="card-header bg-white">
                     <h5 class="card-title mb-0">Security Settings</h5>
                 </div>
@@ -216,6 +218,61 @@
                         </div>
                         <small class="text-muted">Receive email notifications for important updates.</small>
                     </div>
+                </div>
+            </div> *@
+            <div class="card mt-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        Security Settings
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <!-- Future 2FA -->
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="twoFactorAuth"
+                                   disabled>
+
+                            <label class="form-check-label"
+                                   for="twoFactorAuth">
+                                Two-Factor Authentication
+                            </label>
+                        </div>
+
+                        <small class="text-muted">
+                            Enable two-factor authentication for enhanced security.
+                            (Coming soon)
+                        </small>
+                    </div>
+
+                    <!-- Email Notifications -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+
+                            <input asp-for="EmailNotificationsEnabled"
+                                   class="form-check-input"
+                                   type="checkbox"
+                                   id="emailNotifications"
+                                   form="profileForm" />
+
+                            <label class="form-check-label"
+                                   for="emailNotifications">
+                                Email Notifications
+                            </label>
+
+                        </div>
+
+                        <small class="text-muted">
+                            Receive email notifications for task assignments,
+                            approvals, project updates, messages, comments,
+                            task status changes, and other important activity.
+                        </small>
+                    </div>
+
                 </div>
             </div>
         </div>
