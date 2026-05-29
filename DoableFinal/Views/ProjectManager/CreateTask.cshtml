@@ -149,128 +149,256 @@
             cursor: not-allowed;
         }
     </style>
+ 
     <script>
-        $(document).ready(function() {
-            // Initialize variables
+        $(document).ready(function () {
+
             const projectDates = @Html.Raw(ViewBag.ProjectDatesJson ?? "{}");
             const employees = @Html.Raw(ViewBag.EmployeesJson ?? "[]");
-            
-            // Initialize Select2 for employee assignment
+
+            function getTodayString() {
+
+                const today = new Date();
+
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+
+                return `${yyyy}-${mm}-${dd}`;
+            }
+
             $('.select2-employee').select2({
                 data: employees,
                 templateResult: formatEmployee,
                 templateSelection: formatEmployee,
-                escapeMarkup: function(markup) { return markup; }
-            }).on('select2:selecting', function(e) {
-                // Prevent selection of employees with incomplete tasks
+                escapeMarkup: function (markup) {
+                    return markup;
+                }
+            }).on('select2:selecting', function (e) {
+
                 const projectId = parseInt($('#ProjectId').val());
+
                 const employee = e.params.args.data;
-                
-                if (employee.incompleteTaskProjects && employee.incompleteTaskProjects.includes(projectId)) {
+
+                if (
+                    employee.incompleteTaskProjects &&
+                    employee.incompleteTaskProjects.includes(projectId)
+                ) {
+
                     e.preventDefault();
+
                     alert('This employee has incomplete tasks and cannot be assigned to new tasks.');
                 }
             });
-            
+
             function formatEmployee(employee) {
-                if (!employee.id) return employee.text;
-                
+
+                if (!employee.id)
+                    return employee.text;
+
                 const projectId = parseInt($('#ProjectId').val());
-                const hasTasksInProject = projectId && employee.projectAssignments.includes(projectId);
-                const hasIncompleteTasks = projectId && employee.incompleteTaskProjects && 
-                                         employee.incompleteTaskProjects.includes(projectId);
-                const isSelected = $('.select2-employee').val()?.includes(employee.id);
-                
-                const employeeDiv = $(`<div class="employee-option${hasIncompleteTasks ? ' employee-disabled' : ''}">
-                    <span>${employee.text}</span>
-                    ${hasTasksInProject ? '<i class="fas fa-tasks employee-has-tasks" title="Has tasks in this project"></i>' : ''}
-                    ${hasIncompleteTasks ? '<i class="fas fa-exclamation-circle employee-has-incomplete-tasks" title="Has incomplete tasks"></i>' : ''}
-                    ${isSelected ? '<i class="fas fa-check-circle employee-selected" title="Selected"></i>' : ''}
-                </div>`);
+
+                const hasTasksInProject =
+                    projectId &&
+                    employee.projectAssignments.includes(projectId);
+
+                const hasIncompleteTasks =
+                    projectId &&
+                    employee.incompleteTaskProjects &&
+                    employee.incompleteTaskProjects.includes(projectId);
+
+                const isSelected =
+                    $('.select2-employee').val()?.includes(employee.id);
+
+                const employeeDiv = $(`
+                    <div class="employee-option${hasIncompleteTasks ? ' employee-disabled' : ''}">
+                        <span>${employee.text}</span>
+
+                        ${hasTasksInProject
+                            ? '<i class="fas fa-tasks employee-has-tasks" title="Has tasks in this project"></i>'
+                            : ''}
+
+                        ${hasIncompleteTasks
+                            ? '<i class="fas fa-exclamation-circle employee-has-incomplete-tasks" title="Has incomplete tasks"></i>'
+                            : ''}
+
+                        ${isSelected
+                            ? '<i class="fas fa-check-circle employee-selected" title="Selected"></i>'
+                            : ''}
+                    </div>
+                `);
 
                 if (hasIncompleteTasks) {
-                    employeeDiv.attr('title', 'Cannot be assigned - Has incomplete tasks');
+
+                    employeeDiv.attr(
+                        'title',
+                        'Cannot be assigned - Has incomplete tasks'
+                    );
                 }
 
                 return employeeDiv;
             }
-            
+
             function updateDateConstraints() {
+
+                const today = getTodayString();
+
                 const projectId = parseInt($('#ProjectId').val());
+
+                // No project selected
                 if (!projectId || !projectDates[projectId]) {
+
+                    $("#StartDate")
+                        .attr('min', today)
+                        .removeAttr('max');
+
+                    $("#DueDate")
+                        .attr('min', today)
+                        .removeAttr('max');
+
                     $("#projectDateInfo").text("");
+
                     return;
                 }
 
                 const project = projectDates[projectId];
-                const startDate = project.start;
+
+                const effectiveMin =
+                    project.start < today
+                        ? today
+                        : project.start;
+
                 const endDate = project.end;
 
-                // Set date input constraints
-                $("#StartDate").attr('min', startDate);
-                $("#StartDate").attr('max', endDate);
-                $("#DueDate").attr('min', startDate);
-                $("#DueDate").attr('max', endDate);
+                // Always set min dates
+                $("#StartDate").attr('min', effectiveMin);
+                $("#DueDate").attr('min', effectiveMin);
 
-                // Show project date constraints
-                $("#projectDateInfo").html(`Project timeline: <strong>${startDate}</strong> to <strong>${endDate}</strong>`);
+                // Only set max if end date exists
+                if (endDate) {
 
-                // Adjust dates if they're outside project bounds
+                    $("#StartDate").attr('max', endDate);
+                    $("#DueDate").attr('max', endDate);
+
+                    $("#projectDateInfo").html(
+                        `Project timeline: <strong>${project.start}</strong> to <strong>${endDate}</strong>`
+                    );
+                }
+                else {
+
+                    $("#StartDate").removeAttr('max');
+                    $("#DueDate").removeAttr('max');
+
+                    $("#projectDateInfo").html(
+                        `Project starts on <strong>${project.start}</strong>`
+                    );
+                }
+
                 const currentStartDate = $("#StartDate").val();
                 const currentDueDate = $("#DueDate").val();
-                
-                if (currentStartDate < startDate) {
-                    $("#StartDate").val(startDate);
+
+                // Clamp start date
+                if (currentStartDate && currentStartDate < effectiveMin) {
+
+                    $("#StartDate").val(effectiveMin);
                 }
-                if (currentStartDate > endDate) {
-                    $("#StartDate").val(endDate);
+
+                // Clamp due date
+                if (currentDueDate && currentDueDate < effectiveMin) {
+
+                    $("#DueDate").val(effectiveMin);
                 }
-                if (currentDueDate < startDate) {
-                    $("#DueDate").val(startDate);
-                }
-                if (currentDueDate > endDate) {
-                    $("#DueDate").val(endDate);
+
+                // Only compare against endDate if it exists
+                if (endDate) {
+
+                    if (currentStartDate && currentStartDate > endDate) {
+
+                        $("#StartDate").val(endDate);
+                    }
+
+                    if (currentDueDate && currentDueDate > endDate) {
+
+                        $("#DueDate").val(endDate);
+                    }
                 }
             }
 
-            // Event Handlers
-            $('#ProjectId').change(function() {
+            $('#ProjectId').change(function () {
+
                 updateDateConstraints();
-                
-                // Clear selection for employees with incomplete tasks in the new project
+
                 const projectId = parseInt($(this).val());
-                const currentSelection = $('.select2-employee').val() || [];
+
+                const currentSelection =
+                    $('.select2-employee').val() || [];
+
                 const validSelection = currentSelection.filter(employeeId => {
-                    const employee = employees.find(e => e.id === employeeId);
-                    return !(employee.incompleteTaskProjects && 
-                            employee.incompleteTaskProjects.includes(projectId));
+
+                    const employee =
+                        employees.find(e => e.id === employeeId);
+
+                    return !(
+                        employee.incompleteTaskProjects &&
+                        employee.incompleteTaskProjects.includes(projectId)
+                    );
                 });
-                
+
                 if (currentSelection.length !== validSelection.length) {
-                    $('.select2-employee').val(validSelection).trigger('change');
-                } else {
-                    $('.select2-employee').trigger('change');
+
+                    $('.select2-employee')
+                        .val(validSelection)
+                        .trigger('change');
+                }
+                else {
+
+                    $('.select2-employee')
+                        .trigger('change');
                 }
             });
 
-            $("#StartDate, #DueDate").change(function() {
+            $("#StartDate, #DueDate").change(function () {
+
+                const today = getTodayString();
+
                 const projectId = parseInt($('#ProjectId').val());
-                if (!projectId || !projectDates[projectId]) return;
 
-                const project = projectDates[projectId];
-                const startDate = project.start;
-                const endDate = project.end;
-                
-                // Ensure dates are within project bounds
-                if ($(this).val() < startDate) {
-                    $(this).val(startDate);
-                }
-                if ($(this).val() > endDate) {
-                    $(this).val(endDate);
+                // Prevent past dates
+                if ($(this).val() < today) {
+
+                    $(this).val(today);
                 }
 
-                // If DueDate is before StartDate, adjust it
-                if ($(this).is('#StartDate') && $("#DueDate").val() < $(this).val()) {
+                if (projectId && projectDates[projectId]) {
+
+                    const project = projectDates[projectId];
+
+                    const effectiveMin =
+                        project.start < today
+                            ? today
+                            : project.start;
+
+                    const endDate = project.end;
+
+                    // Prevent before project start
+                    if ($(this).val() < effectiveMin) {
+
+                        $(this).val(effectiveMin);
+                    }
+
+                    // Prevent after project end
+                    if (endDate && $(this).val() > endDate) {
+
+                        $(this).val(endDate);
+                    }
+                }
+
+                // Ensure DueDate is never before StartDate
+                if (
+                    $(this).is('#StartDate') &&
+                    $("#DueDate").val() < $(this).val()
+                ) {
+
                     $("#DueDate").val($(this).val());
                 }
             });
@@ -278,5 +406,5 @@
             // Initial setup
             updateDateConstraints();
         });
-    </script>
+    </script>>
 }

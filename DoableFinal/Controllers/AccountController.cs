@@ -76,7 +76,7 @@ namespace DoableFinal.Controllers
                 {
                     await _userManager.AddToRoleAsync(user, "Client");
                     await _signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("Index", "Dashboard");
+                    return RedirectToAction("Index", "Client");
                 }
 
                 foreach (var error in result.Errors)
@@ -519,8 +519,7 @@ namespace DoableFinal.Controllers
 
             return RedirectToAction("ForgotPasswordConfirmation");
         }
-      
-
+     
 
     }
 }

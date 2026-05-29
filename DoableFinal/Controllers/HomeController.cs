@@ -29,7 +29,17 @@ public class HomeController : Controller
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            return RedirectToAction("Index", "Dashboard");
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Index", "Admin");
+
+            if (User.IsInRole("Client"))
+                return RedirectToAction("Index", "Client");
+
+            if (User.IsInRole("Employee"))
+                return RedirectToAction("Index", "Employee");
+
+            if (User.IsInRole("Project Manager"))
+                return RedirectToAction("Index", "ProjectManager");
         }
 
         var sections = await _homePageService.GetAllSectionsAsync();

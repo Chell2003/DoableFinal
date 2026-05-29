@@ -200,29 +200,29 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            // Only allow the assigned project manager
             var currentUser = await _userManager.GetUserAsync(User);
+
             if (project.ProjectManagerId != currentUser?.Id)
             {
                 return Forbid();
             }
 
-            // Verify all tasks are completed
             var totalTasks = project.Tasks?.Count ?? 0;
             var completedTasks = project.Tasks?.Count(t => t.Status == "Completed") ?? 0;
+
             if (totalTasks == 0 || completedTasks != totalTasks)
             {
-                TempData["ErrorMessage"] = "Cannot complete project: Not all tasks are completed.";
+                TempData["ErrorMessage"] =
+                    "Cannot complete project: Not all tasks are completed.";
+
                 return RedirectToAction(nameof(ProjectDetails), new { id });
             }
 
-            // Update project status and archive project
             project.Status = "Completed";
             project.IsArchived = true;
             project.ArchivedAt = DateTime.UtcNow;
             project.UpdatedAt = DateTime.UtcNow;
 
-            // Archive all tasks in the project
             foreach (var task in project.Tasks)
             {
                 task.IsArchived = true;
@@ -232,15 +232,15 @@ namespace DoableFinal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Notify relevant parties (if you have a notification service)
             if (_notificationService != null)
             {
-                await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been marked as completed");
+                await _notificationService.NotifyProjectUpdateAsync(
+                    project,
+                    $"Project '{project.Name}' has been marked as completed"
+                );
             }
 
-            TempData["ProjectMessage"] = "Project has been marked as completed and archived.";
-
-            // If AJAX request, return JSON to update UI dynamically
+            // AJAX REQUEST
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
                 return Json(new
@@ -251,6 +251,10 @@ namespace DoableFinal.Controllers
                     archivedAt = project.ArchivedAt?.ToString("o")
                 });
             }
+
+            // NORMAL REQUEST ONLY
+            TempData["SuccessMessage"] =
+                "Project has been marked as completed and archived.";
 
             return RedirectToAction(nameof(ProjectDetails), new { id });
         }
@@ -420,6 +424,7 @@ namespace DoableFinal.Controllers
                 return await PrepareCreateTaskViewModel(model);
             }
 
+
             if (project.EndDate.HasValue && model.DueDate > project.EndDate.Value)
             {
                 ModelState.AddModelError("DueDate", "Task cannot end after the project end date");
@@ -431,7 +436,20 @@ namespace DoableFinal.Controllers
                 ModelState.AddModelError("DueDate", "Due date must be after the start date");
                 return await PrepareCreateTaskViewModel(model);
             }
+            // Prevent past dates
+            var today = DateTime.Today;
 
+            if (model.StartDate.Date < today)
+            {
+                ModelState.AddModelError("StartDate", "Task start date cannot be in the past.");
+                return await PrepareCreateTaskViewModel(model);
+            }
+
+            if (model.DueDate.Date < today)
+            {
+                ModelState.AddModelError("DueDate", "Task due date cannot be in the past.");
+                return await PrepareCreateTaskViewModel(model);
+            }
             try
             {
                 var task = new ProjectTask
@@ -618,7 +636,7 @@ namespace DoableFinal.Controllers
                 task,
                 $"Task '{task.Title}' has been marked as completed by {authorName}");
 
-            TempData["TaskMessage"] = "Task has been confirmed as completed.";
+            TempData["SuccessMessage"] = "Task has been confirmed as completed.";
             return RedirectToAction(nameof(TaskDetails), new { id });
         }
 
@@ -736,7 +754,7 @@ namespace DoableFinal.Controllers
                 await _notificationService.CreateNotification(assignment.EmployeeId,"Task Proof Disapproved",
                      $"Your proof for task '{task.Title}' has been disapproved by {user.FirstName} {user.LastName}.Reason: {task.DisapprovalRemark}", $"/Employee/TaskDetails/{task.Id}");
             }
-            TempData["TaskMessage"] = "Task proof has been disapproved. The task needs revision.";
+            TempData["SuccessMessage"] = "Task proof has been disapproved. The task needs revision.";
             return RedirectToAction(nameof(TaskDetails), new { id = taskId });
         }
 
@@ -770,7 +788,7 @@ namespace DoableFinal.Controllers
                 await _notificationService.CreateNotification( assignment.EmployeeId,"Task Proof Approved", $"Your proof for task '{task.Title}' has been approved by {user.FirstName} {user.LastName}",
                     $"/Employee/TaskDetails/{task.Id}");
             }
-            TempData["TaskMessage"] = "Task proof has been approved and marked as completed.";
+            TempData["SuccessMessage"] = "Task proof has been approved and marked as completed.";
             return RedirectToAction(nameof(TaskDetails), new { id = taskId });
         }
 
@@ -1030,26 +1048,25 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            // Only allow the assigned project manager
             var currentUser = await _userManager.GetUserAsync(User);
+
             if (project.ProjectManagerId != currentUser?.Id)
             {
                 return Forbid();
             }
 
-            // Check if project can be archived
             if (project.Status == "In Progress")
             {
-                TempData["ErrorMessage"] = "Cannot archive an ongoing project. Project must be completed or not started.";
+                TempData["ErrorMessage"] =
+                    "Cannot archive an ongoing project. Project must be completed or not started.";
+
                 return RedirectToAction(nameof(ProjectDetails), new { id });
             }
 
-            // Archive the project
             project.IsArchived = true;
             project.ArchivedAt = DateTime.UtcNow;
             project.UpdatedAt = DateTime.UtcNow;
 
-            // Archive all tasks in the project
             foreach (var task in project.Tasks)
             {
                 task.IsArchived = true;
@@ -1059,10 +1076,25 @@ namespace DoableFinal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Notify relevant parties
-            await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been archived");
+            await _notificationService.NotifyProjectUpdateAsync(
+                project,
+                $"Project '{project.Name}' has been archived"
+            );
 
-            TempData["ProjectMessage"] = "Project has been archived successfully.";
+            // AJAX REQUEST
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    success = true,
+                    isArchived = true
+                });
+            }
+
+            // NORMAL REQUEST ONLY
+            TempData["SuccessMessage"] =
+                "Project has been archived successfully.";
+
             return RedirectToAction(nameof(MyProjects));
         }
 
@@ -1079,37 +1111,56 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            // Only allow the project manager
             var currentUser = await _userManager.GetUserAsync(User);
+
             if (task.Project.ProjectManagerId != currentUser?.Id)
             {
                 return Forbid();
             }
 
-            // Check if task can be archived
             if (task.Status == "In Progress")
             {
-                TempData["ErrorMessage"] = "Cannot archive an ongoing task. Task must be completed or not started.";
+                TempData["ErrorMessage"] =
+                    "Cannot archive an ongoing task. Task must be completed or not started.";
+
                 return RedirectToAction(nameof(TaskDetails), new { id });
             }
 
-            // Archive the task
             task.IsArchived = true;
             task.ArchivedAt = DateTime.UtcNow;
             task.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
-            // Notify relevant parties
-            await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been archived");
+            await _notificationService.NotifyTaskUpdateAsync(
+                task,
+                $"Task '{task.Title}' has been archived"
+            );
 
-            TempData["TaskMessage"] = "Task has been archived successfully.";
-            return RedirectToAction(nameof(Tasks));
+            // AJAX REQUEST
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    success = true,
+                    isArchived = true
+                });
+            }
+
+            // NORMAL REQUEST ONLY
+            TempData["SuccessMessage"] =
+                "Task has been archived successfully.";
+
+            return RedirectToAction(nameof(TaskDetails),
+            new { id = task.Id });
         }
+
 
         [HttpGet]
         public async Task<IActionResult> ArchivedProjects(string? q = "", string? fromDate = "", string? toDate = "")
         {
+            TempData.Remove("SuccessMessage");
+            TempData.Remove("ErrorMessage");
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser?.Id == null)
             {
@@ -1171,20 +1222,18 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            // Only allow the assigned project manager
             var currentUser = await _userManager.GetUserAsync(User);
+
             if (project.ProjectManagerId != currentUser?.Id)
             {
                 return Forbid();
             }
 
-            // Unarchive the project and set it to In Progress
             project.IsArchived = false;
             project.ArchivedAt = null;
             project.Status = "In Progress";
             project.UpdatedAt = DateTime.UtcNow;
 
-            // Unarchive all tasks in the project
             foreach (var task in project.Tasks)
             {
                 task.IsArchived = false;
@@ -1194,11 +1243,12 @@ namespace DoableFinal.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Notify relevant parties
-            await _notificationService.NotifyProjectUpdateAsync(project, $"Project '{project.Name}' has been unarchived");
+            await _notificationService.NotifyProjectUpdateAsync(
+                project,
+                $"Project '{project.Name}' has been unarchived"
+            );
 
-            TempData["ProjectMessage"] = "Project has been reopened and unarchived.";
-
+            // AJAX REQUEST
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
                 return Json(new
@@ -1209,12 +1259,19 @@ namespace DoableFinal.Controllers
                 });
             }
 
-            return RedirectToAction(nameof(ArchivedProjects));
+            // NORMAL REQUEST ONLY
+            TempData["SuccessMessage"] =
+                "Project has been reopened and unarchived.";
+
+            return RedirectToAction(nameof(ProjectDetails),
+                new { id = project.Id });
         }
 
         [HttpGet]
         public async Task<IActionResult> ArchivedTasks(string? q = "", string? fromDate = "", string? toDate = "")
         {
+            TempData.Remove("SuccessMessage");
+            TempData.Remove("ErrorMessage");
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser?.Id == null)
             {
@@ -1273,25 +1330,40 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            // Only allow the project manager
             var currentUser = await _userManager.GetUserAsync(User);
+
             if (task.Project.ProjectManagerId != currentUser?.Id)
             {
                 return Forbid();
             }
 
-            // Unarchive the task
             task.IsArchived = false;
             task.ArchivedAt = null;
             task.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
-            // Notify relevant parties
-            await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been unarchived");
+            await _notificationService.NotifyTaskUpdateAsync(
+                task,
+                $"Task '{task.Title}' has been unarchived"
+            );
 
-            TempData["TaskMessage"] = "Task has been unarchived successfully.";
-            return RedirectToAction(nameof(ArchivedTasks));
+            // AJAX REQUEST
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new
+                {
+                    success = true,
+                    isArchived = false
+                });
+            }
+
+            // NORMAL REQUEST ONLY
+            TempData["SuccessMessage"] =
+                "Task has been unarchived successfully.";
+
+            return RedirectToAction(nameof(TaskDetails),
+                new { id = task.Id });
         }
 
         [HttpGet]

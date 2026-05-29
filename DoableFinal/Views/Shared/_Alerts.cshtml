@@ -30,10 +30,27 @@
             else if (lower.Contains("success") || lower.Contains("task") || lower.Contains("ticket") || lower.Contains("project") || lower.Contains("profile") || lower.Contains("usermanagement")) alertClass = "alert-success";
             else if (lower.Contains("debug")) alertClass = "alert-warning";
 
-            <div class="alert @alertClass alert-dismissible fade show" role="alert">
+            <div class="alert @alertClass alert-dismissible fade show auto-dismiss-alert" role="alert">
                 @Html.Raw(raw)
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         }
     }
 }
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        setTimeout(function () {
+
+            document.querySelectorAll('.auto-dismiss-alert')
+                .forEach(function (alert) {
+
+                    const bsAlert =
+                        bootstrap.Alert.getOrCreateInstance(alert);
+
+                    bsAlert.close();
+                });
+
+        }, 5000);
+    });
+</script>

@@ -8,21 +8,9 @@
 }
 
 @* Show TempData flash messages (Success / Error) so redirects that set TempData display them immediately *@
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
 
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
+
+
 
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -105,24 +93,58 @@
                         }
                         @foreach (var task in Model)
                         {
-                <tr>
-                    <td>@task.Title</td>
-                    <td>@task.Project.Name</td>
-                    <td>
-                        @string.Join(", ", task.TaskAssignments.Select(ta => $"{ta.Employee?.FirstName} {ta.Employee?.LastName}"))
-                    </td>
-                    <td>@task.Status</td>
-                    <td>@task.ArchivedAt?.ToString("MMM dd, yyyy HH:mm")</td>
-                    <td>
-                        <a asp-action="TaskDetails" asp-route-id="@task.Id" class="btn btn-info btn-sm">View Details</a>
-                        <form asp-action="UnarchiveTask" asp-route-id="@task.Id" method="post" style="display: inline;">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Are you sure you want to unarchive this task?')">
-                                <i class="fas fa-box-open"></i> Unarchive
-                            </button>
-                        </form>
-                    </td>
-                </tr>
+               <tr>
+    <td>
+        <strong>@task.Title</strong>
+    </td>
+
+    <td>
+        <small>@task.Project.Name</small>
+    </td>
+
+    <td>
+        <span class="badge bg-@(task.Status switch {
+            "Not Started" => "secondary",
+            "In Progress" => "primary",
+            "On Hold" => "warning",
+            "Completed" => "success",
+            _ => "secondary"
+        })">
+            @task.Status
+        </span>
+    </td>
+
+    <td>
+        <small class="text-muted">
+            @task.ArchivedAt?.ToString("MMM dd, yyyy")
+        </small>
+    </td>
+
+    <td class="text-end">
+        <div class="d-inline-flex align-items-center gap-1">
+            <a asp-action="TaskDetails"
+               asp-route-id="@task.Id"
+               class="btn btn-sm btn-outline-info"
+               title="View Details">
+                <i class="bi bi-eye"></i>
+            </a>
+
+            <form asp-action="UnarchiveTask"
+                  asp-route-id="@task.Id"
+                  method="post"
+                  class="d-inline">
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        class="btn btn-sm btn-outline-success"
+                        title="Unarchive Task"
+                        onclick="return confirm('Are you sure you want to unarchive this task?')">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+            </form>
+        </div>
+    </td>
+</tr>
             }
         </tbody>
     </table>
