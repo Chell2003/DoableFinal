@@ -1070,7 +1070,7 @@ namespace DoableFinal.Controllers
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
                 EmailNotificationsEnabled = user.EmailNotificationsEnabled,
-
+                TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
                 ResidentialAddress = user.ResidentialAddress ?? string.Empty,
                 Birthday = user.Birthday,
                 PagIbigAccount = user.PagIbigAccount ?? string.Empty,
@@ -1265,21 +1265,7 @@ namespace DoableFinal.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> ToggleTwoFactor()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            var currentStatus = await _userManager.GetTwoFactorEnabledAsync(user);
-            await _userManager.SetTwoFactorEnabledAsync(user, !currentStatus);
-
-            TempData["UserManagementMessage"] = $"Two-factor authentication has been {(!currentStatus ? "enabled" : "disabled")}.";
-            return RedirectToAction(nameof(Profile));
-        }
+        
 
         // User Management
         [HttpGet]

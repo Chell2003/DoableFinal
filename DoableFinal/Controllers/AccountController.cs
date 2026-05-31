@@ -5,6 +5,8 @@ using DoableFinal.ViewModels;
 using System.Net;
 using System.Net.Mail;
 using DoableFinal.Services;
+using Microsoft.Extensions.Caching.Memory;
+using System.Security.Cryptography;
 namespace DoableFinal.Controllers
 {
     public class AccountController : Controller
@@ -12,13 +14,15 @@ namespace DoableFinal.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly EmailSender _emailSender;
+        private readonly IMemoryCache _cache;
         public AccountController(
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,EmailSender emailSender)
+            SignInManager<ApplicationUser> signInManager,EmailSender emailSender, IMemoryCache cache)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
+            _cache = cache;
         }
 
         [HttpGet]
@@ -92,50 +96,311 @@ namespace DoableFinal.Controllers
         public IActionResult Login(string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+
+            ViewBag.ShowOtpModal = TempData["ShowOtpModal"];
+            ViewBag.OtpEmail = TempData["OtpEmail"];
+            ViewBag.RememberMe = TempData["RememberMe"];
+
             return View();
         }
 
+
+
         [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginViewModel model,string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(
-                    model.Email,
-                    model.Password,
-                    model.RememberMe,
-                    lockoutOnFailure: false);
-
-                if (result.Succeeded)
-                {
-                    // Ensure user has appropriate Identity role based on their custom Role property
-                    var user = await _userManager.FindByEmailAsync(model.Email);
-                    if (user != null && user.Role != null)
-                    {
-                        // Check if user has any Identity roles
-                        var userRoles = await _userManager.GetRolesAsync(user);
-                        if (userRoles == null || userRoles.Count == 0)
-                        {
-                            // No roles assigned, add the one from custom Role property
-                            await _userManager.AddToRoleAsync(user, user.Role);
-
-                            // Refresh the security principal to include the new role
-                            await _signInManager.RefreshSignInAsync(user);
-                        }
-                    }
-
-                    return await RedirectToLocal(returnUrl);
-                }
-
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return View(model); 
             }
 
-            return View(model);
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid Login Attempt.");
+                return View(model);
+            }
+
+            var passwordValid = await _userManager.CheckPasswordAsync(user, model.Password);
+
+            if (!passwordValid)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login Attempt.");
+                return View(model);
+            }
+
+            //2 Factor Auth check
+
+            // 2 Factor Authentication
+            var is2FAEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
+
+            if (is2FAEnabled)
+            {
+                var cacheKey = $"OTP_{user.Email}";
+
+                // If OTP already exists, just reopen modal
+                if (_cache.TryGetValue(cacheKey, out string existingOtp))
+                {
+                    ViewBag.ShowOtpModal = true;
+                    ViewBag.OtpEmail = user.Email;
+                    ViewBag.RememberMe = model.RememberMe;
+
+                    return View(model);
+                }
+
+                // Generate new OTP
+                var otp = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+
+                _cache.Set(
+                    cacheKey,
+                    otp,
+                    TimeSpan.FromMinutes(5)
+                );
+
+                var body = $@"
+                    <div style='font-family:sans-serif'>
+                        <h2>DOABLE Login Verification</h2>
+
+                        <p>Your verification code is:</p>
+
+                        <div style='
+                            font-size:32px;
+                            font-weight:bold;
+                            letter-spacing:6px;
+                            color:#347deb;
+                            margin:20px 0;'>
+                            {otp}
+                        </div>
+
+                        <p>This code expires in 5 minutes.</p>
+
+                        <small>
+                            If you did not attempt to login,
+                            please change your password immediately.
+                        </small>
+                    </div>";
+
+                            await _emailSender.SendEmailAsync(
+                                user.Email,
+                                "DOABLE Login Verification Code",
+                                body
+                            );
+
+                ViewBag.ShowOtpModal = true;
+                ViewBag.OtpEmail = user.Email;
+                ViewBag.RememberMe = model.RememberMe;
+
+                return View(model);
+            }
+            user.LastLoginAt = DateTime.UtcNow;
+            await _userManager.UpdateAsync(user);
+            //Normal Login
+            await _signInManager.SignInAsync(user, model.RememberMe);
+
+            return await RedirectToLocal(returnUrl);
+
+        }
+        private bool IncrementOtpAttempts(string email)
+        {
+            var key = $"OTP_ATTEMPTS_{email}";
+
+            int attempts = 0;
+
+            _cache.TryGetValue(key, out attempts);
+
+            attempts++;
+
+            _cache.Set(
+                key,
+                attempts,
+                TimeSpan.FromMinutes(5));
+
+            return attempts >= 5;
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyOtp(VerifyOtpViewModel model, string returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+
+            if (!ModelState.IsValid)
+            {
+                TempData["ShowOtpModal"] = true;
+                TempData["OtpEmail"] = model.Email;
+                TempData["RememberMe"] = model.RememberMe;
+                return RedirectToAction("Login");
+            }
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("Login");
+            }
+
+            var cacheKey = $"OTP_{user.Email}";
+
+            bool hasOtp = _cache.TryGetValue(cacheKey, out string storedOtp);
+        
+
+            if (!hasOtp || string.IsNullOrWhiteSpace(storedOtp))
+            {
+                TempData["ErrorMessage"] = "Verification code expired.";
+                TempData["ShowOtpModal"] = true;
+                TempData["OtpEmail"] = model.Email;
+                TempData["RememberMe"] = model.RememberMe;
+
+                return RedirectToAction("Login");
+            }
+
+            // remove spaces just in case
+            var enteredOtp = model.OtpCode?.Trim();
+
+            if (storedOtp.Trim() != enteredOtp)
+            {
+                bool lockOtp = IncrementOtpAttempts(user.Email);
+
+                if (lockOtp)
+                {
+                    _cache.Remove(cacheKey);
+                    _cache.Remove($"OTP_ATTEMPTS_{user.Email}");
+
+                    TempData["ErrorMessage"] =
+                        "Too many incorrect attempts. Please request a new code.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] =
+                        "Invalid verification code.";
+                }
+
+                TempData["ShowOtpModal"] = true;
+                TempData["OtpEmail"] = model.Email;
+                TempData["RememberMe"] = model.RememberMe;
+
+                return RedirectToAction("Login");
+            }
+
+            _cache.Remove(cacheKey);
+            _cache.Remove($"OTP_ATTEMPTS_{user.Email}");
+
+            await _signInManager.SignInAsync(user, model.RememberMe);
+
+            return await RedirectToLocal(returnUrl);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendOtp(string email)
+        {
+            var cooldownKey = $"OTP_RESEND_{email}";
+
+            if (_cache.TryGetValue(cooldownKey, out _))
+            {
+                TempData["ErrorMessage"] =
+                    "Please wait 60 seconds before requesting another code.";
+
+                TempData["ShowOtpModal"] = true;
+                TempData["OtpEmail"] = email;
+               
+
+                return RedirectToAction("Login");
+            }
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var otp = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+
+            _cache.Set(
+                $"OTP_{user.Email}",
+                otp, TimeSpan.FromMinutes(5)
+                );
+
+            var body = $"<div style='font-family:sans-serif'> <h2>DOABLE Login Verification</h2> <p>Your new verification code is:</p> <div style=' font-size:32px; font-weight:bold; letter-spacing:6px; color:#347deb; margin:20px 0;'> {otp} </div> <p>This code expires in 5 minutes.</p> </div>";
+
+            await _emailSender.SendEmailAsync(user.Email, "DOABLE New Verification Code", body);
+            _cache.Set(
+            cooldownKey,
+            true,
+            TimeSpan.FromSeconds(60));
+            TempData["ShowOtpModal"] = true;
+
+            TempData["SuccessMessage"] = "A new verification code has been sent.";
+            TempData["OtpEmail"] = email;
+
+            return RedirectToAction("Login");
+
+        }
+      
+           [HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> ToggleTwoFactor()
+{
+    var user = await _userManager.GetUserAsync(User);
+
+    if (user == null)
+    {
+        return NotFound();
+    }
+
+    var currentStatus =
+        await _userManager.GetTwoFactorEnabledAsync(user);
+
+    var result =
+        await _userManager.SetTwoFactorEnabledAsync(
+            user,
+            !currentStatus
+        );
+
+    if (result.Succeeded)
+    {
+        // Refresh sign in cookie
+        await _signInManager.RefreshSignInAsync(user);
+
+        TempData["SuccessMessage"] =
+            $"Two-Factor Authentication has been {(!currentStatus ? "enabled" : "disabled")}.";
+    }
+    else
+    {
+        TempData["ErrorMessage"] =
+            "Failed to update Two-Factor Authentication.";
+    }
+
+    if (await _userManager.IsInRoleAsync(user, "Admin"))
+    {
+        return RedirectToAction("Profile", "Admin");
+    }
+
+    if (await _userManager.IsInRoleAsync(user, "Employee"))
+    {
+        return RedirectToAction("Profile", "Employee");
+    }
+
+    if (await _userManager.IsInRoleAsync(user, "Project Manager") ||
+        await _userManager.IsInRoleAsync(user, "ProjectManager"))
+    {
+        return RedirectToAction("Profile", "ProjectManager");
+    }
+
+    if (await _userManager.IsInRoleAsync(user, "Client"))
+    {
+        return RedirectToAction("Profile", "Client");
+    }
+
+    return RedirectToAction(nameof(Profile));
+}
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
@@ -160,7 +425,7 @@ namespace DoableFinal.Controllers
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
                 EmailNotificationsEnabled = user.EmailNotificationsEnabled,
-
+                TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
                 ResidentialAddress = user.ResidentialAddress ?? string.Empty,
                 Birthday = user.Birthday,
                 PagIbigAccount = user.PagIbigAccount ?? string.Empty,
@@ -245,6 +510,7 @@ namespace DoableFinal.Controllers
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
+                await _signInManager.RefreshSignInAsync(user);
                 TempData["ProfileMessage"] = "Profile updated successfully.";
                 return RedirectToAction(nameof(Profile));
             }

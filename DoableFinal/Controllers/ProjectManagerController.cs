@@ -918,7 +918,7 @@ namespace DoableFinal.Controllers
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
                 EmailNotificationsEnabled = user.EmailNotificationsEnabled,
-
+                TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
                 ResidentialAddress = user.ResidentialAddress ?? string.Empty,
                 MobileNumber = user.MobileNumber ?? string.Empty,
                 Birthday = user.Birthday,

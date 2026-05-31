@@ -27,6 +27,9 @@ namespace DoableFinal.ViewModels
         [Display(Name = "Email Notifications")]
         public bool EmailNotificationsEnabled { get; set; }
 
+        [Display(Name = "Two-Factor Authentication")]
+        public bool TwoFactorEnabled { get; set; }
+
         // Client-specific fields
         [Display(Name = "Company Name")]
         public string? CompanyName { get; set; }

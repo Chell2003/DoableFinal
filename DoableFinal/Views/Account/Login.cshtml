@@ -1,7 +1,9 @@
 @model DoableFinal.ViewModels.LoginViewModel
 @{
     ViewData["Title"] = "Login";
+    var loginModel = Model ?? new DoableFinal.ViewModels.LoginViewModel();
 }
+
 
 <style>
     /* =============================================
@@ -10,7 +12,7 @@
 
     @@keyframes heroFadeUp {
         from { opacity: 0; transform: translateY(40px); }
-        to   { opacity: 1; transform: translateY(0); }
+        to   { opacity: 1; transform: translateY(0); }  
     }
 
     @@keyframes shimmerMove {
@@ -27,6 +29,33 @@
     @@keyframes ctaPulse {
         0%, 100% { box-shadow: 0 4px 20px rgba(52, 125, 235, 0.30); }
         50%       { box-shadow: 0 8px 36px rgba(52, 125, 235, 0.52); }
+
+    }
+    @@keyframes otpBackdropFade {
+        from
+
+    {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+    }
+    @@keyframes otpModalPop {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px) scale(.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
     }
 
     .landing-header {
@@ -261,6 +290,26 @@
         color: #1a3f80;
     }
 
+    .otp-modal {
+        animation: otpBackdropFade .35s ease forwards !important;
+        backdrop-filter: blur(6px);
+    }
+
+        .otp-modal .modal-content {
+            animation: otpModalPop .45s cubic-bezier(.22,1,.36,1) !important;
+        }
+
+    .auth-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        border-radius: 50%;
+        background: rgba(52,125,235,.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     /* ---------- Responsive ---------- */
     @@media (max-width: 576px) {
         .auth-card {
@@ -281,6 +330,7 @@
                     </div>
 
                     <form asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
 
                         <div class="form-group mb-3">
@@ -314,6 +364,107 @@
                             <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
                         </button>
                     </form>
+                  
+                    @if (ViewBag.ShowOtpModal == true)
+                    {
+                        <div class="modal show otp-modal"
+                             id="otpModal"
+                             tabindex="-1"
+                             style="display:block;background:rgba(0,0,0,.45);">
+
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg" 
+                                     style="border-radius:20px;">
+                                    <button type="button"
+                                            class="close position-absolute top-0 end-0 m-3"
+                                            onclick="closeOtpModal()"
+                                            style="border:none;background:none;font-size:1.5rem;">
+                                        <span>&times;</span>
+                                    </button>
+                                    <div class="modal-body p-4">
+
+                                        <div class="text-center mb-4">
+
+                                            <div class="auth-icon mb-3">
+                                                <i class="bi bi-shield-lock"
+                                                   style="font-size:3rem;color:#347deb;"></i>
+                                            </div>
+
+                                            <h3 class="auth-title">
+                                                Two-Factor Authentication
+                                            </h3>
+
+                                            <p class="auth-subtitle">
+                                                Enter the 6-digit code sent to your email.
+                                            </p>
+
+                                        </div>
+                                     
+                                        <form asp-action="VerifyOtp" method="post">
+
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden"
+                                                   name="returnUrl"
+                                                   value="@ViewData["ReturnUrl"]" />
+                                            <input type="hidden"
+                                                   name="Email"
+                                                   value="@ViewBag.OtpEmail" />
+
+                                            <input type="hidden"
+                                                   name="RememberMe"
+                                                   value="@((ViewBag.RememberMe ?? loginModel.RememberMe).ToString().ToLower())" />
+
+                                            <div class="mb-3">
+
+                                                <input type="text"
+                                                       name="OtpCode"
+                                                       maxlength="6"
+                                                       required
+                                                       inputmode="numeric"
+                                                       autocomplete="one-time-code"
+                                                       pattern="[0-9]*"
+                                                       oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                                       class="form-control text-center"
+                                                       placeholder="000000"
+                                                       style="
+                                                        letter-spacing:8px;
+                                                        font-size:1.5rem;
+                                                        font-weight:bold;
+                                                   " />
+
+                                            </div>
+
+                                            <button type="submit"
+                                                    class="btn-auth">
+                                                Verify Code
+                                            </button>
+
+                                        </form>
+
+                                        <form asp-action="ResendOtp"
+                                              method="post"
+                                              class="mt-3 text-center">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="email"
+                                                   value="@ViewBag.OtpEmail" />
+
+                                            <button type="submit"
+                                                    class="btn btn-link text-decoration-none">
+                                                Resend Code
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+                   
 
                     <div class="text-center mt-4 auth-footer">
                         Don't have an account? <a asp-action="Register">Register here</a>
@@ -339,6 +490,17 @@
                 icon.classList.remove('bi-eye-slash');
                 icon.classList.add('bi-eye');
             }
+        }
+            function closeOtpModal() {
+            const modal = document.getElementById("otpModal");
+
+            if (!modal) return;
+
+            modal.style.opacity = "0";
+
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
         }
     </script>
 }

@@ -224,7 +224,7 @@ namespace DoableFinal.Controllers
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
                 EmailNotificationsEnabled = user.EmailNotificationsEnabled,
-
+                TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
                 // Client-specific values
                 CompanyName = user.CompanyName ?? string.Empty,
                 CompanyAddress = user.CompanyAddress ?? string.Empty,
@@ -923,5 +923,7 @@ namespace DoableFinal.Controllers
             TempData["TicketMessage"] = "Comment removed successfully.";
             return RedirectToAction(nameof(TicketDetails), new { id = ticketComment.TicketId });
         }
+      
+
     }
 }

@@ -202,24 +202,42 @@
                 <div class="card-body">
 
                     <!-- Future 2FA -->
+                    
                     <div class="mb-4">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   id="twoFactorAuth"
-                                   disabled>
 
-                            <label class="form-check-label"
-                                   for="twoFactorAuth">
-                                Two-Factor Authentication
-                            </label>
-                        </div>
+                        <form asp-controller="Account"
+                              asp-action="ToggleTwoFactor"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <div class="form-check form-switch">
+
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="twoFactorAuth"
+                                       @(Model.TwoFactorEnabled ? "checked" : "")
+                                       style="cursor:pointer"
+                                       onchange="this.form.submit()" />
+
+                                <label class="form-check-label" for="twoFactorAuth">
+                                    Two-Factor Authentication
+                                </label>
+
+                            </div>
+                        </form>
 
                         <small class="text-muted">
-                            Enable two-factor authentication for enhanced security.
-                            (Coming soon)
+                            Secure your account with email verification codes during login.
                         </small>
+                        <br />
+                        <small class="text-muted">
+                            Changes are saved automatically when toggled.
+                        </small>
+
                     </div>
+
+
 
                     <!-- Email Notifications -->
                     <div class="mb-3">
