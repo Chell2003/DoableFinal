@@ -183,11 +183,21 @@ namespace DoableFinal.Controllers
                         </small>
                     </div>";
 
-                            await _emailSender.SendEmailAsync(
-                                user.Email,
-                                "DOABLE Login Verification Code",
-                                body
-                            );
+                try
+                {
+                    await _emailSender.SendEmailAsync(
+                        user.Email,
+                        "DOABLE Login Verification Code",
+                        body
+                    );
+                }
+                catch (Exception)
+                {
+                    TempData["ErrorMessage"] =
+                        "Unable to send the verification code. Please verify your email address or contact support.";
+
+                    return RedirectToAction(nameof(Login));
+                }
 
                 ViewBag.ShowOtpModal = true;
                 ViewBag.OtpEmail = user.Email;
@@ -326,7 +336,24 @@ namespace DoableFinal.Controllers
 
             var body = $"<div style='font-family:sans-serif'> <h2>DOABLE Login Verification</h2> <p>Your new verification code is:</p> <div style=' font-size:32px; font-weight:bold; letter-spacing:6px; color:#347deb; margin:20px 0;'> {otp} </div> <p>This code expires in 5 minutes.</p> </div>";
 
-            await _emailSender.SendEmailAsync(user.Email, "DOABLE New Verification Code", body);
+            try
+            {
+                await _emailSender.SendEmailAsync(
+                    user.Email,
+                    "DOABLE New Verification Code",
+                    body
+                );
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] =
+                    "Unable to send a new verification code.";
+
+                TempData["ShowOtpModal"] = true;
+                TempData["OtpEmail"] = email;
+
+                return RedirectToAction(nameof(Login));
+            }
             _cache.Set(
             cooldownKey,
             true,
@@ -637,7 +664,21 @@ public async Task<IActionResult> ToggleTwoFactor()
         <small>If you did not request this, ignore this email.</small>
     ";
 
-            await _emailSender.SendEmailAsync(user.Email, "Doable Password Reset", body);
+            try
+            {
+                await _emailSender.SendEmailAsync(
+                    user.Email,
+                    "Doable Password Reset",
+                    body
+                );
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] =
+                    "Unable to send the password reset email. Please try again later.";
+
+                return RedirectToAction(nameof(ForgotPassword));
+            }
 
             return RedirectToAction(nameof(ForgotPasswordConfirmation));
         }
