@@ -193,10 +193,17 @@ namespace DoableFinal.Controllers
                 }
                 catch (Exception)
                 {
-                    TempData["ErrorMessage"] =
-                        "Unable to send the verification code. Please verify your email address or contact support.";
+                    // Email failed, bypass 2FA and login normally
 
-                    return RedirectToAction(nameof(Login));
+                    user.LastLoginAt = DateTime.UtcNow;
+                    await _userManager.UpdateAsync(user);
+
+                    await _signInManager.SignInAsync(user, model.RememberMe);
+
+                    TempData["ErrorMessage"] =
+                        "Verification email could not be sent. Two-Factor Authentication was bypassed for this login.";
+
+                    return await RedirectToLocal(returnUrl);
                 }
 
                 ViewBag.ShowOtpModal = true;
@@ -347,10 +354,7 @@ namespace DoableFinal.Controllers
             catch (Exception)
             {
                 TempData["ErrorMessage"] =
-                    "Unable to send a new verification code.";
-
-                TempData["ShowOtpModal"] = true;
-                TempData["OtpEmail"] = email;
+                    "Unable to send a verification code. Please contact an administrator.";
 
                 return RedirectToAction(nameof(Login));
             }
@@ -366,66 +370,94 @@ namespace DoableFinal.Controllers
             return RedirectToAction("Login");
 
         }
-      
-           [HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> ToggleTwoFactor()
-{
-    var user = await _userManager.GetUserAsync(User);
 
-    if (user == null)
-    {
-        return NotFound();
-    }
+        private IActionResult RedirectToProfile(ApplicationUser user)
+        {
+            switch (user.Role)
+            {
+                case "Admin":
+                    return RedirectToAction("Profile", "Admin");
 
-    var currentStatus =
-        await _userManager.GetTwoFactorEnabledAsync(user);
+                case "Employee":
+                    return RedirectToAction("Profile", "Employee");
 
-    var result =
-        await _userManager.SetTwoFactorEnabledAsync(
-            user,
-            !currentStatus
-        );
+                case "Project Manager":
+                case "ProjectManager":
+                    return RedirectToAction("Profile", "ProjectManager");
 
-    if (result.Succeeded)
-    {
-        // Refresh sign in cookie
-        await _signInManager.RefreshSignInAsync(user);
+                case "Client":
+                    return RedirectToAction("Profile", "Client");
 
-        TempData["SuccessMessage"] =
-            $"Two-Factor Authentication has been {(!currentStatus ? "enabled" : "disabled")}.";
-    }
-    else
-    {
-        TempData["ErrorMessage"] =
-            "Failed to update Two-Factor Authentication.";
-    }
+                default:
+                    return RedirectToAction(nameof(Profile));
+            }
+        }
 
-    if (await _userManager.IsInRoleAsync(user, "Admin"))
-    {
-        return RedirectToAction("Profile", "Admin");
-    }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleTwoFactor()
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-    if (await _userManager.IsInRoleAsync(user, "Employee"))
-    {
-        return RedirectToAction("Profile", "Employee");
-    }
+            if (user == null)
+            {
+                return NotFound();
+            }
 
-    if (await _userManager.IsInRoleAsync(user, "Project Manager") ||
-        await _userManager.IsInRoleAsync(user, "ProjectManager"))
-    {
-        return RedirectToAction("Profile", "ProjectManager");
-    }
+            var currentStatus =
+                await _userManager.GetTwoFactorEnabledAsync(user);
 
-    if (await _userManager.IsInRoleAsync(user, "Client"))
-    {
-        return RedirectToAction("Profile", "Client");
-    }
+            // Only check email when enabling 2FA
+            if (!currentStatus)
+            {
+                // Basic email validation
+                if (string.IsNullOrWhiteSpace(user.Email) ||
+                    !user.Email.Contains("@") ||
+                    !user.Email.Contains("."))
+                {
+                    TempData["ErrorMessage"] =
+                        "Please use a valid email address before enabling Two-Factor Authentication.";
 
-    return RedirectToAction(nameof(Profile));
-}
+                    return RedirectToProfile(user);
+                }
 
+                try
+                {
+                    await _emailSender.SendEmailAsync(
+                        user.Email,
+                        "DOABLE 2FA Verification Test",
+                        "<p>This is a test email to verify that your email can receive verification codes.</p>"
+                    );
+                }
+                catch
+                {
+                    TempData["ErrorMessage"] =
+                        "Unable to send email to this address. Please update your email before enabling Two-Factor Authentication.";
 
+                    return RedirectToProfile(user);
+                }
+            }
+
+            var result = await _userManager.SetTwoFactorEnabledAsync(
+                user,
+                !currentStatus
+            );
+
+            if (result.Succeeded)
+            {
+                await _signInManager.RefreshSignInAsync(user);
+
+                TempData["SuccessMessage"] =
+                    $"Two-Factor Authentication has been {(!currentStatus ? "enabled" : "disabled")}.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] =
+                    "Failed to update Two-Factor Authentication.";
+            }
+
+            return RedirectToProfile(user);
+        }
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()

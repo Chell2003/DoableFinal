@@ -1,4 +1,4 @@
-@model DoableFinal.ViewModels.ProfileViewModel
+﻿@model DoableFinal.ViewModels.ProfileViewModel
 
 @{
     ViewData["Title"] = "Client Profile";
@@ -210,7 +210,7 @@
 
                     <!-- Future 2FA -->
                
-                    <div class="mb-4">
+                  @*   <div class="mb-4">
 
                         <form asp-controller="Account"
                               asp-action="ToggleTwoFactor"
@@ -242,8 +242,34 @@
                             Changes are saved automatically when toggled.
                         </small>
 
+                    </div> *@
+                    <div class="mb-4">
+
+                        <div class="form-check form-switch opacity-50"
+                             style="pointer-events:none;">
+
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="twoFactorAuth"
+                                   @(Model.TwoFactorEnabled ? "checked" : "") />
+
+                            <label class="form-check-label" for="twoFactorAuth">
+                                Two-Factor Authentication
+                            </label>
+
+                        </div>
+
+                        <small class="text-muted">
+                            Secure your account with email verification codes during login.
+                        </small>
+
+                        <br />
+
+                        <small class="text-muted text-warning">
+                            ⚠ Temporarily unavailable
+                        </small>
+
                     </div>
-                    
 
 
                     <!-- Email Notifications -->
