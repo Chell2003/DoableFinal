@@ -27,12 +27,12 @@
                         <h4 class="fw-bold mb-0">
                             <i class="bi bi-chat-dots-fill text-primary me-2"></i>Messages
                         </h4>
-                        @if (!User.IsInRole("Client"))
-                            {
+                       @*  @if (!User.IsInRole("Client")) @*  <== remove this to allow client and employee message *@
+                             
                         <button id="btnNewMessage" type="button" class="btn btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#newMessageModal">
                             <i class="bi bi-plus-lg me-1"></i> New
                         </button>
-                        }
+                         @* <<<=== put bracket here for filter employee to client *@
                     </div>
                     
                     @if (ViewBag.Projects != null && ViewBag.Projects.Count > 0)
@@ -149,8 +149,8 @@
         </div>
     </div>
 </div>
-@if (!User.IsInRole("Client"))
-{
+@* @if (!User.IsInRole("Client")) *@  @* <=== remove this to allow message employee and client *@
+
 <!-- Enhanced New Message Modal -->
 <div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -220,7 +220,7 @@
         </div>
     </div>
 </div>
-}
+     @* <<<=== put bracket here for filtering employee client *@
 @section Scripts {
     <script>
         (function () {

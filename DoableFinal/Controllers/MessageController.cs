@@ -110,6 +110,18 @@ namespace DoableFinal.Controllers
                     if (await _userManager.IsInRoleAsync(currentUser, "Client"))
                     {
                         // Already added ProjectManagerId above, so team members are not included for clients
+
+                        //allow client to see employees
+
+                        //comment this whole section from here
+                        var teamUserIds = await _context.ProjectTeams
+                           .Where(pt => pt.ProjectId == proj.Id)
+                           .Select(pt => pt.UserId)
+                           .ToListAsync();
+
+                        foreach (var id in teamUserIds)
+                            relevantUserIds.Add(id);
+                        //to here for client employee filter
                     }
                     else
                     {
@@ -294,6 +306,17 @@ namespace DoableFinal.Controllers
                 {
                     if (!string.IsNullOrEmpty(proj.ProjectManagerId)) 
                         allowedRecipientIds.Add(proj.ProjectManagerId);
+
+                    //allow client see employees
+                    //comment here to 
+                    var teamUserIds = await _context.ProjectTeams
+           .Where(pt => pt.ProjectId == proj.Id)
+           .Select(pt => pt.UserId)
+           .ToListAsync();
+
+                    foreach (var id in teamUserIds)
+                        allowedRecipientIds.Add(id);
+                    //here to filter employee to client message
                 }
             }
             else if (await IsProjectManagerAsync(currentUser))
