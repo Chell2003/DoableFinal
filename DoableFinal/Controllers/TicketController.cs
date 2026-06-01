@@ -61,25 +61,93 @@ namespace DoableFinal.Controllers
         new SelectListItem { Value = "Other", Text = "Other" }
     };
         }
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(
+    string? q = "",
+    string? statusFilter = "",
+    string? fromDate = "",
+    string? toDate = "")
         {
             var currentUser = await _userManager.GetUserAsync(User);
+
             if (currentUser == null)
             {
                 return Challenge();
             }
-            
-            var tickets = await _context.Tickets
+
+            var query = _context.Tickets
                 .Include(t => t.AssignedTo)
                 .Include(t => t.CreatedBy)
                 .Include(t => t.Project)
-                .Where(t => 
-                    User.IsInRole("Admin") || // Admin sees all tickets
-                    (User.IsInRole("Project Manager") && t.Project.ProjectManagerId == currentUser.Id) || // PM sees their project tickets
-                    (User.IsInRole("Client") && t.CreatedById == currentUser.Id) // Client sees only their created tickets
-                )
-                .OrderByDescending(t => t.CreatedAt)
+                .AsQueryable();
+
+            // Role-based filtering
+            query = query.Where(t =>
+                User.IsInRole("Admin") ||
+                (User.IsInRole("Project Manager") &&
+                    t.Project != null &&
+                    t.Project.ProjectManagerId == currentUser.Id) ||
+                (User.IsInRole("Client") &&
+                    t.CreatedById == currentUser.Id)
+            );
+
+            // Search by title
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var searchTerm = q.ToLower();
+
+                query = query.Where(t =>
+                    t.Title.ToLower().Contains(searchTerm) ||
+                    (t.CreatedBy != null &&
+                        (
+                            t.CreatedBy.FirstName.ToLower().Contains(searchTerm) ||
+                            t.CreatedBy.LastName.ToLower().Contains(searchTerm)
+                        ))
+                );
+            }
+
+            // Status Filter
+            if (!string.IsNullOrWhiteSpace(statusFilter))
+            {
+                query = query.Where(t => t.Status == statusFilter);
+            }
+
+            // From Date Filter
+            if (!string.IsNullOrWhiteSpace(fromDate) &&
+                DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(t =>
+                    t.CreatedAt.Date >= startDate.Date);
+            }
+
+            // To Date Filter
+            if (!string.IsNullOrWhiteSpace(toDate) &&
+                DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(t =>
+                    t.CreatedAt.Date <= endDate.Date);
+            }
+
+            var tickets = await query
+                .OrderByDescending(t =>
+                    t.Priority == "Critical" ? 4 :
+                    t.Priority == "High" ? 3 :
+                    t.Priority == "Medium" ? 2 :
+                    t.Priority == "Low" ? 1 : 0)
+                .ThenByDescending(t => t.UpdatedAt ?? t.CreatedAt)
                 .ToListAsync();
+
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.SearchQuery = q;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
+
+            ViewBag.AvailableStatuses = new List<string>
+    {
+        "Open",
+        "In Progress",
+        "Resolved",
+        "Closed"
+    };
 
             var viewModel = new TicketListViewModel
             {
@@ -88,7 +156,8 @@ namespace DoableFinal.Controllers
             };
 
             return View(viewModel);
-        }        [HttpGet]
+        }
+        [HttpGet]
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> Create()
         {
