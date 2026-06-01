@@ -1604,7 +1604,8 @@ namespace DoableFinal.Controllers
                 });
             }
 
-            return RedirectToAction(nameof(ArchivedProjects));
+            return RedirectToAction(nameof(ProjectDetails),
+                new { id = project.Id });
         }
 
         [HttpPost]
@@ -1631,7 +1632,8 @@ namespace DoableFinal.Controllers
             await _notificationService.NotifyTaskUpdateAsync(task, $"Task '{task.Title}' has been unarchived by admin");
 
             TempData["TaskMessage"] = "Task has been unarchived successfully.";
-            return RedirectToAction(nameof(ArchivedTasks));
+            return RedirectToAction(nameof(TaskDetails),
+                 new { id = task.Id });
         }
 
         [HttpPost]

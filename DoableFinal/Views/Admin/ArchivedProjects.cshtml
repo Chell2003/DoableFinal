@@ -14,7 +14,14 @@
             <h1 class="h3 mb-0">Archived Projects</h1>
             <p class="text-muted small mb-0">View and manage archived projects</p>
         </div>
+        <div>
+                <a asp-controller="Admin"
+                           asp-action="Projects"
+                           class="btn btn-secondary btn-sm me-2">
+                             Back to Projects
+                        </a>
         <span class="badge bg-secondary fs-6">@(Model?.Count() ?? 0) Archived</span>
+    </div>
     </div>
 
     <ol class="breadcrumb mb-4">

@@ -41,18 +41,13 @@
 
     @if (Model.Status != "In Progress")
     {
-        <form asp-action="ArchiveTask"
-              asp-route-id="@Model.Id"
-              method="post"
-              class="d-inline"
-              onsubmit="return confirm('Are you sure you want to archive this task?');">
+      <button type="button"
+        class="btn btn-warning btn-sm"
+        onclick="showArchiveModal(@Model.Id, '@Model.Title')">
 
-            @Html.AntiForgeryToken()
+    <i class="fas fa-archive"></i> Archive Task
 
-            <button type="submit" class="btn btn-warning btn-sm">
-                <i class="fas fa-archive"></i> Archive Task
-            </button>
-        </form>
+</button>
     }
 }
 else
@@ -295,7 +290,63 @@ else
         </div>
     </div>
 </div>
+<div class="modal fade"
+     id="archiveTaskModal"
+     tabindex="-1"
+     aria-hidden="true">
 
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Archive Task
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                Are you sure you want to archive:
+
+                <strong id="archiveTaskName"></strong>?
+
+                <p class="text-muted mt-2 mb-0">
+                    Archived tasks remain viewable but cannot be modified.
+                </p>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <form id="archiveTaskForm"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn btn-warning">
+                        Archive Task
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
 <!-- Chart and Modal Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
@@ -327,4 +378,15 @@ function submitApproval() {
             }, 5000);
         }
     });
+    function showArchiveModal(id, title)
+{
+    document.getElementById("archiveTaskName").textContent = title;
+
+    document.getElementById("archiveTaskForm").action =
+        '@Url.Action("ArchiveTask","ProjectManager")/' + id;
+
+    new bootstrap.Modal(
+        document.getElementById("archiveTaskModal")
+    ).show();
+}
 </script>

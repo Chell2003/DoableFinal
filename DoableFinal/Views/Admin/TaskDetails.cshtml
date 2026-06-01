@@ -25,11 +25,25 @@
                         <i class="fas fa-tasks me-1"></i>
                         Task Information
                     </div>
-                    <div>
-                        <a asp-controller="Admin" asp-action="EditTask" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
-                            <i class="fas fa-edit"></i> Edit Task
-                        </a>
-                    </div>
+                   <div class="d-flex gap-2">
+
+                    <a asp-controller="Admin"
+                       asp-action="EditTask"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-primary btn-sm">
+                        <i class="fas fa-edit"></i> Edit Task
+                    </a>
+
+                    @if (!Model.IsArchived && Model.Status != "In Progress")
+                    {
+                        <button type="button"
+                                class="btn btn-warning btn-sm"
+                                onclick="showArchiveModal(@Model.Id, '@Model.Title')">
+                            <i class="fas fa-archive"></i> Archive Task
+                        </button>
+                    }
+
+                </div>
                 </div>
                 <div class="card-body">
                     <div class="row mb-3">
@@ -130,10 +144,85 @@
                     }
                 </div>
             </div>
+            <div class="modal fade"
+     id="archiveTaskModal"
+     tabindex="-1"
+     aria-hidden="true">
 
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Archive Task
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                Are you sure you want to archive:
+
+                <strong id="archiveTaskName"></strong>?
+
+                <p class="text-muted mt-2 mb-0">
+                    Archived tasks remain viewable but can no longer be edited.
+                </p>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <form id="archiveTaskForm"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn btn-warning">
+                        Archive Task
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
 
             @* Use shared Task Timeline partial (matches Project Manager) *@
             @await Html.PartialAsync("_TaskTimeline", Model)
         </div>
     </div>
 </div>
+@section Scripts {
+
+<script>
+
+function showArchiveModal(id, title)
+{
+    document.getElementById("archiveTaskName").textContent = title;
+
+    document.getElementById("archiveTaskForm").action =
+        '@Url.Action("ArchiveTask","Admin")/' + id;
+
+    new bootstrap.Modal(
+        document.getElementById("archiveTaskModal")
+    ).show();
+}
+
+</script>
+
+}
