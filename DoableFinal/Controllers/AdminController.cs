@@ -736,11 +736,20 @@ namespace DoableFinal.Controllers
             if (!string.IsNullOrEmpty(q))
             {
                 var searchTerm = q.ToLower();
-                query = query.Where(p => 
-                    p.Name.ToLower().Contains(searchTerm) ||
-                    (p.Client != null && (
+
+                query = query.Where(p =>
+                    p.Name.ToLower().Contains(searchTerm)
+
+                    || (p.Client != null && (
                         p.Client.FirstName.ToLower().Contains(searchTerm) ||
-                        p.Client.LastName.ToLower().Contains(searchTerm)
+                        p.Client.LastName.ToLower().Contains(searchTerm) ||
+                        (p.Client.FirstName + " " + p.Client.LastName).ToLower().Contains(searchTerm)
+                    ))
+
+                    || (p.ProjectManager != null && (
+                        p.ProjectManager.FirstName.ToLower().Contains(searchTerm) ||
+                        p.ProjectManager.LastName.ToLower().Contains(searchTerm) ||
+                        (p.ProjectManager.FirstName + " " + p.ProjectManager.LastName).ToLower().Contains(searchTerm)
                     ))
                 );
             }
@@ -955,9 +964,22 @@ namespace DoableFinal.Controllers
                 var searchTerm = q.ToLower();
 
                 query = query.Where(t =>
-                    t.Title.ToLower().Contains(searchTerm) ||
-                    (t.Project != null &&
-                     t.Project.Name.ToLower().Contains(searchTerm)));
+                    t.Title.ToLower().Contains(searchTerm)
+
+                    || (t.Project != null &&
+                        t.Project.Name.ToLower().Contains(searchTerm))
+
+                    || t.TaskAssignments.Any(ta =>
+                        ta.Employee != null &&
+                        (
+                            ta.Employee.FirstName.ToLower().Contains(searchTerm)
+                            || ta.Employee.LastName.ToLower().Contains(searchTerm)
+                            || (ta.Employee.FirstName + " " + ta.Employee.LastName)
+                                .ToLower()
+                                .Contains(searchTerm)
+                        )
+                    )
+                );
             }
 
             // Status filter
