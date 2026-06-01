@@ -671,6 +671,7 @@ namespace DoableFinal.Controllers
             var task = await _context.Tasks
                 .Include(t => t.Project)
                     .ThenInclude(p => p.ProjectTeams)
+                      .Include(t => t.CreatedBy)
                 .Include(t => t.TaskAssignments)
                     .ThenInclude(ta => ta.Employee)
                 .Include(t => t.Comments)

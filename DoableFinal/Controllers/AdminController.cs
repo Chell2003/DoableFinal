@@ -915,8 +915,15 @@ namespace DoableFinal.Controllers
             return View(model);
         }
 
+      
         // Task Management
-        public async Task<IActionResult> Tasks(string filter)
+        [HttpGet]
+        public async Task<IActionResult> Tasks(
+            string? filter = "",
+            string? q = "",
+            string? statusFilter = "",
+            string? fromDate = "",
+            string? toDate = "")
         {
             var query = _context.Tasks
                 .Include(t => t.Project)
@@ -925,23 +932,77 @@ namespace DoableFinal.Controllers
                 .Where(t => !t.IsArchived)
                 .AsQueryable();
 
-            // Apply filters
+            // Existing button filters
             query = filter switch
             {
-                "pending" => query.Where(t => !string.IsNullOrEmpty(t.ProofFilePath) && !t.IsConfirmed && t.Status != "Completed"),
-                "completed" => query.Where(t => t.Status == "Completed"),
-                "in-progress" => query.Where(t => t.Status == "In Progress"),
+                "pending" => query.Where(t =>
+                    !string.IsNullOrEmpty(t.ProofFilePath) &&
+                    !t.IsConfirmed &&
+                    t.Status != "Completed"),
+
+                "completed" => query.Where(t =>
+                    t.Status == "Completed"),
+
+                "in-progress" => query.Where(t =>
+                    t.Status == "In Progress"),
+
                 _ => query
             };
 
+            // Search
+            if (!string.IsNullOrEmpty(q))
+            {
+                var searchTerm = q.ToLower();
 
-            // Order: High priority first, then Medium/others, then Low last, then by UpdatedAt/CreatedAt
+                query = query.Where(t =>
+                    t.Title.ToLower().Contains(searchTerm) ||
+                    (t.Project != null &&
+                     t.Project.Name.ToLower().Contains(searchTerm)));
+            }
+
+            // Status filter
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                query = query.Where(t => t.Status == statusFilter);
+            }
+
+            // Date filters
+            if (!string.IsNullOrEmpty(fromDate) &&
+                DateTime.TryParse(fromDate, out var startDate))
+            {
+                query = query.Where(t =>
+                    t.CreatedAt.Date >= startDate.Date);
+            }
+
+            if (!string.IsNullOrEmpty(toDate) &&
+                DateTime.TryParse(toDate, out var endDate))
+            {
+                query = query.Where(t =>
+                    t.CreatedAt.Date <= endDate.Date);
+            }
+
             var tasks = await query
-                .OrderBy(t => t.Priority == "Low" ? 2 : t.Priority == "High" ? 0 : 1)
+                .OrderBy(t => t.Priority == "Low" ? 2 :
+                             t.Priority == "High" ? 0 : 1)
                 .ThenByDescending(t => t.UpdatedAt ?? t.CreatedAt)
                 .ToListAsync();
 
             ViewBag.CurrentFilter = filter;
+
+            ViewBag.SearchQuery = q;
+            ViewBag.StatusFilter = statusFilter;
+            ViewBag.FromDate = fromDate;
+            ViewBag.ToDate = toDate;
+
+            ViewBag.AvailableStatuses = new List<string>
+    {
+        "Not Started",
+        "In Progress",
+        "Pending Approval",
+        "On Hold",
+        "Completed"
+    };
+
             return View(tasks);
         }
 
@@ -1640,6 +1701,8 @@ namespace DoableFinal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CompleteProject(int id)
         {
+            TempData["ErrorMessage"] = "Only the Project Manager can complete projects.";
+            return RedirectToAction(nameof(ProjectDetails), new { id });
             var project = await _context.Projects
                 .Include(p => p.Tasks)
                 .Include(p => p.Client)
@@ -2006,6 +2069,8 @@ namespace DoableFinal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmTask(int id)
         {
+            TempData["ErrorMessage"] = "Only the Project Manager can confirm tasks.";
+            return RedirectToAction(nameof(TaskDetails), new { id });
             var task = await _context.Tasks
                 .Include(t => t.Project)
                 .FirstOrDefaultAsync(t => t.Id == id);
