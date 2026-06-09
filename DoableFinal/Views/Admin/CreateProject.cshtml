@@ -167,7 +167,7 @@
             });
 
             // Project name suggestions (typeable field with autocomplete)
-            const existingNames = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
+            const existingNames = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
                 (ViewBag.ExistingProjectNames as List<string>) ?? new List<string>()
             ));
 
