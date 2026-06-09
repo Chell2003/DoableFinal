@@ -271,6 +271,18 @@ body {
     }
 }
 
+/* Dashboard table rows — uniform height, vertically centred */
+.dashboard-td {
+    height: 44px;
+    vertical-align: middle !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.table.table-sm .dashboard-td {
+    height: 44px;
+}
+
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--primary-color);
 }
