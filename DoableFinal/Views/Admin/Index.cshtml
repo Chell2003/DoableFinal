@@ -21,31 +21,32 @@
 
     <!-- KPI Stats Row -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
+        <div class="col-6 col-md-3 d-flex">
+            <div class="stat-card stat-card--primary w-100">
                 <div class="stat-icon"><i class="bi bi-folder"></i></div>
                 <div class="stat-value">@ViewBag.TotalProjects</div>
                 <div class="stat-label">Total Projects</div>
                 <small class="text-success"><i class="bi bi-arrow-up-right"></i> @ViewBag.InProgressProjects in progress</small>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
+        <div class="col-6 col-md-3 d-flex">
+            <div class="stat-card stat-card--primary w-100">
                 <div class="stat-icon"><i class="bi bi-list-task"></i></div>
                 <div class="stat-value">@ViewBag.TotalTasks</div>
                 <div class="stat-label">Total Tasks</div>
                 <small class="text-success"><i class="bi bi-check-circle"></i> @ViewBag.CompletedTasks completed</small>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
+        <div class="col-6 col-md-3 d-flex">
+            <div class="stat-card stat-card--primary w-100">
                 <div class="stat-icon"><i class="bi bi-people"></i></div>
                 <div class="stat-value">@ViewBag.TotalUsers</div>
                 <div class="stat-label">Total Users</div>
+                <small class="text-success">&nbsp;</small>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card" style="border-left: 4px solid #dc3545;">
+        <div class="col-6 col-md-3 d-flex">
+            <div class="stat-card stat-card--danger w-100">
                 <div class="stat-icon text-danger"><i class="bi bi-clock-history"></i></div>
                 <div class="stat-value text-danger">@ViewBag.OverdueTasks</div>
                 <div class="stat-label">Overdue Tasks</div>

@@ -228,6 +228,19 @@ body {
     padding: 1.5rem;
     margin-bottom: 1rem;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-top: 4px solid transparent;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 160px;
+}
+
+.stat-card--primary {
+    border-top-color: var(--primary-color, #4361ee);
+}
+
+.stat-card--danger {
+    border-top-color: #dc3545;
 }
 
 .stat-card .stat-icon {
