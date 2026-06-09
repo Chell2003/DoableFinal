@@ -113,6 +113,9 @@
         var tbody = table.tBodies[0];
         if (!thead || !tbody) return;
 
+        // Skip sort AND pagination entirely if table has no-sort class
+        if (table.classList.contains('no-sort')) return;
+
         var headers = Array.from(thead.rows[0].cells);
         headers.forEach(function (th, i) {
             // Skip if explicitly marked as no-sort
