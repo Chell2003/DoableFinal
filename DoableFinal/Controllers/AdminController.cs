@@ -247,6 +247,8 @@ namespace DoableFinal.Controllers
             ViewBag.TotalUsers = await _context.Users.CountAsync();
             ViewBag.CompletedTasks = await _context.Tasks.CountAsync(t => !t.IsArchived && t.Status == "Completed");
             ViewBag.OverdueTasks = await _context.Tasks.CountAsync(t => !t.IsArchived && t.Status != "Completed" && t.DueDate < DateTime.UtcNow);
+            ViewBag.InProgressProjects = await _context.Projects.CountAsync(p => !p.IsArchived && p.Status == "In Progress");
+            ViewBag.CompletedProjects = await _context.Projects.CountAsync(p => !p.IsArchived && p.Status == "Completed");
 
             // Get recent users
             ViewBag.RecentUsers = await _context.Users
@@ -254,14 +256,27 @@ namespace DoableFinal.Controllers
                 .Take(5)
                 .ToListAsync();
 
-            // Get recent projects
-            ViewBag.RecentProjects = await _context.Projects
+            // Get ALL active projects with tasks for overview + progress bar
+            var allProjects = await _context.Projects
                 .Include(p => p.Client)
                 .Include(p => p.ProjectManager)
+                .Include(p => p.Tasks)
                 .Where(p => !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
-                .Take(5)
                 .ToListAsync();
+
+            // Build project progress data
+            var projectsWithProgress = allProjects.Select(p => new
+            {
+                Project = p,
+                TotalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0,
+                CompletedTasks = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0,
+                ProgressPercent = (p.Tasks != null && p.Tasks.Count(t => !t.IsArchived) > 0)
+                    ? (int)Math.Round((double)p.Tasks.Count(t => !t.IsArchived && t.Status == "Completed") / p.Tasks.Count(t => !t.IsArchived) * 100)
+                    : 0
+            }).ToList();
+            ViewBag.ProjectsWithProgress = projectsWithProgress;
+            ViewBag.RecentProjects = allProjects.Take(5).ToList();
 
             // Get recent tasks - Update to handle multiple assignments
             ViewBag.RecentTasks = await _context.Tasks
@@ -270,8 +285,50 @@ namespace DoableFinal.Controllers
                     .ThenInclude(ta => ta.Employee)
                 .Where(t => !t.IsArchived)
                 .OrderByDescending(t => t.CreatedAt)
-                .Take(5)
+                .Take(10)
                 .ToListAsync();
+
+            // Employee workload monitoring
+            var employees = await _context.Users
+                .Where(u => u.Role == "Employee" && !u.IsArchived)
+                .ToListAsync();
+
+            var employeeWorkload = new List<object>();
+            foreach (var emp in employees)
+            {
+                var assignedTasks = await _context.TaskAssignments
+                    .Include(ta => ta.ProjectTask)
+                    .Where(ta => ta.EmployeeId == emp.Id && !ta.ProjectTask.IsArchived)
+                    .ToListAsync();
+
+                var totalAssigned = assignedTasks.Count;
+                var completedCount = assignedTasks.Count(ta => ta.ProjectTask.Status == "Completed");
+                var inProgressCount = assignedTasks.Count(ta => ta.ProjectTask.Status == "In Progress");
+                var overdueCount = assignedTasks.Count(ta => ta.ProjectTask.Status != "Completed" && ta.ProjectTask.DueDate < DateTime.UtcNow);
+
+                employeeWorkload.Add(new
+                {
+                    Id = emp.Id,
+                    Name = $"{emp.FirstName} {emp.LastName}",
+                    Position = emp.Position ?? "Employee",
+                    TotalTasks = totalAssigned,
+                    CompletedTasks = completedCount,
+                    InProgressTasks = inProgressCount,
+                    OverdueTasks = overdueCount,
+                    WorkloadLevel = totalAssigned == 0 ? "None" : totalAssigned <= 2 ? "Low" : totalAssigned <= 5 ? "Medium" : "High"
+                });
+            }
+            ViewBag.EmployeeWorkload = employeeWorkload;
+
+            // Task status breakdown for chart
+            ViewBag.TaskStatusBreakdown = new
+            {
+                NotStarted = await _context.Tasks.CountAsync(t => !t.IsArchived && t.Status == "Not Started"),
+                InProgress = await _context.Tasks.CountAsync(t => !t.IsArchived && t.Status == "In Progress"),
+                Completed = await _context.Tasks.CountAsync(t => !t.IsArchived && t.Status == "Completed"),
+                OnHold = await _context.Tasks.CountAsync(t => !t.IsArchived && t.Status == "On Hold"),
+                Overdue = await _context.Tasks.CountAsync(t => !t.IsArchived && t.Status != "Completed" && t.DueDate < DateTime.UtcNow)
+            };
 
             return View();
         }
@@ -724,7 +781,7 @@ namespace DoableFinal.Controllers
         }
 
         // Project Management
-        public async Task<IActionResult> Projects(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
+        public async Task<IActionResult> Projects(string? q = "", string? statusFilter = "", string? categoryFilter = "", string? fromDate = "", string? toDate = "")
         {
             var query = _context.Projects
                 .Include(p => p.Client)
@@ -758,6 +815,12 @@ namespace DoableFinal.Controllers
             if (!string.IsNullOrEmpty(statusFilter))
             {
                 query = query.Where(p => p.Status == statusFilter);
+            }
+
+            // Filter by category
+            if (!string.IsNullOrEmpty(categoryFilter))
+            {
+                query = query.Where(p => p.Category != null && p.Category.ToLower().Contains(categoryFilter.ToLower()));
             }
 
             // Date range filtering
@@ -820,6 +883,13 @@ namespace DoableFinal.Controllers
                 Text = t.Title
             }).ToList();
 
+            // For project name autocomplete
+            ViewBag.ExistingProjectNames = await _context.Projects
+                .Where(p => !p.IsArchived)
+                .Select(p => p.Name)
+                .Distinct()
+                .ToListAsync();
+
             return View(viewModel);
         }
 
@@ -847,9 +917,11 @@ namespace DoableFinal.Controllers
                     Description = model.Description,
                     StartDate = model.StartDate,
                     EndDate = model.EndDate,
-                    Status = model.Status,
+                    // Auto set In Progress if StartDate is today
+                    Status = model.StartDate.Date == DateTime.Today ? "In Progress" : model.Status,
                     ClientId = model.ClientId,
                     ProjectManagerId = model.ProjectManagerId,
+                    Category = model.Category,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -2119,7 +2191,7 @@ namespace DoableFinal.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> CreateTask()
+        public async Task<IActionResult> CreateTask(int? projectId = null)
         {
             // Get all active projects
             var projects = await _context.Projects
@@ -2161,6 +2233,8 @@ namespace DoableFinal.Controllers
                     Value = p.Id.ToString(),
                     Text = p.Name
                 }).ToList(),
+                // Auto-set project if passed from ProjectDetails
+                ProjectId = projectId ?? 0,
                 AvailableEmployees = employees.Select(e => new
                 {
                     id = e.Id,
@@ -2183,6 +2257,7 @@ namespace DoableFinal.Controllers
             );
             ViewBag.ProjectDatesJson = System.Text.Json.JsonSerializer.Serialize(projectDatesJson);
             ViewBag.EmployeesJson = System.Text.Json.JsonSerializer.Serialize(model.AvailableEmployees);
+            ViewBag.PreselectedProjectId = projectId;
 
             return View(model);
         }
@@ -2259,6 +2334,7 @@ namespace DoableFinal.Controllers
                     Status = model.Status,
                     Priority = model.Priority,
                     ProjectId = model.ProjectId,
+                    Category = model.Category,
                     CreatedById = currentUser.Id,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -2588,8 +2664,9 @@ namespace DoableFinal.Controllers
             }
 
             var page = pages[key];
-            page.TitleHtml = titleHtml ?? string.Empty;
-            page.BodyHtml = bodyHtml ?? string.Empty;
+            // Strip HTML tags from content fields
+            page.TitleHtml = System.Text.RegularExpressions.Regex.Replace(titleHtml ?? string.Empty, "<[^>]*>", "");
+            page.BodyHtml = System.Text.RegularExpressions.Regex.Replace(bodyHtml ?? string.Empty, "<[^>]*>", "");
 
             if (imageFile != null && imageFile.Length > 0)
             {

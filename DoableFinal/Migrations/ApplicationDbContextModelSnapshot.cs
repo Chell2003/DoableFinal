@@ -322,6 +322,10 @@ namespace DoableFinal.Migrations
                     b.Property<DateTime?>("ArchivedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("ClientId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -380,6 +384,10 @@ namespace DoableFinal.Migrations
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");

@@ -19,14 +19,35 @@
                     <form asp-action="CreateProject" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                        <div class="mb-3">
-                            <label asp-for="Name" class="form-label"></label>
-                            <input asp-for="Name" class="form-control" />
-                            <span asp-validation-for="Name" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label asp-for="Name" class="form-label fw-semibold"></label>
+                                    <input asp-for="Name" class="form-control" id="projectNameInput" autocomplete="off" />
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                    <div id="projectNameSuggestions" class="list-group position-absolute z-3" style="display:none; max-height:200px; overflow-y:auto; width:100%;"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Category" class="form-label fw-semibold"></label>
+                                    <input asp-for="Category" class="form-control" placeholder="e.g. Additional Feature, Bug Fix, New Module" list="categoryList" />
+                                    <datalist id="categoryList">
+                                        <option value="Additional Feature"></option>
+                                        <option value="Bug Fix"></option>
+                                        <option value="New Module"></option>
+                                        <option value="Maintenance"></option>
+                                        <option value="Research"></option>
+                                        <option value="Client Request"></option>
+                                        <option value="Internal Project"></option>
+                                    </datalist>
+                                    <span asp-validation-for="Category" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Description" class="form-label"></label>
+                            <label asp-for="Description" class="form-label fw-semibold"></label>
                             <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
@@ -34,48 +55,66 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="StartDate" class="form-label"></label>
-                                    <input asp-for="StartDate" class="form-control" />
+                                    <label asp-for="StartDate" class="form-label fw-semibold"></label>
+                                    <input asp-for="StartDate" class="form-control" id="StartDate" type="date" />
                                     <span asp-validation-for="StartDate" class="text-danger"></span>
+                                    <small class="text-info"><i class="bi bi-info-circle"></i> Setting today's date will automatically set status to <strong>In Progress</strong>.</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="EndDate" class="form-label"></label>
-                                    <input asp-for="EndDate" class="form-control" />
+                                    <label asp-for="EndDate" class="form-label fw-semibold"></label>
+                                    <input asp-for="EndDate" class="form-control" id="EndDate" type="date" />
                                     <span asp-validation-for="EndDate" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Status" class="form-label"></label>
-                            <select asp-for="Status" class="form-select">
-                                <option value="Not Started">Not Started</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="On Hold">On Hold</option>
-                                <option value="Completed">Completed</option>
-                            </select>
-                            <span asp-validation-for="Status" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Status" class="form-label fw-semibold"></label>
+                                    <select asp-for="Status" class="form-select" id="StatusSelect">
+                                        <option value="Not Started">Not Started</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="On Hold">On Hold</option>
+                                        <option value="Completed">Completed</option>
+                                    </select>
+                                    <span asp-validation-for="Status" class="text-danger"></span>
+                                    <small id="statusHint" class="text-muted"></small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="ClientId" class="form-label fw-semibold">Client</label>
+                                    <select asp-for="ClientId" asp-items="Model.Clients" class="form-select select2-client">
+                                        <option value="">-- Select Client --</option>
+                                    </select>
+                                    <span asp-validation-for="ClientId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="ProjectManagerId" class="form-label fw-semibold">Project Manager</label>
+                                    <select asp-for="ProjectManagerId" asp-items="Model.ProjectManagers" class="form-select select2-pm">
+                                        <option value="">-- Select Project Manager --</option>
+                                    </select>
+                                    <span asp-validation-for="ProjectManagerId" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="ClientId" class="form-label"></label>
-                            <select asp-for="ClientId" asp-items="Model.Clients" class="form-select">
-                                <option value="">-- Select Client --</option>
-                            </select>
-                            <span asp-validation-for="ClientId" class="text-danger"></span>
-                        </div>
+                        @if (Model.AvailableTickets != null && Model.AvailableTickets.Any())
+                        {
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Attach Tickets (optional)</label>
+                                <select name="SelectedTicketIds" class="form-select" multiple asp-items="Model.AvailableTickets">
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple tickets</small>
+                            </div>
+                        }
 
-                        <div class="mb-3">
-                            <label asp-for="ProjectManagerId" class="form-label"></label>
-                            <select asp-for="ProjectManagerId" asp-items="Model.ProjectManagers" class="form-select">
-                                <option value="">-- Select Project Manager --</option>
-                            </select>
-                            <span asp-validation-for="ProjectManagerId" class="text-danger"></span>
-                        </div>
-
-                        <div class="d-grid gap-2">
+                        <div class="d-flex gap-2 mt-3">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-folder-plus"></i> Create Project
                             </button>
@@ -92,17 +131,65 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        $(document).ready(function() {
-            $("#StartDate").attr('min', new Date().toISOString().split('T')[0]);
-            $("#EndDate").attr('min', new Date().toISOString().split('T')[0]);
+        $(document).ready(function () {
+            const today = new Date().toISOString().split('T')[0];
+            $("#StartDate").attr('min', today);
+            $("#EndDate").attr('min', today);
+            $("#StartDate").val(today);
 
-            $("#StartDate").change(function() {
-                var startDate = $(this).val();
+            // Initialize Select2 for Client and PM for searchable dropdowns
+            $('.select2-client, .select2-pm').select2({ width: '100%' });
+
+            // Auto-update status based on StartDate
+            function checkAutoStatus() {
+                const startVal = $("#StartDate").val();
+                const statusSelect = $("#StatusSelect");
+                if (startVal === today) {
+                    statusSelect.val("In Progress");
+                    $("#statusHint").html('<i class="bi bi-lightning-fill text-warning"></i> Auto-set to <strong>In Progress</strong> because start date is today.');
+                } else if (startVal > today) {
+                    if (statusSelect.val() === "In Progress") statusSelect.val("Not Started");
+                    $("#statusHint").text('');
+                }
+            }
+
+            checkAutoStatus();
+            $("#StartDate").on('change', function () {
+                const startDate = $(this).val();
                 $("#EndDate").attr('min', startDate);
-                
                 if ($("#EndDate").val() < startDate) {
                     $("#EndDate").val(startDate);
+                }
+                checkAutoStatus();
+            });
+
+            // Project name suggestions (typeable field with autocomplete)
+            const existingNames = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
+                (ViewBag.ExistingProjectNames as List<string>) ?? new List<string>()
+            ));
+
+            $("#projectNameInput").on('input', function () {
+                const val = $(this).val().toLowerCase();
+                const suggestions = $("#projectNameSuggestions");
+                suggestions.empty().hide();
+                if (val.length < 1 || existingNames.length === 0) return;
+                const matches = existingNames.filter(n => n.toLowerCase().includes(val));
+                if (matches.length === 0) return;
+                matches.forEach(name => {
+                    suggestions.append(`<button type="button" class="list-group-item list-group-item-action">${name}</button>`);
+                });
+                suggestions.show();
+            });
+            $(document).on('click', '#projectNameSuggestions button', function () {
+                $("#projectNameInput").val($(this).text());
+                $("#projectNameSuggestions").hide();
+            });
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('#projectNameInput, #projectNameSuggestions').length) {
+                    $("#projectNameSuggestions").hide();
                 }
             });
         });

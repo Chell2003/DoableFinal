@@ -32,6 +32,10 @@ namespace DoableFinal.ViewModels
         [Required]
         public string Priority { get; set; } = "Medium";
 
+        [Display(Name = "Category")]
+        [StringLength(100)]
+        public string? Category { get; set; }
+
         [Required]
         [Display(Name = "Project")]
         public int ProjectId { get; set; }

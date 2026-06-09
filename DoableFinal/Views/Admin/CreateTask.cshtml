@@ -2,13 +2,15 @@
 
 @{
     ViewData["Title"] = "Create Task";
+    var preselectedProjectId = ViewBag.PreselectedProjectId as int?;
+    bool hasPreselectedProject = preselectedProjectId.HasValue && preselectedProjectId.Value > 0;
 }
 
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
             <h1 class="h3">Create Task</h1>
-            <p class="text-muted">Create a new task and assign it to a project</p>
+            <p class="text-muted">Create a new task and assign team members</p>
         </div>
     </div>
 
@@ -19,23 +21,59 @@
                     <form asp-action="CreateTask" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                        <div class="mb-3">
-                            <label asp-for="ProjectId" class="form-label"></label>
-                            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
-                                <option value="">-- Select Project --</option>
-                            </select>
-                            <span asp-validation-for="ProjectId" class="text-danger"></span>
-                            <small id="projectDateInfo" class="form-text text-muted"></small>
+                        @if (hasPreselectedProject)
+                        {
+                            <!-- Project is auto-set — hidden field, display-only label -->
+                            <input type="hidden" asp-for="ProjectId" />
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Project</label>
+                                <div class="form-control bg-light text-muted">
+                                    <i class="bi bi-folder-fill text-primary me-1"></i>
+                                    @(Model.Projects.FirstOrDefault(p => p.Value == preselectedProjectId.ToString())?.Text ?? "Selected Project")
+                                </div>
+                                <small class="text-info"><i class="bi bi-info-circle"></i> This task will be created under the selected project.</small>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-3">
+                                <label asp-for="ProjectId" class="form-label fw-semibold">Project</label>
+                                <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select select2-project">
+                                    <option value="">-- Select Project --</option>
+                                </select>
+                                <span asp-validation-for="ProjectId" class="text-danger"></span>
+                                <small id="projectDateInfo" class="form-text text-muted"></small>
+                            </div>
+                        }
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label asp-for="Title" class="form-label fw-semibold"></label>
+                                    <input asp-for="Title" class="form-control" />
+                                    <span asp-validation-for="Title" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label asp-for="Category" class="form-label fw-semibold"></label>
+                                    <input asp-for="Category" class="form-control" placeholder="e.g. Bug Fix, Feature" list="taskCategoryList" />
+                                    <datalist id="taskCategoryList">
+                                        <option value="Additional Feature"></option>
+                                        <option value="Bug Fix"></option>
+                                        <option value="New Module"></option>
+                                        <option value="Maintenance"></option>
+                                        <option value="Research"></option>
+                                        <option value="Client Request"></option>
+                                        <option value="Internal"></option>
+                                    </datalist>
+                                    <span asp-validation-for="Category" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Title" class="form-label"></label>
-                            <input asp-for="Title" class="form-control" />
-                            <span asp-validation-for="Title" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Description" class="form-label"></label>
+                            <label asp-for="Description" class="form-label fw-semibold"></label>
                             <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
@@ -43,12 +81,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="StartDate" class="form-label"></label>
+                                    <label asp-for="StartDate" class="form-label fw-semibold"></label>
                                     <div class="input-group">
                                         <input asp-for="StartDate" class="form-control" type="date" />
-                                        <div class="input-group-text">
-                                            <i class="bi bi-calendar"></i>
-                                        </div>
+                                        <div class="input-group-text"><i class="bi bi-calendar"></i></div>
                                     </div>
                                     <span asp-validation-for="StartDate" class="text-danger"></span>
                                     <small class="form-text text-muted">Must be within project timeline</small>
@@ -56,12 +92,10 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="DueDate" class="form-label"></label>
+                                    <label asp-for="DueDate" class="form-label fw-semibold"></label>
                                     <div class="input-group">
                                         <input asp-for="DueDate" class="form-control" type="date" />
-                                        <div class="input-group-text">
-                                            <i class="bi bi-calendar"></i>
-                                        </div>
+                                        <div class="input-group-text"><i class="bi bi-calendar"></i></div>
                                     </div>
                                     <span asp-validation-for="DueDate" class="text-danger"></span>
                                     <small class="form-text text-muted">Must be within project timeline</small>
@@ -72,7 +106,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="Status" class="form-label"></label>
+                                    <label asp-for="Status" class="form-label fw-semibold"></label>
                                     <select asp-for="Status" class="form-select">
                                         <option value="Not Started">Not Started</option>
                                         <option value="In Progress">In Progress</option>
@@ -84,7 +118,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label asp-for="Priority" class="form-label"></label>
+                                    <label asp-for="Priority" class="form-label fw-semibold"></label>
                                     <select asp-for="Priority" class="form-select">
                                         <option value="Low">Low</option>
                                         <option value="Medium">Medium</option>
@@ -96,9 +130,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="AssignedToIds" class="form-label">Assigned To</label>
-                            <select asp-for="AssignedToIds" class="form-select select2-employee" multiple style="width: 100%;">
-                            </select>
+                            <label asp-for="AssignedToIds" class="form-label fw-semibold">Assigned To</label>
+                            <select asp-for="AssignedToIds" class="form-select select2-employee" multiple style="width: 100%;"></select>
                             <small class="form-text text-muted mt-2">
                                 <i class="fas fa-info-circle me-1"></i> Legend:
                                 <i class="fas fa-tasks text-warning me-1"></i> Has tasks in this project
@@ -108,13 +141,22 @@
                             <span asp-validation-for="AssignedToIds" class="text-danger"></span>
                         </div>
 
-                        <div class="d-grid gap-2">
+                        <div class="d-flex gap-2 mt-3">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-plus-square"></i> Create Task
                             </button>
-                            <a asp-action="Tasks" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Back to Tasks
-                            </a>
+                            @if (hasPreselectedProject)
+                            {
+                                <a asp-action="ProjectDetails" asp-route-id="@preselectedProjectId" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Back to Project
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Tasks" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Back to Tasks
+                                </a>
+                            }
                         </div>
                     </form>
                 </div>
@@ -129,185 +171,117 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        .employee-option {
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .employee-option i {
-            font-size: 14px;
-        }
-        .select2-container .select2-selection--multiple {
-            min-height: 38px;
-        }
-        .select2-container--default .select2-selection--multiple {
-            border: 1px solid #ced4da;
-        }
-        .employee-has-tasks {
-            color: #ffc107;
-            margin-left: 5px;
-        }
-        .employee-has-incomplete-tasks {
-            color: #dc3545;
-            margin-left: 5px;
-        }
-        .employee-selected {
-            color: #28a745;
-            margin-left: 5px;
-        }
-        .employee-disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        .employee-option { padding: 8px; display: flex; align-items: center; gap: 8px; }
+        .employee-option i { font-size: 14px; }
+        .select2-container .select2-selection--multiple { min-height: 38px; }
+        .select2-container--default .select2-selection--multiple { border: 1px solid #ced4da; }
+        .employee-has-tasks { color: #ffc107; margin-left: 5px; }
+        .employee-has-incomplete-tasks { color: #dc3545; margin-left: 5px; }
+        .employee-selected { color: #28a745; margin-left: 5px; }
+        .employee-disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
     <script>
-        $(document).ready(function() {
-            // Initialize variables
+        $(document).ready(function () {
             const projectDates = @Html.Raw(ViewBag.ProjectDatesJson ?? "{}");
             const employees = @Html.Raw(ViewBag.EmployeesJson ?? "[]");
+            const hasPreselected = @Html.Raw(hasPreselectedProject ? "true" : "false");
 
-            // ── Helper: returns today's date as "YYYY-MM-DD" in local time ──
             function getTodayString() {
                 const today = new Date();
-                const yyyy = today.getFullYear();
-                const mm = String(today.getMonth() + 1).padStart(2, '0');
-                const dd = String(today.getDate()).padStart(2, '0');
-                return `${yyyy}-${mm}-${dd}`;
+                return `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
             }
-            
+
+            // Initialize Select2 for Project (searchable dropdown)
+            if (!hasPreselected) {
+                $('.select2-project').select2({ width: '100%', placeholder: '-- Search or Select Project --' });
+            }
+
             // Initialize Select2 for employee assignment
             $('.select2-employee').select2({
                 data: employees,
                 templateResult: formatEmployee,
                 templateSelection: formatEmployee,
-                escapeMarkup: function(markup) { return markup; }
-            }).on('select2:selecting', function(e) {
-                // Prevent selection of employees with incomplete tasks
+                escapeMarkup: function (markup) { return markup; }
+            }).on('select2:selecting', function (e) {
                 const projectId = parseInt($('#ProjectId').val());
                 const employee = e.params.args.data;
-                
                 if (employee.incompleteTaskProjects && employee.incompleteTaskProjects.includes(projectId)) {
                     e.preventDefault();
                     alert('This employee has incomplete tasks and cannot be assigned to new tasks.');
                 }
             });
-            
+
             function formatEmployee(employee) {
                 if (!employee.id) return employee.text;
-                
                 const projectId = parseInt($('#ProjectId').val());
                 const hasTasksInProject = projectId && employee.projectAssignments.includes(projectId);
-                const hasIncompleteTasks = projectId && employee.incompleteTaskProjects && 
-                                         employee.incompleteTaskProjects.includes(projectId);
+                const hasIncompleteTasks = projectId && employee.incompleteTaskProjects && employee.incompleteTaskProjects.includes(projectId);
                 const isSelected = $('.select2-employee').val()?.includes(employee.id);
-                
-                const employeeDiv = $(`<div class="employee-option${hasIncompleteTasks ? ' employee-disabled' : ''}">
+                return $(`<div class="employee-option${hasIncompleteTasks ? ' employee-disabled' : ''}">
                     <span>${employee.text}</span>
                     ${hasTasksInProject ? '<i class="fas fa-tasks employee-has-tasks" title="Has tasks in this project"></i>' : ''}
                     ${hasIncompleteTasks ? '<i class="fas fa-exclamation-circle employee-has-incomplete-tasks" title="Has incomplete tasks"></i>' : ''}
                     ${isSelected ? '<i class="fas fa-check-circle employee-selected" title="Selected"></i>' : ''}
                 </div>`);
-
-                if (hasIncompleteTasks) {
-                    employeeDiv.attr('title', 'Cannot be assigned - Has incomplete tasks');
-                }
-
-                return employeeDiv;
             }
-            
+
             function updateDateConstraints() {
                 const today = getTodayString();
                 const projectId = parseInt($('#ProjectId').val());
-
                 if (!projectId || !projectDates[projectId]) {
-                    // No project selected — still enforce today as the minimum
                     $("#StartDate").attr('min', today).removeAttr('max');
                     $("#DueDate").attr('min', today).removeAttr('max');
-                    $("#projectDateInfo").text("");
+                    if (!hasPreselected) $("#projectDateInfo").text("");
                     return;
                 }
-
                 const project = projectDates[projectId];
-                // Use the later of today vs. project start so past project dates are also blocked
                 const effectiveMin = project.start < today ? today : project.start;
                 const endDate = project.end;
-
-                // Set date input constraints
                 $("#StartDate").attr('min', effectiveMin).attr('max', endDate);
                 $("#DueDate").attr('min', effectiveMin).attr('max', endDate);
-
-                // Show project date constraints
-                $("#projectDateInfo").html(`Project timeline: <strong>${project.start}</strong> to <strong>${endDate}</strong>`);
-
-                // Clamp existing values into the allowed range
-                const currentStartDate = $("#StartDate").val();
-                const currentDueDate = $("#DueDate").val();
-                
-                if (currentStartDate && currentStartDate < effectiveMin) {
-                    $("#StartDate").val(effectiveMin);
+                if (!hasPreselected) {
+                    $("#projectDateInfo").html(`Project timeline: <strong>${project.start}</strong> to <strong>${endDate}</strong>`);
                 }
-                if (currentStartDate && currentStartDate > endDate) {
-                    $("#StartDate").val(endDate);
-                }
-                if (currentDueDate && currentDueDate < effectiveMin) {
-                    $("#DueDate").val(effectiveMin);
-                }
-                if (currentDueDate && currentDueDate > endDate) {
-                    $("#DueDate").val(endDate);
-                }
+                const s = $("#StartDate").val(), d = $("#DueDate").val();
+                if (s && s < effectiveMin) $("#StartDate").val(effectiveMin);
+                if (s && s > endDate) $("#StartDate").val(endDate);
+                if (d && d < effectiveMin) $("#DueDate").val(effectiveMin);
+                if (d && d > endDate) $("#DueDate").val(endDate);
             }
 
-            // Event Handlers
-            $('#ProjectId').change(function() {
-                updateDateConstraints();
-                
-                // Clear selection for employees with incomplete tasks in the new project
-                const projectId = parseInt($(this).val());
-                const currentSelection = $('.select2-employee').val() || [];
-                const validSelection = currentSelection.filter(employeeId => {
-                    const employee = employees.find(e => e.id === employeeId);
-                    return !(employee.incompleteTaskProjects && 
-                            employee.incompleteTaskProjects.includes(projectId));
+            if (!hasPreselected) {
+                $('#ProjectId').change(function () {
+                    updateDateConstraints();
+                    const projectId = parseInt($(this).val());
+                    const currentSelection = $('.select2-employee').val() || [];
+                    const validSelection = currentSelection.filter(eid => {
+                        const emp = employees.find(e => e.id === eid);
+                        return !(emp && emp.incompleteTaskProjects && emp.incompleteTaskProjects.includes(projectId));
+                    });
+                    if (currentSelection.length !== validSelection.length) {
+                        $('.select2-employee').val(validSelection).trigger('change');
+                    } else {
+                        $('.select2-employee').trigger('change');
+                    }
                 });
-                
-                if (currentSelection.length !== validSelection.length) {
-                    $('.select2-employee').val(validSelection).trigger('change');
-                } else {
-                    $('.select2-employee').trigger('change');
-                }
-            });
+            }
 
-            $("#StartDate, #DueDate").change(function() {
+            $("#StartDate, #DueDate").change(function () {
                 const today = getTodayString();
+                if ($(this).val() < today) $(this).val(today);
                 const projectId = parseInt($('#ProjectId').val());
-
-                // Always block past dates regardless of project selection
-                if ($(this).val() < today) {
-                    $(this).val(today);
-                }
-
                 if (projectId && projectDates[projectId]) {
                     const project = projectDates[projectId];
                     const effectiveMin = project.start < today ? today : project.start;
                     const endDate = project.end;
-
-                    // Ensure dates are within project bounds
-                    if ($(this).val() < effectiveMin) {
-                        $(this).val(effectiveMin);
-                    }
-                    if ($(this).val() > endDate) {
-                        $(this).val(endDate);
-                    }
+                    if ($(this).val() < effectiveMin) $(this).val(effectiveMin);
+                    if ($(this).val() > endDate) $(this).val(endDate);
                 }
-
-                // If DueDate is before StartDate, push DueDate forward
                 if ($(this).is('#StartDate') && $("#DueDate").val() < $(this).val()) {
                     $("#DueDate").val($(this).val());
                 }
             });
 
-            // Initial setup — apply today's minimum immediately on page load
             updateDateConstraints();
         });
     </script>

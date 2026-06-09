@@ -11,6 +11,11 @@
         <li class="breadcrumb-item active">Edit</li>
     </ol>
 
+    @if (TempData["ContentMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">@TempData["ContentMessage"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    }
+
     <div class="card mb-4">
         <div class="card-body">
             <form asp-action="SaveContent" asp-controller="Admin" method="post" enctype="multipart/form-data">
@@ -18,37 +23,48 @@
                 <input type="hidden" name="key" value="@Model.Key" />
 
                 <div class="mb-3">
-                    @if (TempData["ImagePath"] != null)
-                    {
-                        <div class="alert alert-success">Image saved: @TempData["ImagePath"]</div>
-                    }
-                    <label class="form-label">Title (HTML allowed)</label>
-                    <textarea name="titleHtml" class="form-control small-textarea" rows="3">@Model.TitleHtml</textarea>
+                    <label class="form-label fw-semibold">Title <small class="text-muted fw-normal">(plain text, HTML tags will be stripped)</small></label>
+                    <input type="text" name="titleHtml" id="titleHtmlInput" class="form-control" value="@System.Text.RegularExpressions.Regex.Replace(Model.TitleHtml ?? "", "<[^>]*>", "")" />
+                    <small class="text-muted">HTML tags are automatically removed on save.</small>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Body (HTML allowed)</label>
-                    <textarea name="bodyHtml" class="form-control small-textarea" rows="3">@Model.BodyHtml</textarea>
+                    <label class="form-label fw-semibold">Body <small class="text-muted fw-normal">(plain text, HTML tags will be stripped)</small></label>
+                    <textarea name="bodyHtml" id="bodyHtmlInput" class="form-control" rows="6">@System.Text.RegularExpressions.Regex.Replace(Model.BodyHtml ?? "", "<[^>]*>", "")</textarea>
+                    <small class="text-muted">HTML tags are automatically removed on save.</small>
                 </div>
 
                 @if (Model.Key == "Index" || !string.IsNullOrEmpty(Model.ImagePath))
                 {
                     <div class="mb-3">
-                        <label class="form-label">Current Image</label>
+                        <label class="form-label fw-semibold">Image</label>
                         @if (!string.IsNullOrEmpty(Model.ImagePath))
                         {
                             <div class="mb-2">
-                                <img src="@Model.ImagePath" alt="image" style="max-width:300px; height:auto;" />
+                                <img src="@Model.ImagePath" alt="image" style="max-width:300px; height:auto; border-radius:8px;" />
                             </div>
                         }
                         <label class="form-label">Replace Image (optional)</label>
-                        <input type="file" name="imageFile" class="form-control" />
+                        <input type="file" name="imageFile" class="form-control" accept="image/*" />
                     </div>
                 }
 
-                <button type="submit" class="btn btn-primary">Save</button>
-                <a asp-action="ContentMS" class="btn btn-secondary ms-2">Cancel</a>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a asp-action="ContentMS" class="btn btn-secondary">Cancel</a>
+                </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Strip HTML tags from inputs before form submit
+        document.querySelector('form').addEventListener('submit', function () {
+            const stripTags = (str) => str.replace(/<[^>]*>/g, '');
+            document.getElementById('titleHtmlInput').value = stripTags(document.getElementById('titleHtmlInput').value);
+            document.getElementById('bodyHtmlInput').value = stripTags(document.getElementById('bodyHtmlInput').value);
+        });
+    </script>
+}

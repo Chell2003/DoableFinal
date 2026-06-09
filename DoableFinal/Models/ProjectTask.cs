@@ -35,6 +35,10 @@ namespace DoableFinal.Models
         public bool IsArchived { get; set; }
         public DateTime? ArchivedAt { get; set; }
 
+        // Feature: Categorization for filtering in reports
+        [StringLength(100)]
+        public string? Category { get; set; }
+
         public virtual ICollection<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
 
         [Required]

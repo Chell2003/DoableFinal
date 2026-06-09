@@ -27,12 +27,12 @@
         </div>
         <div class="card-body">
             <form method="get" class="row g-3" role="search" aria-label="Project search and filter">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="searchInput" class="form-label">Search</label>
                     <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by project name or client..." value="@query" aria-label="Search projects" />
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="statusFilter" class="form-label">Status</label>
                     <select id="statusFilter" name="statusFilter" class="form-select">
                         <option value="">All statuses</option>
@@ -41,6 +41,20 @@
                         <option value="On Hold" selected="@(statusFilter == "On Hold" ? "selected" : null)">On Hold</option>
                         <option value="Completed" selected="@(statusFilter == "Completed" ? "selected" : null)">Completed</option>
                     </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="categoryFilter" class="form-label">Category</label>
+                    <input type="text" id="categoryFilter" name="categoryFilter" class="form-control" placeholder="e.g. Additional Feature" value="@Context.Request.Query["categoryFilter"]" list="projectCategoryOptions" />
+                    <datalist id="projectCategoryOptions">
+                        <option value="Additional Feature"></option>
+                        <option value="Bug Fix"></option>
+                        <option value="New Module"></option>
+                        <option value="Maintenance"></option>
+                        <option value="Research"></option>
+                        <option value="Client Request"></option>
+                        <option value="Internal Project"></option>
+                    </datalist>
                 </div>
 
                 <div class="col-md-3">
@@ -86,11 +100,12 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th scope="col" style="width: 20%;">Name</th>
-                            <th scope="col" style="width: 15%;">Client</th>
-                            <th scope="col" style="width: 15%;">Project Manager</th>
-                            <th scope="col" style="width: 12%;">Start Date</th>
-                            <th scope="col" style="width: 12%;">Due Date</th>
+                            <th scope="col" style="width: 18%;">Name</th>
+                            <th scope="col" style="width: 10%;">Category</th>
+                            <th scope="col" style="width: 13%;">Client</th>
+                            <th scope="col" style="width: 13%;">Project Manager</th>
+                            <th scope="col" style="width: 10%;">Start Date</th>
+                            <th scope="col" style="width: 10%;">Due Date</th>
                             <th scope="col" style="width: 12%;">Status</th>
                             <th scope="col" class="text-end" style="width: 14%;">Actions</th>
                         </tr>
@@ -100,6 +115,7 @@
                         {
                             <tr>
                                 <td data-label="Name"><strong>@project.Name</strong></td>
+                                <td data-label="Category"><small class="text-muted">@(string.IsNullOrEmpty(project.Category) ? "—" : project.Category)</small></td>
                                 <td data-label="Client"><small>@($"{project.Client.FirstName} {project.Client.LastName}")</small></td>
                                 <td data-label="Project Manager"><small>@($"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}")</small></td>
                                 <td data-label="Start Date"><small>@project.StartDate.ToString("MMM dd, yyyy")</small></td>

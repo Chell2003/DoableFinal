@@ -28,6 +28,10 @@ namespace DoableFinal.ViewModels
         [Required]
         public string Status { get; set; } = "Not Started";
 
+        [Display(Name = "Category")]
+        [StringLength(100)]
+        public string? Category { get; set; }
+
         [Required]
         [Display(Name = "Client")]
         public string ClientId { get; set; } = string.Empty;
