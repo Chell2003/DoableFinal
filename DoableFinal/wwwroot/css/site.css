@@ -316,9 +316,10 @@ body {
     border-bottom: 2px solid #dee2e6;
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar — suppress blue horizontal scrollbars */
 ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+    height: 0px;
 }
 
 ::-webkit-scrollbar-track {
@@ -326,12 +327,22 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
+    background: #c1c1c1;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #0b5ed7;
+    background: #a0a0a0;
+}
+
+/* Hide horizontal scrollbar on table-responsive completely */
+.table-responsive::-webkit-scrollbar {
+    height: 0px;
+}
+
+.table-responsive {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -594,4 +605,32 @@ body {
     margin: 0;
     padding: 0;
   }
+}
+
+/* Dashboard pagination controls */
+.table-pagination-wrapper {
+    padding: 8px 12px;
+    border-top: 1px solid #dee2e6;
+    background: #fff;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.table-pagination-wrapper .table-page-size {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    height: auto;
+}
+
+.table-pagination-wrapper .btn-sm {
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.table-page-info {
+    font-size: 0.8rem;
+    color: #6c757d;
+    min-width: 50px;
+    text-align: center;
 }
