@@ -141,7 +141,7 @@
                                             </div>
                                             <small class="text-muted">@item.ProgressPercent%</small>
                                         </td>
-                                        <td><small>@(item.Project.EndDate.HasValue ? ((DateTime)item.Project.EndDate).ToString("MMM dd") : "—")</small></td>
+                                        <td><small>@{ DateTime? endDate = (DateTime?)item.Project.EndDate; }@(endDate.HasValue ? endDate.Value.ToString("MMM dd") : "—")</small></td>
                                     </tr>
                                 }
                                 @if (!projectsWithProgress.Any())
