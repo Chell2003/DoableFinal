@@ -5,6 +5,38 @@
     Layout = "_Layout";
 }
 
+<style>
+    .drop-zone {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 24px;
+        text-align: center;
+        background: #f8f9fa;
+        cursor: pointer;
+        transition: border-color .2s, background .2s;
+    }
+    .drop-zone.dragover {
+        border-color: #0d6efd;
+        background: #e8f0fe;
+    }
+    .drop-zone:hover { border-color: #adb5bd; }
+    .file-preview-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        font-size: .875rem;
+    }
+    .file-preview-item .file-icon { font-size: 1.1rem; margin-right: 8px; }
+    .file-preview-item .remove-file { cursor: pointer; color: #dc3545; border: none; background: none; padding: 0; }
+    select option:disabled { color: #adb5bd !important; font-style: italic; }
+    .project-hint { font-size: .8rem; margin-top: 4px; }
+</style>
+
 <div class="container-fluid px-4">
     <h1 class="mt-4">Create Support Ticket</h1>
     <ol class="breadcrumb mb-4">
@@ -15,73 +47,114 @@
 
     <div class="row">
         <div class="col-lg-8">
-            
-
             @if (TempData["Error"] != null)
             {
-                <div class="alert alert-danger">
-                    <pre>@TempData["Error"]</pre>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <pre class="mb-0">@TempData["Error"]</pre>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             }
+            @if (TempData["AttachmentWarning"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show">
+                    <i class="fas fa-exclamation-triangle me-2"></i>@TempData["AttachmentWarning"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
             <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-ticket-alt me-1"></i>
-                    Ticket Details
+                    <i class="fas fa-ticket-alt me-1"></i> Ticket Details
                 </div>
                 <div class="card-body">
-                    <form asp-action="CreateTicket" method="post">
+                    <form asp-action="CreateTicket" method="post" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
+                        <!-- Title -->
                         <div class="mb-3">
-                            <label asp-for="Title" class="form-label">Title</label>
-                            <input asp-for="Title" class="form-control" required />
+                            <label asp-for="Title" class="form-label fw-semibold">Title</label>
+                            <input asp-for="Title" class="form-control" required placeholder="Brief summary of your issue" />
                             <span asp-validation-for="Title" class="text-danger"></span>
                         </div>
 
+                        <!-- Project -->
                         <div class="mb-3">
-                            <label asp-for="ProjectId" class="form-label">Project (Optional)</label>
-                            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                            <label asp-for="ProjectId" class="form-label fw-semibold">Project <span class="text-muted fw-normal">(Optional)</span></label>
+                            <select asp-for="ProjectId" class="form-select" id="projectSelect">
                                 <option value="">No project (general ticket)</option>
+                                @foreach (var item in Model.Projects)
+                                {
+                                    if (item.Disabled)
+                                    {
+                                        <option value="@item.Value" disabled class="text-muted">@item.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
                             </select>
+                            <div id="projectDisabledHint" class="project-hint text-warning" style="display:none;">
+                                <i class="fas fa-exclamation-triangle me-1"></i> Projects with no tasks cannot be selected.
+                            </div>
                             <span asp-validation-for="ProjectId" class="text-danger"></span>
                         </div>
 
+                        <!-- Description -->
                         <div class="mb-3">
-                            <label asp-for="Description" class="form-label">Description</label>
-                            <textarea asp-for="Description" class="form-control" rows="5" required></textarea>
+                            <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="5" required placeholder="Describe your issue in detail. Include steps to reproduce if applicable."></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Type" class="form-label">Type</label>
-                            <select asp-for="Type" class="form-select" required>
-                                <option value="">Select a type...</option>
-                                <option value="Bug">Bug</option>
-                                <option value="Feature Request">Feature Request</option>
-                                <option value="Support">Support</option>
-                                <option value="Other">Other</option>
-                            </select>
-                            <span asp-validation-for="Type" class="text-danger"></span>
+                        <!-- Type + Priority -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Type" class="form-label fw-semibold">Type</label>
+                                    <select asp-for="Type" class="form-select" required>
+                                        <option value="">Select a type...</option>
+                                        <option value="Bug">🐛 Bug</option>
+                                        <option value="Feature Request">✨ Feature Request</option>
+                                        <option value="Support">🛠 Support</option>
+                                        <option value="Other">📋 Other</option>
+                                    </select>
+                                    <span asp-validation-for="Type" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Priority" class="form-label fw-semibold">Priority</label>
+                                    <select asp-for="Priority" class="form-select">
+                                        <option value="Low">🟢 Low</option>
+                                        <option value="Medium" selected>🟡 Medium</option>
+                                        <option value="High">🟠 High</option>
+                                        <option value="Critical">🔴 Critical</option>
+                                    </select>
+                                    <span asp-validation-for="Priority" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Priority" class="form-label">Priority</label>
-                            <select asp-for="Priority" class="form-select">
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="High">High</option>
-                                <option value="Critical">Critical</option>
-                            </select>
-                            <span asp-validation-for="Priority" class="text-danger"></span>
+                        <!-- Attachments -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Attachments <span class="text-muted fw-normal">(Optional)</span></label>
+                            <div class="drop-zone" id="dropZone">
+                                <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                <p class="mb-1 text-muted">Drag &amp; drop files here, or <span class="text-primary">click to browse</span></p>
+                                <small class="text-muted">Allowed: JPG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP, MP4, MOV &mdash; Max 10MB each</small>
+                                <input type="file" name="attachments" id="fileInput" class="d-none" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.mp4,.mov" />
+                            </div>
+                            <div id="filePreviewList" class="mt-2"></div>
                         </div>
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"></i> Submit Ticket
+                                <i class="fas fa-paper-plane me-1"></i> Submit Ticket
                             </button>
                             <a asp-action="Tickets" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancel
+                                <i class="fas fa-times me-1"></i> Cancel
                             </a>
                         </div>
                     </form>
@@ -92,28 +165,28 @@
         <div class="col-lg-4">
             <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Tips for Creating a Ticket
+                    <i class="fas fa-info-circle me-1"></i> Tips for Creating a Ticket
                 </div>
                 <div class="card-body">
                     <ul class="list-unstyled mb-0">
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Be specific with your ticket title
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Provide detailed description of the issue
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Set appropriate priority level
-                        </li>
-                        <li>
-                            <i class="fas fa-check text-success me-2"></i>
-                            Include steps to reproduce if applicable
-                        </li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Be specific with your ticket title</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Provide detailed description of the issue</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Set appropriate priority level</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Include steps to reproduce if applicable</li>
+                        <li><i class="fas fa-paperclip text-primary me-2"></i> Attach screenshots or files to help explain</li>
                     </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-folder me-1"></i> Project Selection Guide
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">
+                        <span class="text-success fw-semibold">✓ Available</span> — Project has tasks assigned.<br><br>
+                        <span class="text-muted fw-semibold">✗ Grayed out</span> — Project has no tasks yet and cannot be linked to a ticket until work begins.
+                    </small>
                 </div>
             </div>
         </div>
@@ -122,4 +195,96 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // ── Project hint ──────────────────────────────────────────────
+        const projectProgressData = @Html.Raw(ViewBag.ProjectProgressJson ?? "[]");
+
+        document.getElementById('projectSelect').addEventListener('change', function () {
+            const val = parseInt(this.value);
+            const hint = document.getElementById('projectDisabledHint');
+            if (!val) { hint.style.display = 'none'; return; }
+            const proj = projectProgressData.find(p => p.id === val);
+            hint.style.display = (proj && !proj.hasProgress) ? 'block' : 'none';
+        });
+
+        // ── File drag & drop / preview ────────────────────────────────
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewList = document.getElementById('filePreviewList');
+        let selectedFiles = new DataTransfer();
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            addFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', function () {
+            addFiles(this.files);
+        });
+
+        function addFiles(files) {
+            const maxSize = 10 * 1024 * 1024;
+            const allowed = ['.jpg','.jpeg','.png','.gif','.pdf','.doc','.docx','.xls','.xlsx','.txt','.zip','.mp4','.mov'];
+            for (const file of files) {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!allowed.includes(ext)) { alert(`"${file.name}" has an unsupported file type.`); continue; }
+                if (file.size > maxSize) { alert(`"${file.name}" exceeds the 10MB limit.`); continue; }
+                // Avoid duplicates
+                let isDup = false;
+                for (const f of selectedFiles.files) { if (f.name === file.name && f.size === file.size) { isDup = true; break; } }
+                if (!isDup) selectedFiles.items.add(file);
+            }
+            syncInput();
+            renderPreviews();
+        }
+
+        function syncInput() {
+            fileInput.files = selectedFiles.files;
+        }
+
+        function removeFile(index) {
+            const dt = new DataTransfer();
+            for (let i = 0; i < selectedFiles.files.length; i++) {
+                if (i !== index) dt.items.add(selectedFiles.files[i]);
+            }
+            selectedFiles = dt;
+            syncInput();
+            renderPreviews();
+        }
+
+        function fileIcon(name) {
+            const ext = name.split('.').pop().toLowerCase();
+            if (['jpg','jpeg','png','gif'].includes(ext)) return '🖼️';
+            if (ext === 'pdf') return '📄';
+            if (['doc','docx'].includes(ext)) return '📝';
+            if (['xls','xlsx'].includes(ext)) return '📊';
+            if (['zip'].includes(ext)) return '🗜️';
+            if (['mp4','mov'].includes(ext)) return '🎥';
+            return '📎';
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function renderPreviews() {
+            previewList.innerHTML = '';
+            for (let i = 0; i < selectedFiles.files.length; i++) {
+                const f = selectedFiles.files[i];
+                const div = document.createElement('div');
+                div.className = 'file-preview-item';
+                div.innerHTML = `
+                    <span><span class="file-icon">${fileIcon(f.name)}</span>${f.name} <small class="text-muted">(${formatSize(f.size)})</small></span>
+                    <button type="button" class="remove-file" onclick="removeFile(${i})" title="Remove"><i class="fas fa-times-circle"></i></button>`;
+                previewList.appendChild(div);
+            }
+        }
+    </script>
 }

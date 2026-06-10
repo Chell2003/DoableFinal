@@ -18,15 +18,18 @@ namespace DoableFinal.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly NotificationService _notificationService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
         public ClientController(
             ApplicationDbContext context, 
             UserManager<ApplicationUser> userManager,
-            NotificationService notificationService)
+            NotificationService notificationService,
+            IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _userManager = userManager;
             _notificationService = notificationService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         public async Task<IActionResult> Index()
@@ -626,15 +629,35 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            var projects = await _context.Projects
+            // Load projects with task counts for progress calculation
+            var projectsRaw = await _context.Projects
+                .Include(p => p.Tasks)
                 .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
-                .Select(p => new SelectListItem
+                .ToListAsync();
+
+            // Build project list — disable those with zero progress (no tasks or 0% done)
+            var projects = projectsRaw.Select(p =>
+            {
+                var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                var completedTasks = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
+                var progress = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
+                var hasProgress = totalTasks > 0; // at least has tasks = has some progress setup
+                return new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = p.Name
-                })
-                .ToListAsync();
+                    Text = hasProgress ? $"{p.Name} ({progress}% done)" : $"{p.Name} (no tasks yet)",
+                    Disabled = !hasProgress
+                };
+            }).ToList();
+
+            // Pass raw project progress data as JSON for JS-side disabling
+            var projectProgressData = projectsRaw.Select(p =>
+            {
+                var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                return new { id = p.Id, hasProgress = totalTasks > 0 };
+            }).ToList();
+            ViewBag.ProjectProgressJson = System.Text.Json.JsonSerializer.Serialize(projectProgressData);
 
             var vm = new DoableFinal.ViewModels.CreateTicketViewModel
             {
@@ -660,7 +683,7 @@ namespace DoableFinal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateTicket(DoableFinal.ViewModels.CreateTicketViewModel model)
+        public async Task<IActionResult> CreateTicket(DoableFinal.ViewModels.CreateTicketViewModel model, List<IFormFile>? attachments)
         {
             var debug = new System.Text.StringBuilder();
             
@@ -683,15 +706,24 @@ namespace DoableFinal.Controllers
                 var currentUser = await _userManager.GetUserAsync(User);
                 if (currentUser != null)
                 {
-                    model.Projects = await _context.Projects
+                    var projectsRaw = await _context.Projects
+                        .Include(p => p.Tasks)
                         .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
                         .OrderByDescending(p => p.CreatedAt)
-                        .Select(p => new SelectListItem
+                        .ToListAsync();
+                    model.Projects = projectsRaw.Select(p =>
+                    {
+                        var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                        var completedTasks = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
+                        var progress = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
+                        var hasProgress = totalTasks > 0;
+                        return new SelectListItem
                         {
                             Value = p.Id.ToString(),
-                            Text = p.Name
-                        })
-                        .ToListAsync();
+                            Text = hasProgress ? $"{p.Name} ({progress}% done)" : $"{p.Name} (no tasks yet)",
+                            Disabled = !hasProgress
+                        };
+                    }).ToList();
                 }
 
                 TempData["Debug"] = debug.ToString();
@@ -708,20 +740,51 @@ namespace DoableFinal.Controllers
             if (model.ProjectId.HasValue)
             {
                 project = await _context.Projects
+                    .Include(p => p.Tasks)
                     .FirstOrDefaultAsync(p => p.Id == model.ProjectId && p.ClientId == user.Id);
                 if (project == null)
                 {
                     ModelState.AddModelError("ProjectId", "Invalid project selection");
-                    model.Projects = await _context.Projects
+                    var projectsRaw = await _context.Projects
+                        .Include(p => p.Tasks)
                         .Where(p => p.ClientId == user.Id && !p.IsArchived)
                         .OrderByDescending(p => p.CreatedAt)
-                        .Select(p => new SelectListItem
+                        .ToListAsync();
+                    model.Projects = projectsRaw.Select(p =>
+                    {
+                        var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                        var hasProgress = totalTasks > 0;
+                        return new SelectListItem
                         {
                             Value = p.Id.ToString(),
-                            Text = p.Name
-                        })
-                        .ToListAsync();
+                            Text = hasProgress ? p.Name : $"{p.Name} (no tasks yet)",
+                            Disabled = !hasProgress
+                        };
+                    }).ToList();
                     TempData["Debug"] = "Project selection invalid";
+                    return View(model);
+                }
+
+                // Reject if project has zero tasks (zero progress)
+                var totalProjectTasks = project.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                if (totalProjectTasks == 0)
+                {
+                    ModelState.AddModelError("ProjectId", "This project has no tasks yet and cannot be selected.");
+                    var projectsRaw2 = await _context.Projects
+                        .Include(p => p.Tasks)
+                        .Where(p => p.ClientId == user.Id && !p.IsArchived)
+                        .OrderByDescending(p => p.CreatedAt)
+                        .ToListAsync();
+                    model.Projects = projectsRaw2.Select(p =>
+                    {
+                        var hasProgress = (p.Tasks?.Count(t => !t.IsArchived) ?? 0) > 0;
+                        return new SelectListItem
+                        {
+                            Value = p.Id.ToString(),
+                            Text = hasProgress ? p.Name : $"{p.Name} (no tasks yet)",
+                            Disabled = !hasProgress
+                        };
+                    }).ToList();
                     return View(model);
                 }
             }
@@ -741,11 +804,56 @@ namespace DoableFinal.Controllers
             try
             {
                 _context.Tickets.Add(newTicket);
-                var rows = await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
+
+                // Handle file attachments
+                if (attachments != null && attachments.Any())
+                {
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".zip", ".mp4", ".mov" };
+                    const long maxFileSize = 10 * 1024 * 1024; // 10MB
+
+                    foreach (var file in attachments)
+                    {
+                        if (file.Length == 0) continue;
+                        if (file.Length > maxFileSize)
+                        {
+                            TempData["AttachmentWarning"] = $"File '{file.FileName}' exceeds the 10MB limit and was skipped.";
+                            continue;
+                        }
+                        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                        if (!allowedExtensions.Contains(ext))
+                        {
+                            TempData["AttachmentWarning"] = $"File type '{ext}' is not allowed and was skipped.";
+                            continue;
+                        }
+
+                        var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tickets", newTicket.Id.ToString());
+                        Directory.CreateDirectory(uploadsFolder);
+
+                        var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await file.CopyToAsync(stream);
+                        }
+
+                        var attachment = new TicketAttachment
+                        {
+                            TicketId = newTicket.Id,
+                            FileName = file.FileName,
+                            FilePath = $"/uploads/tickets/{newTicket.Id}/{uniqueFileName}",
+                            FileType = file.ContentType,
+                            FileSize = file.Length,
+                            UploadedById = user.Id,
+                            UploadedAt = DateTime.UtcNow
+                        };
+                        _context.TicketAttachments.Add(attachment);
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
                 debug.AppendLine($"Your ticket '{newTicket.Title}' has been created successfully.");
-                // TempData["Debug"] = debug.ToString();
-                // Also set a ticket-specific success message so the shared alerts partial
-                // renders this as a success (green) alert instead of the debug (yellow) alert.
                 TempData["TicketMessage"] = $"Your ticket '{newTicket.Title}' has been created successfully.";
 
                 // Notify project manager if ticket is associated with a project
@@ -789,15 +897,21 @@ namespace DoableFinal.Controllers
                 TempData["Error"] = "Failed to create ticket: " + ex.Message;
                 TempData["Debug"] = debug.ToString();
 
-                model.Projects = await _context.Projects
+                var catchProjects = await _context.Projects
+                    .Include(p => p.Tasks)
                     .Where(p => p.ClientId == user.Id && !p.IsArchived)
                     .OrderByDescending(p => p.CreatedAt)
-                    .Select(p => new SelectListItem
+                    .ToListAsync();
+                model.Projects = catchProjects.Select(p =>
+                {
+                    var hasProgress = (p.Tasks?.Count(t => !t.IsArchived) ?? 0) > 0;
+                    return new SelectListItem
                     {
                         Value = p.Id.ToString(),
-                        Text = p.Name
-                    })
-                    .ToListAsync();
+                        Text = hasProgress ? p.Name : $"{p.Name} (no tasks yet)",
+                        Disabled = !hasProgress
+                    };
+                }).ToList();
                 return View(model);
             }
         }
