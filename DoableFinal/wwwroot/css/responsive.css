@@ -148,6 +148,74 @@ html, body {
 }
 
 /* ------------------------------------------------------------------
+   6b. TABLES — mobile card layout (labels from data-label via JS)
+   ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+    /* Hide header row — labels injected via JS + data-label attr */
+    .table thead {
+        display: none;
+    }
+
+    /* Each row = its own card */
+    .table tbody tr {
+        display: block;
+        border: 1px solid rgba(52, 125, 235, 0.10);
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        padding: 0.15rem 0;
+        box-shadow: 0 1px 8px rgba(52, 125, 235, 0.06);
+        background: #fff;
+    }
+
+    /* Each cell = label on left, value on right */
+    .table tbody td {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 0.55rem 1rem;
+        border-bottom: 1px solid rgba(52, 125, 235, 0.06);
+        font-size: 0.85rem;
+        height: auto !important;  /* override dashboard-td fixed height on mobile */
+        white-space: normal !important;
+    }
+
+    .table tbody td:last-child {
+        border-bottom: none;
+    }
+
+    /* The column label (from data-label attribute set by JS) */
+    .table tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6b84b0;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        text-align: left;
+        flex-shrink: 0;
+        margin-right: 0.75rem;
+        max-width: 45%;
+    }
+
+    /* Don't apply card style to thead rows that may still render */
+    .table thead tr {
+        display: none;
+    }
+
+    /* Remove table-responsive horizontal scroll — card layout doesn't need it */
+    .table-responsive {
+        overflow-x: visible;
+    }
+
+    /* Pagination wrapper stays below the cards */
+    .table-pagination-wrapper {
+        border-radius: 12px;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ------------------------------------------------------------------
    7. FORMS — full width inputs, stacked rows on mobile
    ------------------------------------------------------------------ */
 @media (max-width: 576px) {
