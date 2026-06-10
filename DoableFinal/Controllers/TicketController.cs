@@ -32,9 +32,12 @@ namespace DoableFinal.Controllers
             _notificationService = notificationService;
         }        [Authorize(Roles = "Client,Admin,Project Manager")]
 
-        private async Task ReloadFormData(CreateTicketViewModel model)
+        private async Task ReloadFormData(CreateTicketViewModel model, string clientId)
         {
-            var projects = await _context.Projects.ToListAsync();
+            var projects = await _context.Projects
+                .Where(p => p.ClientId == clientId && !p.IsArchived)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
 
             model.Projects = projects.Select(p => new SelectListItem
             {
@@ -161,9 +164,14 @@ namespace DoableFinal.Controllers
         [Authorize(Roles = "Client")]
         public async Task<IActionResult> Create()
         {
-            var projects = await _context.Projects.ToListAsync();
-            var employees = await _userManager.GetUsersInRoleAsync("Employee");
-            
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null) return Challenge();
+
+            var projects = await _context.Projects
+                .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
             var viewModel = new CreateTicketViewModel
             {
                 Projects = projects.Select(p => new SelectListItem
@@ -206,19 +214,20 @@ public async Task<IActionResult> Create(CreateTicketViewModel model)
     var debugInfo = new System.Text.StringBuilder();
     debugInfo.AppendLine($"ModelState.IsValid: {ModelState.IsValid}");
 
- 
     ModelState.Remove("AssignedToId");
     ModelState.Remove("Assignees");
+
+    var user = await _userManager.GetUserAsync(User);
+    if (user == null) return Challenge();
 
     if (!ModelState.IsValid)
     {
         debugInfo.AppendLine("Model validation failed");
-        await ReloadFormData(model);
+        await ReloadFormData(model, user.Id);
         TempData["Debug"] = debugInfo.ToString();
         return View(model);
     }
 
-    var user = await _userManager.GetUserAsync(User);
     if (user == null)
     {
         TempData["Error"] = "User not found.";
@@ -265,6 +274,16 @@ public async Task<IActionResult> Create(CreateTicketViewModel model)
       
         if (ticket.ProjectId.HasValue)
         {
+            // Security: ensure the project actually belongs to this client
+            var projectOwned = await _context.Projects
+                .AnyAsync(p => p.Id == ticket.ProjectId && p.ClientId == user.Id);
+            if (!projectOwned)
+            {
+                ModelState.AddModelError("ProjectId", "You can only link tickets to your own projects.");
+                await ReloadFormData(model, user.Id);
+                return View(model);
+            }
+
             var project = await _context.Projects
                 .FirstOrDefaultAsync(p => p.Id == ticket.ProjectId);
 
@@ -312,7 +331,7 @@ public async Task<IActionResult> Create(CreateTicketViewModel model)
         TempData["Error"] = "An error occurred: " + ex.Message;
         TempData["Debug"] = debugInfo.ToString();
 
-        await ReloadFormData(model);
+        await ReloadFormData(model, user?.Id ?? "");
         return View(model);
     }
 }
