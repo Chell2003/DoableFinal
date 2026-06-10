@@ -180,11 +180,7 @@ namespace DoableFinal.Controllers
                     Text = p.Name
                 }).ToList(),
                 
-                Assignees = employees.Select(e => new SelectListItem
-                {
-                    Value = e.Id,
-                    Text = $"{e.FirstName} {e.LastName}"
-                }).ToList(),
+                Assignees = new List<SelectListItem>(),
 
                 PriorityLevels = new List<SelectListItem>
                 {
