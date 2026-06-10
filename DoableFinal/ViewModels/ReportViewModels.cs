@@ -7,6 +7,8 @@ namespace DoableFinal.ViewModels
     {
         public int ProjectId { get; set; }
         public string ProjectName { get; set; }
+        public string? ProjectCategory { get; set; }
+        public string? ProjectStatus { get; set; }
         public DateTime GeneratedDate { get; set; } = DateTime.UtcNow;
         public List<TaskStatusItem> CompletedTasks { get; set; } = new();
         public List<TaskStatusItem> InProgressTasks { get; set; } = new();
@@ -20,6 +22,7 @@ namespace DoableFinal.ViewModels
         public int TaskId { get; set; }
         public string Title { get; set; }
         public string Priority { get; set; }
+        public string? Category { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime? CompletedAt { get; set; }
         public string AssignedTo { get; set; }
@@ -175,5 +178,7 @@ namespace DoableFinal.ViewModels
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public string? Category { get; set; }
+        public string? Status { get; set; }
     }
 }

@@ -54,6 +54,8 @@ namespace DoableFinal.Services
             {
                 ProjectId = projectId,
                 ProjectName = project.Name,
+                ProjectCategory = project.Category,
+                ProjectStatus = project.Status,
                 GeneratedDate = DateTime.UtcNow,
                 CompletedTasks = completedTasks,
                 InProgressTasks = inProgressTasks,
@@ -341,9 +343,10 @@ namespace DoableFinal.Services
                 TaskId = task.Id,
                 Title = task.Title,
                 Priority = task.Priority,
+                Category = task.Category,
                 DueDate = task.DueDate,
                 CompletedAt = task.CompletedAt,
-                AssignedTo = "Assigned", // Would need to load assignments
+                AssignedTo = "Assigned",
                 Status = task.Status
             };
         }

@@ -67,7 +67,9 @@ namespace DoableFinal.Controllers
             }
 
             var projects = await projectsQuery
-                .Select(p => new ProjectSelectItem { Id = p.Id, Name = p.Name })
+                .OrderBy(p => p.Category)
+                .ThenBy(p => p.Name)
+                .Select(p => new ProjectSelectItem { Id = p.Id, Name = p.Name, Category = p.Category, Status = p.Status })
                 .ToListAsync();
 
             var filterViewModel = new ReportFilterViewModel
