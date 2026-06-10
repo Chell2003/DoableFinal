@@ -609,28 +609,32 @@ body {
 
 /* Dashboard pagination controls */
 .table-pagination-wrapper {
-    padding: 8px 12px;
+    padding: 8px 14px;
     border-top: 1px solid #dee2e6;
-    background: #fff;
+    background: #f8f9fa;
     font-size: 0.8rem;
     color: #6c757d;
+    border-radius: 0 0 8px 8px;
 }
 
 .table-pagination-wrapper .table-page-size {
     font-size: 0.8rem;
     padding: 2px 6px;
     height: auto;
+    border-radius: 4px;
 }
 
 .table-pagination-wrapper .btn-sm {
-    padding: 2px 8px;
+    padding: 2px 10px;
     font-size: 0.75rem;
-    line-height: 1.4;
+    line-height: 1.5;
+    border-radius: 4px;
 }
 
 .table-page-info {
     font-size: 0.8rem;
     color: #6c757d;
-    min-width: 50px;
+    min-width: 55px;
     text-align: center;
+    display: inline-block;
 }

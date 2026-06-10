@@ -73,44 +73,42 @@
                     <h6 class="card-title mb-0"><i class="bi bi-bar-chart me-2 text-success"></i>Project Progress Overview</h6>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0 no-sort">
-                            <thead class="table-light">
+                    <table class="table table-sm table-hover mb-0 no-sort" data-page-size="5">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Project</th>
+                                <th class="text-center" style="width:110px;">Status</th>
+                                <th class="text-center" style="width:80px;">Progress</th>
+                                <th class="text-center" style="width:90px;">Tasks Done</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in projectsWithProgress)
+                            {
+                                var sc = item.Project.Status == "Completed" ? "success" :
+                                         item.Project.Status == "In Progress" ? "primary" :
+                                         item.Project.Status == "On Hold" ? "warning" : "secondary";
                                 <tr>
-                                    <th>Project</th>
-                                    <th class="text-center" style="width:110px;">Status</th>
-                                    <th class="text-center" style="width:80px;">Progress</th>
-                                    <th class="text-center" style="width:100px;">Tasks Done</th>
+                                    <td class="dashboard-td">
+                                        <a asp-action="ProjectDetails" asp-route-id="@item.Project.Id" class="text-decoration-none fw-semibold small text-truncate d-block" style="max-width:200px;">@item.Project.Name</a>
+                                    </td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-@sc">@item.Project.Status</span></td>
+                                    <td class="text-center dashboard-td"><span class="fw-semibold small">@item.ProgressPercent%</span></td>
+                                    <td class="text-center dashboard-td"><small class="text-muted">@item.CompletedTasks / @item.TotalTasks</small></td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in projectsWithProgress.Take(8))
-                                {
-                                    var sc = item.Project.Status == "Completed" ? "success" :
-                                             item.Project.Status == "In Progress" ? "primary" :
-                                             item.Project.Status == "On Hold" ? "warning" : "secondary";
-                                    <tr>
-                                        <td class="dashboard-td">
-                                            <a asp-action="ProjectDetails" asp-route-id="@item.Project.Id" class="text-decoration-none fw-semibold small text-truncate d-block" style="max-width:200px;">@item.Project.Name</a>
-                                        </td>
-                                        <td class="text-center dashboard-td"><span class="badge bg-@sc">@item.Project.Status</span></td>
-                                        <td class="text-center dashboard-td"><span class="fw-semibold small">@item.ProgressPercent%</span></td>
-                                        <td class="text-center dashboard-td"><small class="text-muted">@item.CompletedTasks / @item.TotalTasks</small></td>
-                                    </tr>
-                                }
-                                @if (!projectsWithProgress.Any())
-                                {
-                                    <tr><td colspan="4" class="text-center text-muted py-3">No active projects</td></tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                            @if (!projectsWithProgress.Any())
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">No active projects</td></tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Projects Overview + Recent Tasks -->
+    <!-- All Projects + Recent Tasks -->
     <div class="row g-3 mb-4">
         <div class="col-12 col-xl-7">
             <div class="card">
@@ -119,42 +117,39 @@
                     <a asp-action="Projects" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0 no-sort">
-                            <thead class="table-light">
+                    <table class="table table-sm table-hover mb-0 no-sort" data-page-size="5">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Project</th>
+                                <th class="text-center" style="width:120px;">Status</th>
+                                <th class="text-center" style="width:80px;">Progress</th>
+                                <th class="text-center" style="width:80px;">Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in projectsWithProgress)
+                            {
+                                var sc = item.Project.Status == "Completed" ? "success" :
+                                         item.Project.Status == "In Progress" ? "primary" :
+                                         item.Project.Status == "On Hold" ? "warning" : "secondary";
                                 <tr>
-                                    <th>Project</th>
-                                    <th class="d-none d-md-table-cell">Category</th>
-                                    <th class="d-none d-md-table-cell">Manager</th>
-                                    <th class="text-center">Status</th>
-                                    <th class="text-center" style="width:70px;">Progress</th>
-                                    <th class="text-center d-none d-sm-table-cell">Due</th>
+                                    <td class="dashboard-td">
+                                        <a asp-action="ProjectDetails" asp-route-id="@item.Project.Id" class="text-decoration-none fw-semibold small">@item.Project.Name</a>
+                                    </td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-@sc">@item.Project.Status</span></td>
+                                    <td class="text-center dashboard-td"><span class="fw-semibold small">@item.ProgressPercent%</span></td>
+                                    <td class="text-center dashboard-td">
+                                        @{ DateTime? endDate = (DateTime?)item.Project.EndDate; }
+                                        <small>@(endDate.HasValue ? endDate.Value.ToString("MMM dd") : "—")</small>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in projectsWithProgress)
-                                {
-                                    var sc = item.Project.Status == "Completed" ? "success" :
-                                             item.Project.Status == "In Progress" ? "primary" :
-                                             item.Project.Status == "On Hold" ? "warning" : "secondary";
-                                    <tr>
-                                        <td class="dashboard-td">
-                                            <a asp-action="ProjectDetails" asp-route-id="@item.Project.Id" class="text-decoration-none fw-semibold small">@item.Project.Name</a>
-                                        </td>
-                                        <td class="dashboard-td d-none d-md-table-cell"><small class="text-muted">@(string.IsNullOrEmpty((string)item.Project.Category) ? "—" : item.Project.Category)</small></td>
-                                        <td class="dashboard-td d-none d-md-table-cell"><small>@(item.Project.ProjectManager != null ? $"{item.Project.ProjectManager.FirstName} {item.Project.ProjectManager.LastName}" : "—")</small></td>
-                                        <td class="text-center dashboard-td"><span class="badge bg-@sc">@item.Project.Status</span></td>
-                                        <td class="text-center dashboard-td"><span class="fw-semibold small">@item.ProgressPercent%</span></td>
-                                        <td class="text-center dashboard-td d-none d-sm-table-cell"><small>@{ DateTime? endDate = (DateTime?)item.Project.EndDate; }@(endDate.HasValue ? endDate.Value.ToString("MMM dd") : "—")</small></td>
-                                    </tr>
-                                }
-                                @if (!projectsWithProgress.Any())
-                                {
-                                    <tr><td colspan="6" class="text-center text-muted py-3">No active projects</td></tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                            @if (!projectsWithProgress.Any())
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">No active projects</td></tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -167,31 +162,27 @@
                     <a asp-action="Tasks" class="btn btn-sm btn-outline-success">View All</a>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0 no-sort">
-                            <thead class="table-light">
+                    <table class="table table-sm table-hover mb-0 no-sort" data-page-size="5">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Task</th>
+                                <th class="text-center" style="width:90px;">Priority</th>
+                                <th class="text-center" style="width:120px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var task in ViewBag.RecentTasks ?? new List<ProjectTask>())
+                            {
+                                var pc = task.Priority == "High" ? "danger" : task.Priority == "Medium" ? "warning" : "secondary";
+                                var sc2 = task.Status == "Completed" ? "success" : task.Status == "In Progress" ? "primary" : task.Status == "On Hold" ? "warning" : "secondary";
                                 <tr>
-                                    <th>Task</th>
-                                    <th class="d-none d-sm-table-cell">Project</th>
-                                    <th class="text-center">Priority</th>
-                                    <th class="text-center">Status</th>
+                                    <td class="dashboard-td"><a asp-action="TaskDetails" asp-route-id="@task.Id" class="text-decoration-none small">@task.Title</a></td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-@pc">@task.Priority</span></td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-@sc2">@task.Status</span></td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var task in ViewBag.RecentTasks ?? new List<ProjectTask>())
-                                {
-                                    var pc = task.Priority == "High" ? "danger" : task.Priority == "Medium" ? "warning" : "secondary";
-                                    var sc2 = task.Status == "Completed" ? "success" : task.Status == "In Progress" ? "primary" : task.Status == "On Hold" ? "warning" : "secondary";
-                                    <tr>
-                                        <td class="dashboard-td"><a asp-action="TaskDetails" asp-route-id="@task.Id" class="text-decoration-none small">@task.Title</a></td>
-                                        <td class="dashboard-td d-none d-sm-table-cell"><small class="text-muted">@(task.Project?.Name ?? "—")</small></td>
-                                        <td class="text-center dashboard-td"><span class="badge bg-@pc">@task.Priority</span></td>
-                                        <td class="text-center dashboard-td"><span class="badge bg-@sc2">@task.Status</span></td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -206,47 +197,41 @@
                     <a asp-action="Users" class="btn btn-sm btn-outline-secondary">Manage Users</a>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0 no-sort">
-                            <thead class="table-light">
+                    <table class="table table-sm table-hover mb-0 no-sort" data-page-size="5">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Employee</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">In Progress</th>
+                                <th class="text-center">Completed</th>
+                                <th class="text-center">Overdue</th>
+                                <th class="text-center">Workload</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var emp in employeeWorkload)
+                            {
+                                var wc = emp.WorkloadLevel == "High" ? "danger" : emp.WorkloadLevel == "Medium" ? "warning" : emp.WorkloadLevel == "Low" ? "info" : "secondary";
                                 <tr>
-                                    <th>Employee</th>
-                                    <th class="d-none d-md-table-cell">Position</th>
-                                    <th class="text-center">Total</th>
-                                    <th class="text-center">In Progress</th>
-                                    <th class="text-center">Completed</th>
-                                    <th class="text-center">Overdue</th>
-                                    <th class="text-center d-none d-sm-table-cell">Workload</th>
+                                    <td class="fw-semibold small dashboard-td">@emp.Name</td>
+                                    <td class="text-center dashboard-td">@emp.TotalTasks</td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-primary">@emp.InProgressTasks</span></td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-success">@emp.CompletedTasks</span></td>
+                                    <td class="text-center dashboard-td">
+                                        @if (emp.OverdueTasks > 0)
+                                        { <span class="badge bg-danger">@emp.OverdueTasks</span> }
+                                        else
+                                        { <span class="text-muted">—</span> }
+                                    </td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-@wc">@emp.WorkloadLevel</span></td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var emp in employeeWorkload)
-                                {
-                                    var wc = emp.WorkloadLevel == "High" ? "danger" : emp.WorkloadLevel == "Medium" ? "warning" : emp.WorkloadLevel == "Low" ? "info" : "secondary";
-                                    <tr>
-                                        <td class="fw-semibold small dashboard-td">@emp.Name</td>
-                                        <td class="dashboard-td d-none d-md-table-cell"><small class="text-muted">@emp.Position</small></td>
-                                        <td class="text-center dashboard-td">@emp.TotalTasks</td>
-                                        <td class="text-center dashboard-td"><span class="badge bg-primary">@emp.InProgressTasks</span></td>
-                                        <td class="text-center dashboard-td"><span class="badge bg-success">@emp.CompletedTasks</span></td>
-                                        <td class="text-center dashboard-td">
-                                            @if (emp.OverdueTasks > 0)
-                                            { <span class="badge bg-danger">@emp.OverdueTasks</span> }
-                                            else
-                                            { <span class="text-muted">—</span> }
-                                        </td>
-                                        <td class="text-center dashboard-td d-none d-sm-table-cell">
-                                            <span class="badge bg-@wc">@emp.WorkloadLevel</span>
-                                        </td>
-                                    </tr>
-                                }
-                                @if (!employeeWorkload.Any())
-                                {
-                                    <tr><td colspan="7" class="text-center text-muted py-3">No employees found</td></tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                            @if (!employeeWorkload.Any())
+                            {
+                                <tr><td colspan="6" class="text-center text-muted py-3">No employees found</td></tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -259,11 +244,11 @@
                     <a asp-action="Users" class="btn btn-sm btn-outline-secondary">View All</a>
                 </div>
                 <div class="card-body p-0">
-                    <table class="table table-sm table-hover mb-0 no-sort">
-                        <thead class="table-light">
+                    <table class="table table-sm table-hover mb-0 no-sort" data-page-size="5">
+                        <thead class="table-dark">
                             <tr>
                                 <th>Name</th>
-                                <th class="d-none d-sm-table-cell">Role</th>
+                                <th>Role</th>
                                 <th class="text-center">Status</th>
                             </tr>
                         </thead>
@@ -272,7 +257,7 @@
                             {
                                 <tr>
                                     <td class="small dashboard-td">@user.FirstName @user.LastName</td>
-                                    <td class="dashboard-td d-none d-sm-table-cell"><small class="text-muted">@user.Role</small></td>
+                                    <td class="dashboard-td"><small class="text-muted">@user.Role</small></td>
                                     <td class="text-center dashboard-td">
                                         @if (user.IsActive)
                                         { <span class="badge bg-success">Active</span> }

@@ -113,40 +113,44 @@
         var tbody = table.tBodies[0];
         if (!thead || !tbody) return;
 
-        // Skip sort AND pagination entirely if table has no-sort class
-        if (table.classList.contains('no-sort')) return;
+        // no-sort = skip sort arrows only (pagination still runs)
+        // no-paginate = skip pagination only (sort arrows still run)
+        var skipSort = table.classList.contains('no-sort');
 
-        var headers = Array.from(thead.rows[0].cells);
-        headers.forEach(function (th, i) {
-            // Skip if explicitly marked as no-sort
-            if (th.classList.contains('no-sort')) return;
+        if (!skipSort) {
+            var headers = Array.from(thead.rows[0].cells);
+            headers.forEach(function (th, i) {
+                // Skip if explicitly marked as no-sort
+                if (th.classList.contains('no-sort')) return;
 
-            // Skip columns that are clearly action columns (labelled "Action" or "Actions")
-            var headerText = getCellText(th).toLowerCase();
-            if (headerText === 'actions' || headerText === 'action') return;
-            addArrowsToHeader(th);
+                // Skip columns that are clearly action columns (labelled "Action" or "Actions")
+                var headerText = getCellText(th).toLowerCase();
+                if (headerText === 'actions' || headerText === 'action') return;
+                addArrowsToHeader(th);
 
-            var asc = th.querySelector('.sort-asc');
-            var desc = th.querySelector('.sort-desc');
+                var asc = th.querySelector('.sort-asc');
+                var desc = th.querySelector('.sort-desc');
 
-            if (!asc || !desc) return;
+                if (!asc || !desc) return;
 
-            asc.addEventListener('click', function (e) {
-                e.preventDefault();
-                var allTh = Array.from(table.tHead.rows[0].cells);
-                clearActive(allTh);
-                asc.classList.add('active');
-                sortTable(table, i, 1);
+                asc.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var allTh = Array.from(table.tHead.rows[0].cells);
+                    clearActive(allTh);
+                    asc.classList.add('active');
+                    sortTable(table, i, 1);
+                });
+
+                desc.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var allTh = Array.from(table.tHead.rows[0].cells);
+                    clearActive(allTh);
+                    desc.classList.add('active');
+                    sortTable(table, i, -1);
+                });
             });
+        }
 
-            desc.addEventListener('click', function (e) {
-                e.preventDefault();
-                var allTh = Array.from(table.tHead.rows[0].cells);
-                clearActive(allTh);
-                desc.classList.add('active');
-                sortTable(table, i, -1);
-            });
-        });
         // Initialize pagination for the table (skip if explicitly disabled)
         if (!table.classList.contains('no-paginate')) {
             setupPagination(table);
