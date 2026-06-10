@@ -31,78 +31,9 @@
     <!-- Page-specific styles -->
     @await RenderSectionAsync("Styles", required: false)
 
-    @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Client"))
-    {
-        <style>
-            #mobile-block-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                z-index: 99999;
-                background: linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%);
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-                padding: 2rem;
-                color: white;
-            }
-            #mobile-block-overlay .block-icon {
-                font-size: 4rem;
-                margin-bottom: 1.25rem;
-                opacity: .9;
-            }
-            #mobile-block-overlay h2 {
-                font-size: 1.4rem;
-                font-weight: 700;
-                margin-bottom: .75rem;
-            }
-            #mobile-block-overlay p {
-                font-size: .95rem;
-                opacity: .85;
-                max-width: 320px;
-                line-height: 1.6;
-                margin-bottom: 1.5rem;
-            }
-            #mobile-block-overlay .device-icons {
-                display: flex;
-                gap: 1.5rem;
-                justify-content: center;
-                font-size: 2.2rem;
-                opacity: .75;
-                margin-bottom: 1.5rem;
-            }
-            #mobile-block-overlay .badge-tip {
-                background: rgba(255,255,255,.15);
-                border: 1px solid rgba(255,255,255,.25);
-                border-radius: 8px;
-                padding: .5rem 1.2rem;
-                font-size: .8rem;
-                opacity: .9;
-            }
-            @@media (max-width: 1023px) {
-                #mobile-block-overlay { display: flex !important; }
-            }
-        </style>
-    }
 </head>
 <body>
-    @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Client"))
-    {
-        <div id="mobile-block-overlay">
-            <div class="block-icon">🔒</div>
-            <h2>Desktop Only</h2>
-            <p>This panel is designed for desktop and laptop use. Please switch to a PC or laptop to continue.</p>
-            <div class="device-icons">
-                <span title="Laptop">💻</span>
-                <span title="Desktop">🖥️</span>
-            </div>
-            <div class="badge-tip">
-                <i class="bi bi-info-circle me-1"></i>
-                Minimum screen width: 1024 px
-            </div>
-        </div>
-    }
+
     @if (User.Identity?.IsAuthenticated == true)
     {
         <div class="wrapper">
