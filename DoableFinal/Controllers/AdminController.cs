@@ -835,8 +835,20 @@ namespace DoableFinal.Controllers
             }
 
             var projects = await query
+                .Include(p => p.Tasks)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
+
+            // Compute progress per project (same pattern as PM)
+            var projectProgress = new Dictionary<int, int>();
+            foreach (var project in projects)
+            {
+                var totalTasks = project.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                projectProgress[project.Id] = totalTasks > 0
+                    ? (int)Math.Round((double)(project.Tasks.Count(t => !t.IsArchived && t.Status == "Completed")) / totalTasks * 100)
+                    : 0;
+            }
+            ViewBag.ProjectProgress = projectProgress;
 
             ViewBag.SearchQuery = q;
             ViewBag.StatusFilter = statusFilter;

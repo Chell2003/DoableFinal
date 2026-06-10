@@ -6,47 +6,128 @@
     var statusFilter = Context.Request.Query["statusFilter"].ToString();
     var fromDate = Context.Request.Query["fromDate"].ToString();
     var toDate = Context.Request.Query["toDate"].ToString();
+    var categoryFilter = Context.Request.Query["categoryFilter"].ToString();
+    var projectProgress = ViewBag.ProjectProgress as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
+
+<style>
+    /* ── Project card ─────────────────────────────────────────── */
+    .project-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.07);
+        transition: transform .2s ease, box-shadow .2s ease;
+        overflow: hidden;
+    }
+    .project-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+    .project-card .card-header-bar {
+        height: 5px;
+    }
+    .project-card .card-body { padding: 1.1rem 1.25rem .75rem; }
+    .project-card .card-footer { background: transparent; border-top: 1px solid #f0f0f0; padding: .75rem 1.25rem; }
+
+    /* progress bar */
+    .project-card .progress { height: 6px; border-radius: 3px; }
+
+    /* badge tweak */
+    .project-card .badge { font-size: .72rem; letter-spacing: .03em; }
+
+    /* ── "New Task" / "Create Project" green button animation ── */
+    .btn-new-task {
+        position: relative;
+        overflow: hidden;
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .btn-new-task::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,.18);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform .25s ease;
+    }
+    .btn-new-task:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 18px rgba(25,135,84,.38);
+    }
+    .btn-new-task:hover::after { transform: scaleX(1); }
+    .btn-new-task:active { transform: scale(.97); }
+
+    /* ── Mobile: keep category input right below name ────────── */
+    @media (max-width: 767.98px) {
+        .form-name-category .col-md-8,
+        .form-name-category .col-md-4 {
+            width: 100% !important;
+        }
+    }
+
+    /* empty state */
+    .empty-state { padding: 3rem 1rem; text-align: center; }
+    .empty-state i { font-size: 3rem; color: #ced4da; margin-bottom: 1rem; }
+</style>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 }
 
 <div class="container-fluid px-4">
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0">Projects</h1>
             <p class="text-muted small mb-0">Manage all projects in the system</p>
         </div>
-        <div>
+        <div class="d-flex gap-2">
+            <a asp-action="CreateTask" class="btn btn-success btn-new-task">
+                <i class="bi bi-plus-square me-1"></i> New Task
+            </a>
             <a asp-action="CreateProject" class="btn btn-primary">
-                <i class="bi bi-folder-plus"></i> Create Project
+                <i class="bi bi-folder-plus me-1"></i> Create Project
             </a>
         </div>
     </div>
 
+    <!-- Filters -->
     <div class="card mb-4">
         <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters & Search</h5>
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters &amp; Search</h5>
         </div>
         <div class="card-body">
-            <form method="get" class="row g-3" role="search" aria-label="Project search and filter">
+            <form method="get" class="row g-3" role="search">
                 <div class="col-md-4">
                     <label for="searchInput" class="form-label">Search</label>
-                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by project name or client..." value="@query" aria-label="Search projects" />
+                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Project name, client, or manager…" value="@query" />
                 </div>
-
                 <div class="col-md-2">
                     <label for="statusFilter" class="form-label">Status</label>
                     <select id="statusFilter" name="statusFilter" class="form-select">
                         <option value="">All statuses</option>
-                        <option value="Not Started" selected="@(statusFilter == "Not Started" ? "selected" : null)">Not Started</option>
-                        <option value="In Progress" selected="@(statusFilter == "In Progress" ? "selected" : null)">In Progress</option>
-                        <option value="On Hold" selected="@(statusFilter == "On Hold" ? "selected" : null)">On Hold</option>
-                        <option value="Completed" selected="@(statusFilter == "Completed" ? "selected" : null)">Completed</option>
+                        <option value="Not Started"  selected="@(statusFilter=="Not Started"  ? "selected":null)">Not Started</option>
+                        <option value="In Progress"  selected="@(statusFilter=="In Progress"  ? "selected":null)">In Progress</option>
+                        <option value="On Hold"       selected="@(statusFilter=="On Hold"       ? "selected":null)">On Hold</option>
+                        <option value="Completed"    selected="@(statusFilter=="Completed"    ? "selected":null)">Completed</option>
                     </select>
                 </div>
-
                 <div class="col-md-3">
                     <label for="categoryFilter" class="form-label">Category</label>
-                    <input type="text" id="categoryFilter" name="categoryFilter" class="form-control" placeholder="e.g. Additional Feature" value="@Context.Request.Query["categoryFilter"]" list="projectCategoryOptions" />
-                    <datalist id="projectCategoryOptions">
+                    <input type="text" id="categoryFilter" name="categoryFilter" class="form-control"
+                           placeholder="e.g. Additional Feature" value="@categoryFilter" list="catOptions" />
+                    <datalist id="catOptions">
                         <option value="Additional Feature"></option>
                         <option value="Bug Fix"></option>
                         <option value="New Module"></option>
@@ -56,102 +137,141 @@
                         <option value="Internal Project"></option>
                     </datalist>
                 </div>
-
-                <div class="col-md-3">
-                    <label for="applyBtn" class="form-label">&nbsp;</label>
-                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
-                        <i class="bi bi-search"></i> Apply Filters
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button class="btn btn-primary flex-grow-1" type="submit">
+                        <i class="bi bi-search"></i> Search
                     </button>
+                    <a class="btn btn-outline-secondary" href="@Url.Action("Projects","Admin")">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
                 </div>
 
-                <div class="col-12">
-                    <hr class="my-2" />
-                </div>
+                <div class="col-12"><hr class="my-1" /></div>
 
                 <div class="col-md-4">
                     <label for="fromDate" class="form-label"><i class="bi bi-calendar-event"></i> From Date</label>
-                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" aria-label="From date" />
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" />
                 </div>
-
                 <div class="col-md-4">
                     <label for="toDate" class="form-label"><i class="bi bi-calendar-event"></i> To Date</label>
-                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" aria-label="To date" />
+                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" />
                 </div>
-
-                <div class="col-md-4">
-                    <label for="applyDateBtn" class="form-label">&nbsp;</label>
-                    <button id="applyDateBtn" class="btn btn-outline-primary w-100" type="submit">
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-outline-primary w-100" type="submit">
                         <i class="bi bi-calendar3"></i> Apply Date Range
                     </button>
-                </div>
-
-                <div class="col-12 text-end">
-                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Projects", "Admin")">
-                        <i class="bi bi-x-circle"></i> Reset Filters
-                    </a>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th scope="col" style="width: 18%;">Name</th>
-                            <th scope="col" style="width: 10%;">Category</th>
-                            <th scope="col" style="width: 13%;">Client</th>
-                            <th scope="col" style="width: 13%;">Project Manager</th>
-                            <th scope="col" style="width: 10%;">Start Date</th>
-                            <th scope="col" style="width: 10%;">Due Date</th>
-                            <th scope="col" style="width: 12%;">Status</th>
-                            <th scope="col" class="text-end" style="width: 14%;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var project in Model)
-                        {
-                            <tr>
-                                <td data-label="Name"><strong>@project.Name</strong></td>
-                                <td data-label="Category"><small class="text-muted">@(string.IsNullOrEmpty(project.Category) ? "—" : project.Category)</small></td>
-                                <td data-label="Client"><small>@($"{project.Client.FirstName} {project.Client.LastName}")</small></td>
-                                <td data-label="Project Manager"><small>@($"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}")</small></td>
-                                <td data-label="Start Date"><small>@project.StartDate.ToString("MMM dd, yyyy")</small></td>
-                                <td data-label="Due Date"><small>@(project.EndDate?.ToString("MMM dd, yyyy") ?? "-")</small></td>
-                                <td data-label="Status">
-                                    <span class="badge bg-@(project.Status switch {
-                                        "Not Started" => "secondary",
-                                        "In Progress" => "primary",
-                                        "On Hold" => "warning",
-                                        "Completed" => "success",
-                                        _ => "secondary"
-                                    })">@project.Status</span>
-                                </td>
-                                <td data-label="Actions" class="text-end">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <a asp-action="EditProject" asp-route-id="@project.Id" class="btn btn-outline-primary" title="Edit project">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <a asp-action="ProjectDetails" asp-route-id="@project.Id" class="btn btn-outline-info" title="View details">
-                                            <i class="bi bi-info-circle"></i>
-                                        </a>
-                                        @if (!project.IsArchived && project.Status != "In Progress")
-                                        {
-                                            <button type="button" class="btn btn-outline-warning" 
-                                                    onclick="showArchiveModal(@project.Id, '@project.Name')" title="Archive project">
-                                                <i class="bi bi-archive"></i>
-                                            </button>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+    <!-- Cards -->
+    <div class="row g-4">
+        @if (!Model.Any())
+        {
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="bi bi-folder2-open d-block"></i>
+                    <h5>No Projects Found</h5>
+                    <p class="text-muted">Try adjusting your filters or <a asp-action="CreateProject">create a new project</a>.</p>
+                </div>
             </div>
-        </div>
+        }
+        else
+        {
+            @foreach (var project in Model)
+            {
+                var progress = projectProgress.ContainsKey(project.Id) ? projectProgress[project.Id] : 0;
+                var (statusColor, headerColor) = project.Status switch {
+                    "In Progress" => ("primary",  "#0d6efd"),
+                    "Completed"   => ("success",  "#198754"),
+                    "On Hold"     => ("warning",  "#ffc107"),
+                    _             => ("secondary","#6c757d")
+                };
+
+                <div class="col-md-6 col-lg-4">
+                    <div class="card project-card h-100">
+                        <!-- coloured top bar -->
+                        <div class="card-header-bar" style="background:@headerColor;"></div>
+
+                        <div class="card-body">
+                            <!-- Title + category -->
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h5 class="card-title mb-0 fw-semibold" style="font-size:1rem;">@project.Name</h5>
+                                <span class="badge bg-@statusColor ms-2 flex-shrink-0">@project.Status</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(project.Category))
+                            {
+                                <span class="badge bg-light text-secondary border mb-2" style="font-size:.72rem;">
+                                    <i class="bi bi-tag me-1"></i>@project.Category
+                                </span>
+                            }
+
+                            <!-- Description -->
+                            @if (!string.IsNullOrEmpty(project.Description))
+                            {
+                                <p class="card-text text-muted small mb-3"
+                                   style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                                    @project.Description
+                                </p>
+                            }
+
+                            <!-- Progress -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted">Progress</small>
+                                    <small class="text-muted fw-semibold">@progress%</small>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-@statusColor" role="progressbar"
+                                         style="width:@progress%;"
+                                         aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+
+                            <!-- Client + PM -->
+                            <div class="row g-1 mb-2">
+                                <div class="col-6">
+                                    <small class="text-muted d-block" style="font-size:.72rem;">CLIENT</small>
+                                    <small class="fw-semibold">@(project.Client != null ? $"{project.Client.FirstName} {project.Client.LastName}" : "—")</small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block" style="font-size:.72rem;">MANAGER</small>
+                                    <small class="fw-semibold">@(project.ProjectManager != null ? $"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}" : "—")</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    Due: @(project.EndDate?.ToString("MMM dd, yyyy") ?? "No end date")
+                                </small>
+                                <div class="d-flex gap-1">
+                                    <a asp-action="EditProject" asp-route-id="@project.Id"
+                                       class="btn btn-sm btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a asp-action="ProjectDetails" asp-route-id="@project.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
+                                    @if (!project.IsArchived && project.Status != "In Progress")
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                                onclick="showArchiveModal(@project.Id, '@Html.Raw(project.Name.Replace("'","\\'")')"
+                                                title="Archive">
+                                            <i class="bi bi-archive"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
     </div>
 </div>
 
@@ -161,17 +281,17 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="archiveModalLabel">Archive Project</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to archive the project "<span id="projectName"></span>"?
-                <p class="text-muted mt-2">Archived projects are still available for reference but cannot be modified.</p>
+                Are you sure you want to archive <strong id="projectNameModal"></strong>?
+                <p class="text-muted mt-2 mb-0">Archived projects are still available for reference but cannot be modified.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form id="archiveForm" method="post" class="d-inline">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-warning">Archive Project</button>
+                    <button type="submit" class="btn btn-warning">Archive</button>
                 </form>
             </div>
         </div>
@@ -180,11 +300,10 @@
 
 @section Scripts {
     <script>
-        function showArchiveModal(projectId, projectName) {
-            const modal = new bootstrap.Modal(document.getElementById('archiveModal'));
-            document.getElementById('projectName').textContent = projectName;
-            document.getElementById('archiveForm').action = `/Admin/ArchiveProject/${projectId}`;
-            modal.show();
+        function showArchiveModal(id, name) {
+            document.getElementById('projectNameModal').textContent = name;
+            document.getElementById('archiveForm').action = `/Admin/ArchiveProject/${id}`;
+            new bootstrap.Modal(document.getElementById('archiveModal')).show();
         }
     </script>
 }

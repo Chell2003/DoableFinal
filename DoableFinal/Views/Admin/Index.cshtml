@@ -6,6 +6,35 @@
     var employeeWorkload = ViewBag.EmployeeWorkload as IEnumerable<dynamic> ?? new List<dynamic>();
 }
 
+<style>
+    .stat-card { background:#fff; border-radius:10px; padding:1.1rem 1.25rem; box-shadow:0 2px 8px rgba(0,0,0,.06); border-left:4px solid #0d6efd; height:100%; }
+    .stat-card .stat-icon { font-size:1.6rem; color:#0d6efd; margin-bottom:.3rem; }
+    .stat-card .stat-value { font-size:1.8rem; font-weight:700; line-height:1.1; }
+    .stat-card .stat-label { font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:#6c757d; }
+
+    /* Green button animation */
+    .btn-new-task {
+        position: relative;
+        overflow: hidden;
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .btn-new-task::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,.18);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform .25s ease;
+    }
+    .btn-new-task:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 18px rgba(25,135,84,.38);
+    }
+    .btn-new-task:hover::after { transform: scaleX(1); }
+    .btn-new-task:active { transform: scale(.97); }
+</style>
+
 <div class="container-fluid">
     <!-- Header -->
     <div class="row mb-3">
@@ -15,7 +44,7 @@
         </div>
         <div class="col-auto d-flex align-items-center gap-2">
             <a asp-action="CreateProject" class="btn btn-primary btn-sm"><i class="bi bi-folder-plus me-1"></i>New Project</a>
-            <a asp-action="CreateTask" class="btn btn-success btn-sm"><i class="bi bi-plus-square me-1"></i>New Task</a>
+            <a asp-action="CreateTask" class="btn btn-success btn-sm btn-new-task"><i class="bi bi-plus-square me-1"></i>New Task</a>
         </div>
     </div>
 

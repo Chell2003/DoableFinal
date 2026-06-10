@@ -4,6 +4,40 @@
     ViewData["Title"] = "Create Project";
 }
 
+<style>
+    /* Stack Name + Category vertically on mobile */
+    @media (max-width: 767.98px) {
+        .form-name-category > [class*="col-"] {
+            width: 100% !important;
+        }
+        .form-name-category .mb-0 {
+            margin-bottom: .75rem !important;
+        }
+    }
+
+    /* Green button animation */
+    .btn-new-task {
+        position: relative;
+        overflow: hidden;
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .btn-new-task::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,.18);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform .25s ease;
+    }
+    .btn-new-task:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 18px rgba(25,135,84,.38);
+    }
+    .btn-new-task:hover::after { transform: scaleX(1); }
+    .btn-new-task:active { transform: scale(.97); }
+</style>
+
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
@@ -19,19 +53,21 @@
                     <form asp-action="CreateProject" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-3">
+                        <div class="row g-3 form-name-category">
+                            <div class="col-12 col-md-8">
+                                <div class="mb-0">
                                     <label asp-for="Name" class="form-label fw-semibold"></label>
-                                    <input asp-for="Name" class="form-control" id="projectNameInput" autocomplete="off" />
+                                    <div class="position-relative">
+                                        <input asp-for="Name" class="form-control" id="projectNameInput" autocomplete="off" />
+                                        <div id="projectNameSuggestions" class="list-group position-absolute z-3" style="display:none; max-height:200px; overflow-y:auto; width:100%;"></div>
+                                    </div>
                                     <span asp-validation-for="Name" class="text-danger"></span>
-                                    <div id="projectNameSuggestions" class="list-group position-absolute z-3" style="display:none; max-height:200px; overflow-y:auto; width:100%;"></div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
+                            <div class="col-12 col-md-4">
+                                <div class="mb-0">
                                     <label asp-for="Category" class="form-label fw-semibold"></label>
-                                    <input asp-for="Category" class="form-control" placeholder="e.g. Additional Feature, Bug Fix, New Module" list="categoryList" />
+                                    <input asp-for="Category" class="form-control" placeholder="e.g. Additional Feature" list="categoryList" />
                                     <datalist id="categoryList">
                                         <option value="Additional Feature"></option>
                                         <option value="Bug Fix"></option>
