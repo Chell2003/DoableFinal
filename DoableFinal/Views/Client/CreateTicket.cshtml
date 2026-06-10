@@ -81,23 +81,32 @@
                         <!-- Project -->
                         <div class="mb-3">
                             <label asp-for="ProjectId" class="form-label fw-semibold">Project <span class="text-muted fw-normal">(Optional)</span></label>
-                            <select asp-for="ProjectId" class="form-select" id="projectSelect">
-                                <option value="">No project (general ticket)</option>
-                                @foreach (var item in Model.Projects)
-                                {
-                                    if (item.Disabled)
+                            @if (!Model.Projects.Any())
+                            {
+                                <div class="form-control bg-light text-muted">No projects assigned to your account yet.</div>
+                                <input type="hidden" asp-for="ProjectId" value="" />
+                                <small class="text-muted">Projects will appear here once your account has been linked to one by an admin.</small>
+                            }
+                            else
+                            {
+                                <select asp-for="ProjectId" class="form-select" id="projectSelect">
+                                    <option value="">No project (general ticket)</option>
+                                    @foreach (var item in Model.Projects)
                                     {
-                                        <option value="@item.Value" disabled class="text-muted">@item.Text</option>
+                                        if (item.Disabled)
+                                        {
+                                            <option value="@item.Value" disabled class="text-muted">@item.Text</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@item.Value">@item.Text</option>
+                                        }
                                     }
-                                    else
-                                    {
-                                        <option value="@item.Value">@item.Text</option>
-                                    }
-                                }
-                            </select>
-                            <div id="projectDisabledHint" class="project-hint text-warning" style="display:none;">
-                                <i class="fas fa-exclamation-triangle me-1"></i> Projects with no tasks cannot be selected.
-                            </div>
+                                </select>
+                                <div id="projectDisabledHint" class="project-hint text-warning" style="display:none;">
+                                    <i class="fas fa-exclamation-triangle me-1"></i> Projects with no tasks cannot be selected.
+                                </div>
+                            }
                             <span asp-validation-for="ProjectId" class="text-danger"></span>
                         </div>
 
@@ -184,6 +193,7 @@
                 </div>
                 <div class="card-body">
                     <small class="text-muted">
+                        Only <strong>projects assigned to your account</strong> are shown here.<br><br>
                         <span class="text-success fw-semibold">✓ Available</span> — Project has tasks assigned.<br><br>
                         <span class="text-muted fw-semibold">✗ Grayed out</span> — Project has no tasks yet and cannot be linked to a ticket until work begins.
                     </small>

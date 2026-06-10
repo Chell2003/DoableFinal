@@ -629,10 +629,11 @@ namespace DoableFinal.Controllers
                 return NotFound();
             }
 
-            // Load projects with task counts for progress calculation
+            // Load ONLY projects assigned to this specific client
+            var clientId = currentUser.Id;
             var projectsRaw = await _context.Projects
                 .Include(p => p.Tasks)
-                .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
+                .Where(p => p.ClientId == clientId && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
