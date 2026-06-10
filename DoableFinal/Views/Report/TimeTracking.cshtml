@@ -7,7 +7,7 @@
 
 <div class="container-fluid mt-4">
     <div class="row mb-3">
-        <div class="col-md-8">
+        <div class="col-12 col-md-8">
             <h1>
                 <i class="fas fa-clock"></i> Time Tracking Report
             </h1>
@@ -68,7 +68,7 @@
 
     <!-- Time per Task -->
     <div class="row mb-4">
-        <div class="col-md-12">
+        <div class="col-12 col-md-12">
             <div class="card">
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0">
@@ -133,7 +133,7 @@
     @if (Model.EmployeeTimes.Count > 0)
     {
         <div class="row mb-4">
-            <div class="col-md-12">
+            <div class="col-12 col-md-12">
                 <div class="card">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">
@@ -174,7 +174,7 @@
     @if (Model.DailyBreakdown.Count > 0)
     {
         <div class="row mb-4">
-            <div class="col-md-12">
+            <div class="col-12 col-md-12">
                 <div class="card">
                     <div class="card-header bg-warning text-dark">
                         <h5 class="mb-0">
@@ -216,7 +216,7 @@
     @if (Model.WeeklyBreakdown.Count > 0)
     {
         <div class="row mb-4">
-            <div class="col-md-12">
+            <div class="col-12 col-md-12">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">
@@ -256,7 +256,7 @@
 
     <!-- Report Footer -->
     <div class="row mb-4">
-        <div class="col-md-12">
+        <div class="col-12 col-md-12">
             <div class="alert alert-light border">
                 <small class="text-muted">
                     Report generated on @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC

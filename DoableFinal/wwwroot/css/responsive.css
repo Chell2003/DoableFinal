@@ -1,0 +1,403 @@
+/* =============================================================
+   RESPONSIVE.CSS — Mobile-first overrides for DoableFinal
+   Breakpoints: xs <576  sm 576  md 768  lg 992  xl 1200
+   ============================================================= */
+
+/* ------------------------------------------------------------------
+   1. GLOBAL RESETS
+   ------------------------------------------------------------------ */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Prevent any element from ever causing horizontal scroll */
+.wrapper, #content, .content-wrapper, .container-fluid {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* ------------------------------------------------------------------
+   2. SIDEBAR — mobile overlay behaviour (works with sidebar.css)
+   ------------------------------------------------------------------ */
+/* Close btn always visible when sidebar is open on mobile */
+#sidebarCollapse {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    #sidebarCollapse {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255,255,255,0.85);
+        font-size: 1.3rem;
+        padding: 0;
+        background: transparent;
+        border: none;
+        margin-left: auto;
+    }
+
+    /* Tap on overlay = close sidebar */
+    #content.active::before {
+        cursor: pointer;
+    }
+
+    /* Hamburger button in topbar */
+    #sidebarCollapseShow {
+        font-size: 1.3rem;
+        color: #1a3060;
+        padding: 4px 8px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   3. TOPBAR NAVBAR
+   ------------------------------------------------------------------ */
+#content .navbar {
+    padding: 8px 12px;
+}
+
+@media (max-width: 576px) {
+    #content .navbar .navbar-text {
+        font-size: 13px;
+        max-width: calc(100vw - 140px);
+    }
+}
+
+/* ------------------------------------------------------------------
+   4. CARDS — full width, smaller padding on mobile
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    .card {
+        border-radius: 8px;
+    }
+
+    .card-body {
+        padding: 12px;
+    }
+
+    .card-header {
+        padding: 10px 12px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   5. STAT CARDS
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    .stat-card {
+        padding: 1rem;
+        min-height: 130px;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.6rem;
+    }
+
+    .stat-card .stat-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ------------------------------------------------------------------
+   6. TABLES — horizontal scroll on small screens, uniform row heights
+   ------------------------------------------------------------------ */
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure table cells don't grow too wide */
+.table td, .table th {
+    white-space: nowrap;
+}
+
+/* Allow wrapping only for description/name columns */
+.table td.cell-wrap, .table th.cell-wrap {
+    white-space: normal;
+    min-width: 120px;
+}
+
+@media (max-width: 768px) {
+    /* Slightly smaller font inside tables on mobile */
+    .table.table-sm td,
+    .table.table-sm th {
+        font-size: 0.78rem;
+        padding: 6px 8px;
+    }
+
+    .dashboard-td {
+        height: 40px !important;
+    }
+
+    /* Hide lower-priority columns on small screens */
+    .col-hide-sm {
+        display: none !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .col-hide-xs {
+        display: none !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   7. FORMS — full width inputs, stacked rows on mobile
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    .row > [class*="col-md-"],
+    .row > [class*="col-lg-"] {
+        /* let Bootstrap's col-12 default take over on xs */
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 0.9rem;
+    }
+
+    /* Stack form action buttons */
+    .d-grid.gap-2 .btn {
+        font-size: 0.9rem;
+    }
+
+    /* Ensure select2 doesn't overflow */
+    .select2-container {
+        width: 100% !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   8. BUTTONS — touch-friendly tap targets
+   ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+    .btn {
+        min-height: 38px;
+    }
+
+    .btn-sm {
+        min-height: 32px;
+        font-size: 0.8rem;
+    }
+
+    /* Action button groups in card headers */
+    .card-header .btn-sm {
+        padding: 4px 10px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   9. BADGES — readable on mobile
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    .badge {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   10. PAGINATION WRAPPER
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    .table-pagination-wrapper {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px;
+        font-size: 0.75rem;
+    }
+
+    .table-pagination-wrapper .table-page-size {
+        width: 55px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   11. MODALS — full screen on mobile
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        min-height: 100%;
+    }
+
+    .modal-content {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+}
+
+/* ------------------------------------------------------------------
+   12. DETAIL / INFO PANELS (task details, project details)
+   ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+    /* Stack two-column info grids */
+    .info-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Meta info rows in cards */
+    .detail-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   13. PAGE HEADERS — compact on mobile
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    h1.h3 {
+        font-size: 1.2rem;
+    }
+
+    .page-header-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* Stack header row if needed */
+    .row.mb-3 > .col,
+    .row.mb-4 > .col {
+        min-width: 0;
+    }
+}
+
+/* ------------------------------------------------------------------
+   14. DASHBOARD CHART — don't let canvas overflow
+   ------------------------------------------------------------------ */
+#taskStatusChart {
+    max-width: 100% !important;
+}
+
+@media (max-width: 576px) {
+    #taskStatusChart {
+        max-height: 180px !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   15. PROJECT / TASK CARDS IN LIST VIEWS
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    /* Full-width list items */
+    .list-group-item {
+        padding: 10px 12px;
+    }
+
+    .list-group-item h6 {
+        font-size: 0.85rem;
+    }
+}
+
+/* ------------------------------------------------------------------
+   16. REPORTS
+   ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+    /* Charts in reports */
+    .apexcharts-canvas {
+        max-width: 100% !important;
+    }
+
+    /* Report filter rows */
+    .report-filters .row > div {
+        margin-bottom: 8px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   17. NOTIFICATIONS LIST
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    .notification-item {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .notification-item .notification-time {
+        font-size: 0.7rem;
+    }
+}
+
+/* ------------------------------------------------------------------
+   18. PROFILE PAGE
+   ------------------------------------------------------------------ */
+@media (max-width: 576px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   19. TICKET & INQUIRY TABLES
+   ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+    /* Hide less-critical ticket columns */
+    .tickets-table .col-hide-md {
+        display: none !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   20. CMS / VISUAL EDITOR
+   ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+    .cms-editor-toolbar {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   21. PRINT — hide sidebar
+   ------------------------------------------------------------------ */
+@media print {
+    #sidebar,
+    #sidebarCollapseShow,
+    .navbar,
+    .btn,
+    .table-pagination-wrapper {
+        display: none !important;
+    }
+
+    #content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .content-wrapper {
+        padding: 0 !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   22. TOUCH — larger tap targets for interactive elements
+   ------------------------------------------------------------------ */
+@media (hover: none) and (pointer: coarse) {
+    /* Sidebar nav links */
+    .sidebar ul.components li a {
+        padding: 12px 14px;
+    }
+
+    /* Table sort arrows */
+    .sort-asc, .sort-desc {
+        padding: 6px;
+    }
+
+    /* Select dropdowns */
+    select.form-select {
+        min-height: 42px;
+    }
+
+    input.form-control {
+        min-height: 42px;
+    }
+}

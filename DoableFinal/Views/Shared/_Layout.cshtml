@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="~/css/custom-theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/reports-print-media.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/sidebar.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/responsive.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/header-dropdown.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/auth.css" />
     <!-- Icons -->
@@ -452,6 +453,24 @@
                 $('#sidebarCollapseShow').on('click', function () {
                     $('#sidebar').addClass('active');
                     $('#content').addClass('active');
+                });
+
+                // Close sidebar when clicking the overlay on mobile
+                $(document).on('click', '#content.active::before, #content', function (e) {
+                    if ($(window).width() <= 768 && $('#sidebar').hasClass('active')) {
+                        if (!$(e.target).closest('#sidebar').length && !$(e.target).is('#sidebarCollapseShow')) {
+                            $('#sidebar').removeClass('active');
+                            $('#content').removeClass('active');
+                        }
+                    }
+                });
+
+                // Close sidebar when a nav link is clicked on mobile
+                $('#sidebar ul.components li a').on('click', function () {
+                    if ($(window).width() <= 768) {
+                        $('#sidebar').removeClass('active');
+                        $('#content').removeClass('active');
+                    }
                 });
 
                 // Handle active menu items and submenu

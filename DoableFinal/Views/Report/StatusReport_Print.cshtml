@@ -124,6 +124,7 @@
     <!-- Summary Section -->
     <div class="section">
         <div class="section-header">Summary</div>
+        <div class="table-responsive">
         <table>
             <tr>
                 <th>Completed Tasks</th>
@@ -138,6 +139,7 @@
                 <td>@Model.TotalTasks</td>
             </tr>
         </table>
+        </div><!-- /.table-responsive -->
     </div>
 
     <!-- Progress Bar Section -->
@@ -155,6 +157,7 @@
     {
         <div class="section">
             <div class="section-header">Completed Tasks (@Model.CompletedTasks.Count)</div>
+            <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
@@ -178,6 +181,7 @@
                     }
                 </tbody>
             </table>
+            </div><!-- /.table-responsive -->
         </div>
     }
 
@@ -186,6 +190,7 @@
     {
         <div class="section">
             <div class="section-header">In Progress Tasks (@Model.InProgressTasks.Count)</div>
+            <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
@@ -219,6 +224,7 @@
                     }
                 </tbody>
             </table>
+            </div><!-- /.table-responsive -->
         </div>
     }
 
@@ -227,6 +233,7 @@
     {
         <div class="section">
             <div class="section-header">Upcoming Tasks (@Model.UpcomingTasks.Count)</div>
+            <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
@@ -264,6 +271,7 @@
                     }
                 </tbody>
             </table>
+            </div><!-- /.table-responsive -->
         </div>
     }
 

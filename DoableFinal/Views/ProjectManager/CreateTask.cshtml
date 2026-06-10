@@ -15,7 +15,7 @@
     </div>
 
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-12 col-md-12">
             <div class="card">
                 <div class="card-body">
                     <form asp-action="CreateTask" method="post">
@@ -56,14 +56,14 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="StartDate" class="form-label"></label>
                                     <input asp-for="StartDate" class="form-control" type="date" />
                                     <span asp-validation-for="StartDate" class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="DueDate" class="form-label"></label>
                                     <input asp-for="DueDate" class="form-control" type="date" />
@@ -73,7 +73,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Status" class="form-label"></label>
                                     <select asp-for="Status" class="form-select">
@@ -85,7 +85,7 @@
                                     <span asp-validation-for="Status" class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Priority" class="form-label"></label>
                                     <select asp-for="Priority" class="form-select">
@@ -99,7 +99,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Category" class="form-label">Category</label>
                                     <select id="CategorySelect" name="Category" class="form-select">
@@ -132,7 +132,7 @@
                                     <span asp-validation-for="Category" class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="col-md-6" id="CustomCategoryGroup" style="display:none;">
+                            <div class="col-12 col-md-6" id="CustomCategoryGroup" style="display:none;">
                                 <div class="mb-3">
                                     <label class="form-label">Custom Category</label>
                                     <input type="text" name="CustomCategory" id="CustomCategory" class="form-control" placeholder="Enter custom category" maxlength="100" />

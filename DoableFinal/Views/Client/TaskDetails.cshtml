@@ -29,7 +29,7 @@
                     <p class="card-text">@Model.Description</p>
                     
                     <div class="row mt-4">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <p><strong>Status:</strong> 
                                 <span class="badge bg-@(Model.Status switch {
                                     "Not Started" => "secondary",
@@ -54,7 +54,7 @@
                                 </span>
                             </p>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <p><strong>Project:</strong> 
                                 <a asp-controller="Client" asp-action="ProjectDetails" asp-route-id="@Model.ProjectId">
                                     @Model.Project.Name

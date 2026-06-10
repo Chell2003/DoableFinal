@@ -81,15 +81,15 @@
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Name:</div>
-                        <div class="col-md-9">@Model.Name</div>
+                        <div class="col-12 col-md-9">@Model.Name</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Description:</div>
-                        <div class="col-md-9">@Model.Description</div>
+                        <div class="col-12 col-md-9">@Model.Description</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Client:</div>
-                        <div class="col-md-9">@($"{Model.Client.FirstName} {Model.Client.LastName}")
+                        <div class="col-12 col-md-9">@($"{Model.Client.FirstName} {Model.Client.LastName}")
                         @if (Model.ProjectManager.Id != ViewBag.CurrentUserId)
                         {
                             <a asp-controller="Message" asp-action="Index" asp-route-userId="@Model.ProjectManager.Id" title="Message" class="btn btn-sm btn-outline-secondary ms-2">
@@ -100,7 +100,7 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Status:</div>
-                        <div class="col-md-9">
+                        <div class="col-12 col-md-9">
                             <span id="projectStatusBadge" class="badge bg-@(Model.Status switch {
                                 "Not Started" => "secondary",
                                 "In Progress" => "primary",
@@ -112,17 +112,17 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Progress:</div>
-                        <div class="col-md-9">
+                        <div class="col-12 col-md-9">
                             @completedTasks out of @totalTasks tasks completed
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Start Date:</div>
-                        <div class="col-md-9">@Model.StartDate.ToString(dateFormat)</div>
+                        <div class="col-12 col-md-9">@Model.StartDate.ToString(dateFormat)</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">End Date:</div>
-                        <div class="col-md-9">
+                        <div class="col-12 col-md-9">
                             @if (Model.EndDate.HasValue)
                             {
                                 <span class="@(Model.EndDate.Value < DateTime.Now && Model.Status != "Completed" ? "text-danger" : "")">

@@ -15,7 +15,7 @@
     </div>
 
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-12 col-md-12">
             <div class="card">
                 <div class="card-body">
                     <form asp-action="CreateTask" method="post">
@@ -47,14 +47,14 @@
                         }
 
                         <div class="row">
-                            <div class="col-md-8">
+                            <div class="col-12 col-md-8">
                                 <div class="mb-3">
                                     <label asp-for="Title" class="form-label fw-semibold"></label>
                                     <input asp-for="Title" class="form-control" />
                                     <span asp-validation-for="Title" class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <div class="mb-3">
                                     <label asp-for="Category" class="form-label fw-semibold"></label>
                                     <input asp-for="Category" class="form-control" placeholder="e.g. Bug Fix, Feature" list="taskCategoryList" />
@@ -79,7 +79,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="StartDate" class="form-label fw-semibold"></label>
                                     <div class="input-group">
@@ -90,7 +90,7 @@
                                     <small class="form-text text-muted">Must be within project timeline</small>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="DueDate" class="form-label fw-semibold"></label>
                                     <div class="input-group">
@@ -104,7 +104,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Status" class="form-label fw-semibold"></label>
                                     <select asp-for="Status" class="form-select">
@@ -116,7 +116,7 @@
                                     <span asp-validation-for="Status" class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-12 col-md-6">
                                 <div class="mb-3">
                                     <label asp-for="Priority" class="form-label fw-semibold"></label>
                                     <select asp-for="Priority" class="form-select">
