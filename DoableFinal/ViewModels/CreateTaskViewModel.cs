@@ -36,6 +36,12 @@ namespace DoableFinal.ViewModels
         [StringLength(100)]
         public string? Category { get; set; }
 
+        // Custom category typed by user (if "Other" is selected)
+        public string? CustomCategory { get; set; }
+
+        // Readonly — populated by server after save
+        public string? ReferenceNumber { get; set; }
+
         [Required]
         [Display(Name = "Project")]
         public int ProjectId { get; set; }

@@ -83,6 +83,48 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Category" class="form-label">Category</label>
+                                    <select id="CategorySelect" name="Category" class="form-select">
+                                        <option value="">-- Select Category --</option>
+                                        <optgroup label="Issue Types">
+                                            <option value="Bug">🐛 Bug</option>
+                                            <option value="Feature Request">✨ Feature Request</option>
+                                            <option value="Enhancement">🔧 Enhancement</option>
+                                            <option value="UI/UX">🎨 UI/UX</option>
+                                            <option value="Performance">⚡ Performance</option>
+                                            <option value="Security">🔒 Security</option>
+                                            <option value="Testing">🧪 Testing</option>
+                                            <option value="Documentation">📄 Documentation</option>
+                                        </optgroup>
+                                        <optgroup label="Client & Onboarding">
+                                            <option value="Client Onboarding">🤝 Client Onboarding</option>
+                                            <option value="Demo">🎯 Demo</option>
+                                            <option value="Training">📚 Training</option>
+                                            <option value="Support">💬 Support</option>
+                                        </optgroup>
+                                        <optgroup label="Project">
+                                            <option value="Planning">📋 Planning</option>
+                                            <option value="Research">🔍 Research</option>
+                                            <option value="Review">👀 Review</option>
+                                            <option value="Deployment">🚀 Deployment</option>
+                                            <option value="Maintenance">🛠 Maintenance</option>
+                                        </optgroup>
+                                        <option value="Other">Other (specify below)</option>
+                                    </select>
+                                    <span asp-validation-for="Category" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="CustomCategoryGroup" style="display:none;">
+                                <div class="mb-3">
+                                    <label class="form-label">Custom Category</label>
+                                    <input type="text" name="CustomCategory" id="CustomCategory" class="form-control" placeholder="Enter custom category" maxlength="100" />
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label asp-for="AssignedToIds" class="form-label">Assigned To</label>
                             <select asp-for="AssignedToIds" class="form-select select2-employee" multiple style="width: 100%;">
@@ -405,6 +447,17 @@
 
             // Initial setup
             updateDateConstraints();
+
+            // Show/hide custom category field
+            $('#CategorySelect').on('change', function () {
+                if ($(this).val() === 'Other') {
+                    $('#CustomCategoryGroup').show();
+                    $('#CustomCategory').attr('required', true);
+                } else {
+                    $('#CustomCategoryGroup').hide();
+                    $('#CustomCategory').removeAttr('required').val('');
+                }
+            });
         });
-    </script>>
+    </script>
 }

@@ -39,6 +39,10 @@ namespace DoableFinal.Models
         [StringLength(100)]
         public string? Category { get; set; }
 
+        // System-generated task reference number (e.g. TASK-2026-00042)
+        [StringLength(30)]
+        public string? ReferenceNumber { get; set; }
+
         public virtual ICollection<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
 
         [Required]

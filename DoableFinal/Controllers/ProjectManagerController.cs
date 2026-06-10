@@ -91,36 +91,62 @@ namespace DoableFinal.Controllers
 
             var userId = currentUser.Id;
 
-            // Get statistics
-            ViewBag.MyProjects = await _context.Projects
-                .Where(p => p.ProjectManagerId != null &&
-                           p.ProjectManagerId == userId &&
-                           !p.IsArchived)
-                .CountAsync();
+            var allProjects = await _context.Projects
+                .Include(p => p.Tasks)
+                .Include(p => p.ProjectTeams)
+                .Where(p => p.ProjectManagerId == userId && !p.IsArchived)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.MyProjects = allProjects.Count;
 
             ViewBag.MyTasks = await _context.Tasks
-                .Where(t => t.Project != null && t.Project.ProjectManagerId != null && t.Project.ProjectManagerId == userId)
+                .Where(t => t.Project != null && t.Project.ProjectManagerId == userId && !t.IsArchived)
+                .CountAsync();
+
+            ViewBag.CompletedTasks = await _context.Tasks
+                .Where(t => t.Project != null && t.Project.ProjectManagerId == userId && t.Status == "Completed")
                 .CountAsync();
 
             ViewBag.OverdueTasks = await _context.Tasks
-                .Where(t => t.Project != null && t.Project.ProjectManagerId != null && t.Project.ProjectManagerId == userId &&
-                            t.DueDate < DateTime.UtcNow &&
-                            t.Status != "Completed")
+                .Where(t => t.Project != null && t.Project.ProjectManagerId == userId &&
+                            t.DueDate < DateTime.UtcNow && t.Status != "Completed" && !t.IsArchived)
                 .CountAsync();
 
-            // Get recent projects
-            ViewBag.RecentProjects = await _context.Projects
-                .Where(p => p.ProjectManagerId != null && p.ProjectManagerId == userId)
-                .OrderByDescending(p => p.CreatedAt)
-                .Take(5)
-                .ToListAsync();
-
-            // Get team members
             ViewBag.TeamMembers = await _context.ProjectTeams
                 .Include(pt => pt.User)
-                .Where(pt => pt.Project != null && pt.Project.ProjectManagerId != null && pt.Project.ProjectManagerId == userId)
+                .Where(pt => pt.Project != null && pt.Project.ProjectManagerId == userId)
                 .Select(pt => pt.User)
                 .Distinct()
+                .ToListAsync();
+
+            var projectOverview = allProjects.Select(p =>
+            {
+                var total = p.Tasks != null ? p.Tasks.Count(t => !t.IsArchived) : 0;
+                var completed = p.Tasks != null ? p.Tasks.Count(t => t.Status == "Completed") : 0;
+                var overdue = p.Tasks != null ? p.Tasks.Count(t => t.Status != "Completed" && t.DueDate < DateTime.UtcNow) : 0;
+                var inProgress = p.Tasks != null ? p.Tasks.Count(t => t.Status == "In Progress") : 0;
+                var progress = total > 0 ? (int)Math.Round((double)completed / total * 100) : 0;
+                return new
+                {
+                    Project = p,
+                    TotalTasks = total,
+                    CompletedTasks = completed,
+                    InProgressTasks = inProgress,
+                    OverdueTasks = overdue,
+                    ProgressPercent = progress,
+                    TeamSize = p.ProjectTeams != null ? p.ProjectTeams.Select(pt => pt.UserId).Distinct().Count() : 0
+                };
+            }).Cast<dynamic>().ToList();
+
+            ViewBag.ProjectOverview = projectOverview;
+
+            ViewBag.RecentTasks = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.TaskAssignments).ThenInclude(ta => ta.Employee)
+                .Where(t => t.Project != null && t.Project.ProjectManagerId == userId && !t.IsArchived)
+                .OrderByDescending(t => t.CreatedAt)
+                .Take(10)
                 .ToListAsync();
 
             return View();
@@ -471,6 +497,11 @@ namespace DoableFinal.Controllers
             }
             try
             {
+                // Resolve category: use custom value if "Other" was selected
+                var resolvedCategory = model.Category == "Other" && !string.IsNullOrWhiteSpace(model.CustomCategory)
+                    ? model.CustomCategory.Trim()
+                    : model.Category;
+
                 var task = new ProjectTask
                 {
                     Title = model.Title,
@@ -480,11 +511,16 @@ namespace DoableFinal.Controllers
                     Status = model.Status,
                     Priority = model.Priority,
                     ProjectId = model.ProjectId,
+                    Category = resolvedCategory,
                     CreatedById = currentUser.Id,
                     CreatedAt = DateTime.UtcNow
                 };
 
                 _context.Tasks.Add(task);
+                await _context.SaveChangesAsync();
+
+                // Generate reference number after save (uses the auto-incremented Id)
+                task.ReferenceNumber = $"TASK-{DateTime.UtcNow.Year}-{task.Id:D5}";
                 await _context.SaveChangesAsync();
 
                 // Add assignments if specified
@@ -523,7 +559,7 @@ namespace DoableFinal.Controllers
 
                 await _notificationService.NotifyTaskUpdateAsync(task, $"New task '{task.Title}' has been created");
 
-                TempData["TaskMessage"] = "Task created successfully.";
+                TempData["TaskMessage"] = $"Task created successfully. Reference: {task.ReferenceNumber}";
                 return RedirectToAction(nameof(Tasks));
             }
             catch (Exception ex)

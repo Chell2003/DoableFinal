@@ -1,105 +1,190 @@
 @using DoableFinal.Models
 @{
     ViewData["Title"] = "Project Manager Dashboard";
+    var projectOverview = ViewBag.ProjectOverview as IEnumerable<dynamic> ?? new List<dynamic>();
+    var recentTasks = ViewBag.RecentTasks as IEnumerable<ProjectTask> ?? new List<ProjectTask>();
 }
 
 <div class="container-fluid">
-    <div class="row mb-4">
+    <!-- Header -->
+    <div class="row mb-3">
         <div class="col">
-            <h1 class="h3">Project Manager Dashboard</h1>
+            <h1 class="h3 mb-0">Project Manager Dashboard</h1>
             <p class="text-muted">Overview of your projects and team</p>
         </div>
+        <div class="col-auto d-flex align-items-center gap-2">
+            <a asp-action="CreateTask" class="btn btn-primary btn-sm"><i class="bi bi-plus-square me-1"></i>New Task</a>
+            <a asp-action="MyProjects" class="btn btn-outline-secondary btn-sm"><i class="bi bi-folder me-1"></i>All Projects</a>
+        </div>
     </div>
 
-    <div class="row">
-        <!-- Statistics -->
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-folder"></i>
-                </div>
+    <!-- KPI Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3 d-flex">
+            <div class="stat-card stat-card--primary w-100">
+                <div class="stat-icon"><i class="bi bi-folder"></i></div>
                 <div class="stat-value">@ViewBag.MyProjects</div>
                 <div class="stat-label">My Projects</div>
+                <small class="text-muted">&nbsp;</small>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-list-task"></i>
-                </div>
+        <div class="col-6 col-md-3 d-flex">
+            <div class="stat-card stat-card--primary w-100">
+                <div class="stat-icon"><i class="bi bi-list-task"></i></div>
                 <div class="stat-value">@ViewBag.MyTasks</div>
-                <div class="stat-label">My Tasks</div>
+                <div class="stat-label">Total Tasks</div>
+                <small class="text-success"><i class="bi bi-check-circle"></i> @ViewBag.CompletedTasks completed</small>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-clock"></i>
-                </div>
-                <div class="stat-value">@ViewBag.OverdueTasks</div>
+        <div class="col-6 col-md-3 d-flex">
+            <div class="stat-card stat-card--danger w-100">
+                <div class="stat-icon text-danger"><i class="bi bi-clock-history"></i></div>
+                <div class="stat-value text-danger">@ViewBag.OverdueTasks</div>
                 <div class="stat-label">Overdue Tasks</div>
+                <small class="text-muted">Need attention</small>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-people"></i>
-                </div>
-                <div class="stat-value">@ViewBag.TeamMembers.Count</div>
+        <div class="col-6 col-md-3 d-flex">
+            <div class="stat-card stat-card--primary w-100">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div class="stat-value">@(ViewBag.TeamMembers?.Count ?? 0)</div>
                 <div class="stat-label">Team Members</div>
+                <small class="text-muted">&nbsp;</small>
             </div>
         </div>
     </div>
 
-    <div class="row mt-4">
-        <!-- Recent Projects -->
-        <div class="col-md-6">
+    <!-- Project Overview Table -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">Recent Projects</h5>
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0"><i class="bi bi-folder2-open me-2 text-primary"></i>All My Projects Overview</h6>
+                    <a asp-action="MyProjects" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        @foreach (var project in ViewBag.RecentProjects ?? new List<Project>())
-                        {
-                            <a href="@Url.Action("ProjectDetails", new { id = project.Id })" 
-                               class="list-group-item list-group-item-action">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1">@project.Name</h6>
-                                    <small class="text-muted">@project.CreatedAt.ToString("MMM dd, yyyy")</small>
-                                </div>
-                                <p class="mb-1">@project.Description</p>
-                                <small class="text-muted">Status: @project.Status</small>
-                            </a>
-                        }
-                    </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-hover mb-0 no-sort" data-page-size="5">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Project</th>
+                                <th>Category</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Progress</th>
+                                <th class="text-center">Tasks</th>
+                                <th class="text-center">In Progress</th>
+                                <th class="text-center text-danger">Overdue</th>
+                                <th class="text-center">Team</th>
+                                <th class="text-center">Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in projectOverview)
+                            {
+                                var sc = item.Project.Status == "Completed" ? "success" :
+                                         item.Project.Status == "In Progress" ? "primary" :
+                                         item.Project.Status == "On Hold" ? "warning" : "secondary";
+                                <tr>
+                                    <td class="dashboard-td">
+                                        <a asp-action="ProjectDetails" asp-route-id="@item.Project.Id" class="text-decoration-none fw-semibold small">@item.Project.Name</a>
+                                    </td>
+                                    <td class="dashboard-td">
+                                        <small class="text-muted">@(string.IsNullOrEmpty((string)item.Project.Category) ? "—" : item.Project.Category)</small>
+                                    </td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-@sc">@item.Project.Status</span></td>
+                                    <td class="text-center dashboard-td">
+                                        <span class="fw-semibold small">@item.ProgressPercent%</span>
+                                    </td>
+                                    <td class="text-center dashboard-td">
+                                        <small>@item.CompletedTasks / @item.TotalTasks</small>
+                                    </td>
+                                    <td class="text-center dashboard-td">
+                                        <span class="badge bg-primary">@item.InProgressTasks</span>
+                                    </td>
+                                    <td class="text-center dashboard-td">
+                                        @if (item.OverdueTasks > 0)
+                                        {
+                                            <span class="badge bg-danger">@item.OverdueTasks</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td class="text-center dashboard-td">
+                                        <span class="badge bg-secondary">@item.TeamSize</span>
+                                    </td>
+                                    <td class="text-center dashboard-td">
+                                        @{ DateTime? endDate = (DateTime?)item.Project.EndDate; }
+                                        <small>@(endDate.HasValue ? endDate.Value.ToString("MMM dd, yyyy") : "—")</small>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!projectOverview.Any())
+                            {
+                                <tr><td colspan="9" class="text-center text-muted py-4">No projects assigned to you yet.</td></tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Team Overview -->
-        <div class="col-md-6">
+    <!-- Recent Tasks -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
             <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">Team Overview</h5>
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0"><i class="bi bi-list-check me-2 text-success"></i>Recent Tasks</h6>
+                    <a asp-action="Tasks" class="btn btn-sm btn-outline-success">View All</a>
                 </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        @foreach (var member in ViewBag.TeamMembers ?? new List<ApplicationUser>())
-                        {
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">@member.FirstName @member.LastName</h6>
-                                        <small class="text-muted">@member.Email</small>
-                                    </div>
-                                    <div>
-                                        <span class="badge bg-primary">@member.Role</span>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-hover mb-0 no-sort" data-page-size="5">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width:120px;">Ref #</th>
+                                <th>Task</th>
+                                <th>Project</th>
+                                <th>Category</th>
+                                <th class="text-center">Priority</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var task in recentTasks)
+                            {
+                                var pc = task.Priority == "High" ? "danger" : task.Priority == "Medium" ? "warning" : "secondary";
+                                var sc2 = task.Status == "Completed" ? "success" : task.Status == "In Progress" ? "primary" : task.Status == "On Hold" ? "warning" : "secondary";
+                                <tr>
+                                    <td class="dashboard-td">
+                                        <code class="small text-muted">@(task.ReferenceNumber ?? "—")</code>
+                                    </td>
+                                    <td class="dashboard-td">
+                                        <a asp-action="TaskDetails" asp-route-id="@task.Id" class="text-decoration-none fw-semibold small">@task.Title</a>
+                                    </td>
+                                    <td class="dashboard-td"><small class="text-muted">@(task.Project?.Name ?? "—")</small></td>
+                                    <td class="dashboard-td">
+                                        @if (!string.IsNullOrEmpty(task.Category))
+                                        {
+                                            <span class="badge bg-light text-dark border">@task.Category</span>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">—</small>
+                                        }
+                                    </td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-@pc">@task.Priority</span></td>
+                                    <td class="text-center dashboard-td"><span class="badge bg-@sc2">@task.Status</span></td>
+                                    <td class="text-center dashboard-td"><small>@task.DueDate.ToString("MMM dd, yyyy")</small></td>
+                                </tr>
+                            }
+                            @if (!recentTasks.Any())
+                            {
+                                <tr><td colspan="7" class="text-center text-muted py-4">No tasks found.</td></tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
