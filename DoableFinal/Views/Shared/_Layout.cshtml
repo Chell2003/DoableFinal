@@ -30,7 +30,7 @@
     <!-- Page-specific styles -->
     @await RenderSectionAsync("Styles", required: false)
 
-    @if (!User.IsInRole("Client"))
+    @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Client"))
     {
         <style>
             #mobile-block-overlay {
@@ -86,7 +86,7 @@
     }
 </head>
 <body>
-    @if (!User.IsInRole("Client"))
+    @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Client"))
     {
         <div id="mobile-block-overlay">
             <div class="block-icon">🔒</div>
