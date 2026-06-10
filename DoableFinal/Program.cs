@@ -37,6 +37,7 @@ builder.Services.AddScoped<TimelineAdjustmentService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<HomePageService>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddHostedService<DeadlineReminderService>();
 //Email Service
 builder.Services.AddScoped<EmailSender>();
 // Register ContentService for reading editable home pages
