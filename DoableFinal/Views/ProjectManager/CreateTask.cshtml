@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Create Task";
+    var preselectedProjectId = ViewBag.PreselectedProjectId as int?;
+    bool hasPreselectedProject = preselectedProjectId.HasValue && preselectedProjectId.Value > 0;
 }
 
 <div class="container-fluid">
@@ -20,12 +22,25 @@
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="mb-3">
-                            <label asp-for="ProjectId" class="form-label"></label>
-                            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
-                                <option value="">-- Select Project --</option>
-                            </select>
-                            <span asp-validation-for="ProjectId" class="text-danger"></span>
-                            <small id="projectDateInfo" class="form-text text-muted"></small>
+                            @if (hasPreselectedProject)
+                            {
+                                <input type="hidden" asp-for="ProjectId" />
+                                <label class="form-label fw-semibold">Project</label>
+                                <div class="form-control bg-light text-muted">
+                                    <i class="bi bi-folder-fill text-primary me-1"></i>
+                                    @(Model.Projects.FirstOrDefault(p => p.Value == preselectedProjectId.ToString())?.Text ?? "Selected Project")
+                                </div>
+                                <small class="text-info"><i class="bi bi-info-circle"></i> This task will be created under the selected project.</small>
+                            }
+                            else
+                            {
+                                <label asp-for="ProjectId" class="form-label"></label>
+                                <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                                    <option value="">-- Select Project --</option>
+                                </select>
+                                <span asp-validation-for="ProjectId" class="text-danger"></span>
+                                <small id="projectDateInfo" class="form-text text-muted"></small>
+                            }
                         </div>
 
                         <div class="mb-3">
@@ -142,9 +157,18 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-plus-square"></i> Create Task
                             </button>
-                            <a asp-action="Tasks" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left"></i> Back to Tasks
-                            </a>
+                            @if (hasPreselectedProject)
+                            {
+                                <a asp-action="ProjectDetails" asp-route-id="@preselectedProjectId" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Back to Project
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Tasks" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Back to Tasks
+                                </a>
+                            }
                         </div>
                     </form>
                 </div>
@@ -197,6 +221,7 @@
 
             const projectDates = @Html.Raw(ViewBag.ProjectDatesJson ?? "{}");
             const employees = @Html.Raw(ViewBag.EmployeesJson ?? "[]");
+            const hasPreselected = @Html.Raw(hasPreselectedProject ? "true" : "false");
 
             function getTodayString() {
 
@@ -366,11 +391,12 @@
                 }
             }
 
-            $('#ProjectId').change(function () {
+            if (!hasPreselected) {
+                $('#ProjectId').change(function () {
 
-                updateDateConstraints();
+                    updateDateConstraints();
 
-                const projectId = parseInt($(this).val());
+                    const projectId = parseInt($(this).val());
 
                 const currentSelection =
                     $('.select2-employee').val() || [];
@@ -398,6 +424,7 @@
                         .trigger('change');
                 }
             });
+            } // end if (!hasPreselected)
 
             $("#StartDate, #DueDate").change(function () {
 

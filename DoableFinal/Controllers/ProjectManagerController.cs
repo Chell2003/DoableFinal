@@ -342,7 +342,7 @@ namespace DoableFinal.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> CreateTask()
+        public async Task<IActionResult> CreateTask(int? projectId = null)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -392,10 +392,12 @@ namespace DoableFinal.Controllers
                     Value = p.Id.ToString(),
                     Text = p.Name
                 }).ToList(),
+                // Auto-set project if launched from ProjectDetails
+                ProjectId = projectId ?? 0,
                 AvailableEmployees = employees.Select(e => new
                 {
                     id = e.Id,
-                    text = $"{e.FirstName} {e.LastName} ({e.Email})", // or e.Email or full name if available
+                    text = $"{e.FirstName} {e.LastName} ({e.Email})",
                     projectAssignments = projectTaskAssignments
                         .Where(pta => pta.EmployeeId == e.Id)
                         .Select(pta => pta.ProjectId)
@@ -414,6 +416,7 @@ namespace DoableFinal.Controllers
             );
             ViewBag.ProjectDatesJson = System.Text.Json.JsonSerializer.Serialize(projectDatesJson);
             ViewBag.EmployeesJson = System.Text.Json.JsonSerializer.Serialize(model.AvailableEmployees);
+            ViewBag.PreselectedProjectId = projectId;
 
             return View(model);
         }
