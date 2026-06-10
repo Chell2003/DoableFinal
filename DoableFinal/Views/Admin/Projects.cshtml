@@ -11,31 +11,6 @@
 }
 
 <style>
-    /* ── Project card ─────────────────────────────────────────── */
-    .project-card {
-        border: none;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,.07);
-        transition: transform .2s ease, box-shadow .2s ease;
-        overflow: hidden;
-    }
-    .project-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0,0,0,.12);
-    }
-    .project-card .card-header-bar {
-        height: 5px;
-    }
-    .project-card .card-body { padding: 1.1rem 1.25rem .75rem; }
-    .project-card .card-footer { background: transparent; border-top: 1px solid #f0f0f0; padding: .75rem 1.25rem; }
-
-    /* progress bar */
-    .project-card .progress { height: 6px; border-radius: 3px; }
-
-    /* badge tweak */
-    .project-card .badge { font-size: .72rem; letter-spacing: .03em; }
-
-    /* ── "New Task" / "Create Project" green button animation ── */
     .btn-new-task {
         position: relative;
         overflow: hidden;
@@ -56,37 +31,24 @@
     }
     .btn-new-task:hover::after { transform: scaleX(1); }
     .btn-new-task:active { transform: scale(.97); }
-
-    /* ── Mobile: keep category input right below name ────────── */
-    @media (max-width: 767.98px) {
-        .form-name-category .col-md-8,
-        .form-name-category .col-md-4 {
-            width: 100% !important;
-        }
-    }
-
-    /* empty state */
-    .empty-state { padding: 3rem 1rem; text-align: center; }
-    .empty-state i { font-size: 3rem; color: #ced4da; margin-bottom: 1rem; }
 </style>
 
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
 @if (TempData["ErrorMessage"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
 
 <div class="container-fluid px-4">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0">Projects</h1>
@@ -102,27 +64,28 @@
         </div>
     </div>
 
-    <!-- Filters -->
     <div class="card mb-4">
         <div class="card-header bg-light">
             <h5 class="mb-0"><i class="bi bi-funnel"></i> Filters &amp; Search</h5>
         </div>
         <div class="card-body">
-            <form method="get" class="row g-3" role="search">
-                <div class="col-md-4">
+            <form method="get" class="row g-3" role="search" aria-label="Project search and filter">
+                <div class="col-md-5">
                     <label for="searchInput" class="form-label">Search</label>
-                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Project name, client, or manager…" value="@query" />
+                    <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by project name or client..." value="@query" aria-label="Search projects" />
                 </div>
+
                 <div class="col-md-2">
                     <label for="statusFilter" class="form-label">Status</label>
                     <select id="statusFilter" name="statusFilter" class="form-select">
                         <option value="">All statuses</option>
-                        <option value="Not Started"  selected="@(statusFilter=="Not Started"  ? "selected":null)">Not Started</option>
-                        <option value="In Progress"  selected="@(statusFilter=="In Progress"  ? "selected":null)">In Progress</option>
-                        <option value="On Hold"       selected="@(statusFilter=="On Hold"       ? "selected":null)">On Hold</option>
-                        <option value="Completed"    selected="@(statusFilter=="Completed"    ? "selected":null)">Completed</option>
+                        <option value="Not Started" selected="@(statusFilter == "Not Started" ? "selected" : null)">Not Started</option>
+                        <option value="In Progress" selected="@(statusFilter == "In Progress" ? "selected" : null)">In Progress</option>
+                        <option value="On Hold" selected="@(statusFilter == "On Hold" ? "selected" : null)">On Hold</option>
+                        <option value="Completed" selected="@(statusFilter == "Completed" ? "selected" : null)">Completed</option>
                     </select>
                 </div>
+
                 <div class="col-md-3">
                     <label for="categoryFilter" class="form-label">Category</label>
                     <input type="text" id="categoryFilter" name="categoryFilter" class="form-control"
@@ -137,43 +100,54 @@
                         <option value="Internal Project"></option>
                     </datalist>
                 </div>
-                <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button class="btn btn-primary flex-grow-1" type="submit">
-                        <i class="bi bi-search"></i> Search
+
+                <div class="col-md-2">
+                    <label for="applyBtn" class="form-label">&nbsp;</label>
+                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
+                        <i class="bi bi-search"></i> Apply Filters
                     </button>
-                    <a class="btn btn-outline-secondary" href="@Url.Action("Projects","Admin")">
-                        <i class="bi bi-x-circle"></i>
-                    </a>
                 </div>
 
-                <div class="col-12"><hr class="my-1" /></div>
+                <div class="col-12">
+                    <hr class="my-2" />
+                </div>
 
                 <div class="col-md-4">
                     <label for="fromDate" class="form-label"><i class="bi bi-calendar-event"></i> From Date</label>
-                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" />
+                    <input type="date" id="fromDate" name="fromDate" class="form-control" value="@fromDate" aria-label="From date" />
                 </div>
+
                 <div class="col-md-4">
                     <label for="toDate" class="form-label"><i class="bi bi-calendar-event"></i> To Date</label>
-                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" />
+                    <input type="date" id="toDate" name="toDate" class="form-control" value="@toDate" aria-label="To date" />
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button class="btn btn-outline-primary w-100" type="submit">
+
+                <div class="col-md-4">
+                    <label for="applyDateBtn" class="form-label">&nbsp;</label>
+                    <button id="applyDateBtn" class="btn btn-outline-primary w-100" type="submit">
                         <i class="bi bi-calendar3"></i> Apply Date Range
                     </button>
+                </div>
+
+                <div class="col-12 text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Projects", "Admin")">
+                        <i class="bi bi-x-circle"></i> Reset Filters
+                    </a>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Cards -->
-    <div class="row g-4">
+    <div class="row">
         @if (!Model.Any())
         {
             <div class="col-12">
-                <div class="empty-state">
-                    <i class="bi bi-folder2-open d-block"></i>
-                    <h5>No Projects Found</h5>
-                    <p class="text-muted">Try adjusting your filters or <a asp-action="CreateProject">create a new project</a>.</p>
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-folder-open fa-3x text-muted"></i>
+                    </div>
+                    <h4>No Projects Found</h4>
+                    <p class="text-muted">No projects match your search. Try adjusting your filters or <a asp-action="CreateProject">create a new project</a>.</p>
                 </div>
             </div>
         }
@@ -182,89 +156,77 @@
             @foreach (var project in Model)
             {
                 var progress = projectProgress.ContainsKey(project.Id) ? projectProgress[project.Id] : 0;
-                var (statusColor, headerColor) = project.Status switch {
-                    "In Progress" => ("primary",  "#0d6efd"),
-                    "Completed"   => ("success",  "#198754"),
-                    "On Hold"     => ("warning",  "#ffc107"),
-                    _             => ("secondary","#6c757d")
-                };
 
-                <div class="col-md-6 col-lg-4">
-                    <div class="card project-card h-100">
-                        <!-- coloured top bar -->
-                        <div class="card-header-bar" style="background:@headerColor;"></div>
-
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
                         <div class="card-body">
-                            <!-- Title + category -->
-                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                <h5 class="card-title mb-0 fw-semibold" style="font-size:1rem;">@project.Name</h5>
-                                <span class="badge bg-@statusColor ms-2 flex-shrink-0">@project.Status</span>
-                            </div>
+                            <h5 class="card-title">@project.Name</h5>
+
                             @if (!string.IsNullOrEmpty(project.Category))
                             {
-                                <span class="badge bg-light text-secondary border mb-2" style="font-size:.72rem;">
-                                    <i class="bi bi-tag me-1"></i>@project.Category
-                                </span>
-                            }
-
-                            <!-- Description -->
-                            @if (!string.IsNullOrEmpty(project.Description))
-                            {
-                                <p class="card-text text-muted small mb-3"
-                                   style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                                    @project.Description
+                                <p class="mb-2">
+                                    <span class="badge bg-light text-secondary border" style="font-size:.75rem;">
+                                        <i class="bi bi-tag me-1"></i>@project.Category
+                                    </span>
                                 </p>
                             }
 
-                            <!-- Progress -->
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-person me-1"></i>Client:
+                                    <strong>@(project.Client != null ? $"{project.Client.FirstName} {project.Client.LastName}" : "—")</strong>
+                                </small>
+                            </div>
                             <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">
+                                    <i class="bi bi-person-badge me-1"></i>Manager:
+                                    <strong>@(project.ProjectManager != null ? $"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}" : "—")</strong>
+                                </small>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
                                     <small class="text-muted">Progress</small>
-                                    <small class="text-muted fw-semibold">@progress%</small>
+                                    <small class="text-muted">@progress%</small>
                                 </div>
-                                <div class="progress">
-                                    <div class="progress-bar bg-@statusColor" role="progressbar"
-                                         style="width:@progress%;"
-                                         aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width: @progress%;"
+                                         aria-valuenow="@progress"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"></div>
                                 </div>
                             </div>
 
-                            <!-- Client + PM -->
-                            <div class="row g-1 mb-2">
-                                <div class="col-6">
-                                    <small class="text-muted d-block" style="font-size:.72rem;">CLIENT</small>
-                                    <small class="fw-semibold">@(project.Client != null ? $"{project.Client.FirstName} {project.Client.LastName}" : "—")</small>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block" style="font-size:.72rem;">MANAGER</small>
-                                    <small class="fw-semibold">@(project.ProjectManager != null ? $"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}" : "—")</small>
-                                </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-@(project.Status switch {
+                                    "Not Started" => "secondary",
+                                    "In Progress" => "primary",
+                                    "On Hold" => "warning",
+                                    "Completed" => "success",
+                                    _ => "secondary"
+                                })">@project.Status</span>
+                                <small class="text-muted">Due: @(project.EndDate?.ToString("MMM dd, yyyy") ?? "No end date")</small>
                             </div>
                         </div>
-
-                        <div class="card-footer">
+                        <div class="card-footer bg-transparent">
                             <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar3 me-1"></i>
-                                    Due: @(project.EndDate?.ToString("MMM dd, yyyy") ?? "No end date")
-                                </small>
+                                <small class="text-muted">Started: @project.StartDate.ToString("MMM dd, yyyy")</small>
                                 <div class="d-flex gap-1">
                                     <a asp-action="EditProject" asp-route-id="@project.Id"
                                        class="btn btn-sm btn-outline-secondary" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <a asp-action="ProjectDetails" asp-route-id="@project.Id"
-                                       class="btn btn-sm btn-outline-primary">
-                                        View Details
-                                    </a>
                                     @if (!project.IsArchived && project.Status != "In Progress")
                                     {
                                         <button type="button" class="btn btn-sm btn-outline-warning"
-                                                onclick="showArchiveModal(@project.Id, '@Html.Raw(project.Name.Replace("'","\\'")')"
+                                                onclick="showArchiveModal(@project.Id, '@Html.Raw(project.Name.Replace("'", "\\'"))')"
                                                 title="Archive">
                                             <i class="bi bi-archive"></i>
                                         </button>
                                     }
+                                    <a asp-action="ProjectDetails" asp-route-id="@project.Id"
+                                       class="btn btn-sm btn-outline-primary">View Details</a>
                                 </div>
                             </div>
                         </div>
@@ -281,17 +243,17 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="archiveModalLabel">Archive Project</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to archive <strong id="projectNameModal"></strong>?
+                Are you sure you want to archive the project "<strong id="projectNameModal"></strong>"?
                 <p class="text-muted mt-2 mb-0">Archived projects are still available for reference but cannot be modified.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form id="archiveForm" method="post" class="d-inline">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-warning">Archive</button>
+                    <button type="submit" class="btn btn-warning">Archive Project</button>
                 </form>
             </div>
         </div>
