@@ -605,7 +605,6 @@
                         <thead>
                             <tr>
                                 <th class="sortable" data-sort="name" style="padding-left:1.25rem;">Name <i class="bi bi-arrow-down-up ms-1"></i></th>
-                                <th>Project Manager</th>
                                 <th class="sortable" data-sort="startDate">Start Date <i class="bi bi-arrow-down-up ms-1"></i></th>
                                 <th class="sortable" data-sort="endDate">End Date <i class="bi bi-arrow-down-up ms-1"></i></th>
                                 <th>Status</th>
@@ -646,7 +645,6 @@
                                                   data-bs-toggle="tooltip" data-bs-title="Past due date">Overdue</span>
                                         }
                                     </td>
-                                    <td>@($"{project.ProjectManager?.FirstName} {project.ProjectManager?.LastName}")</td>
                                     <td style="font-size:.85rem; color:#6b84b0;">@project.StartDate.ToShortDateString()</td>
                                     <td style="font-size:.85rem; color:#6b84b0;">@(project.EndDate?.ToShortDateString() ?? "Not set")</td>
                                     <td>
