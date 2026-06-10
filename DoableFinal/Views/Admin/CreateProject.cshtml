@@ -66,17 +66,20 @@
                             </div>
                             <div class="col-12 col-md-4">
                                 <div class="mb-0">
-                                    <label asp-for="Category" class="form-label fw-semibold"></label>
-                                    <input asp-for="Category" class="form-control" placeholder="e.g. Additional Feature" list="categoryList" />
-                                    <datalist id="categoryList">
-                                        <option value="Additional Feature"></option>
-                                        <option value="Bug Fix"></option>
-                                        <option value="New Module"></option>
-                                        <option value="Maintenance"></option>
-                                        <option value="Research"></option>
-                                        <option value="Client Request"></option>
-                                        <option value="Internal Project"></option>
-                                    </datalist>
+                                    <label asp-for="Category" class="form-label fw-semibold">Category</label>
+                                    <select asp-for="Category" class="form-select" id="categorySelect">
+                                        <option value="">-- Select Category --</option>
+                                        <option value="Additional Feature">Additional Feature</option>
+                                        <option value="Bug Fix">Bug Fix</option>
+                                        <option value="New Module">New Module</option>
+                                        <option value="Maintenance">Maintenance</option>
+                                        <option value="Research">Research</option>
+                                        <option value="Client Request">Client Request</option>
+                                        <option value="Internal Project">Internal Project</option>
+                                        <option value="Client Onboarding">Client Onboarding</option>
+                                        <option value="Other">Other (specify)</option>
+                                    </select>
+                                    <input type="text" id="categoryCustom" name="Category" class="form-control mt-2" placeholder="Enter custom category…" maxlength="100" style="display:none;" />
                                     <span asp-validation-for="Category" class="text-danger"></span>
                                 </div>
                             </div>
@@ -178,6 +181,28 @@
 
             // Initialize Select2 for Client and PM for searchable dropdowns
             $('.select2-client, .select2-pm').select2({ width: '100%' });
+
+            // Category: show custom text input when "Other" is selected
+            $('#categorySelect').on('change', function () {
+                var custom = $('#categoryCustom');
+                if ($(this).val() === 'Other') {
+                    $(this).removeAttr('name');          // don't post the select
+                    custom.attr('name', 'Category').show().focus();
+                } else {
+                    $(this).attr('name', 'Category');    // post the select value
+                    custom.removeAttr('name').hide().val('');
+                }
+            });
+
+            // On page load restore state if model was invalid and returned "Other"
+            (function () {
+                var sel = $('#categorySelect');
+                var val = sel.val();
+                if (val === 'Other' || (val === '' && '@Model?.Category' !== '' && !sel.find('option[value="@Model?.Category"]').length)) {
+                    sel.val('Other').trigger('change');
+                    $('#categoryCustom').val('@Model?.Category');
+                }
+            })();
 
             // Auto-update status based on StartDate
             function checkAutoStatus() {
