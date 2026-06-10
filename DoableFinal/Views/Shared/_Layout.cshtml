@@ -30,7 +30,7 @@
     <!-- Page-specific styles -->
     @await RenderSectionAsync("Styles", required: false)
 
-    @if (User.IsInRole("Admin"))
+    @if (!User.IsInRole("Client"))
     {
         <style>
             #mobile-block-overlay {
@@ -86,12 +86,12 @@
     }
 </head>
 <body>
-    @if (User.IsInRole("Admin"))
+    @if (!User.IsInRole("Client"))
     {
         <div id="mobile-block-overlay">
             <div class="block-icon">🔒</div>
-            <h2>Admin Panel — Desktop Only</h2>
-            <p>The admin dashboard is designed for desktop and laptop use. Please switch to a PC or laptop to access the admin panel.</p>
+            <h2>Desktop Only</h2>
+            <p>This panel is designed for desktop and laptop use. Please switch to a PC or laptop to continue.</p>
             <div class="device-icons">
                 <span title="Laptop">💻</span>
                 <span title="Desktop">🖥️</span>
