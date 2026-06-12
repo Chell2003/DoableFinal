@@ -209,13 +209,16 @@
         // ── Project hint ──────────────────────────────────────────────
         const projectProgressData = @Html.Raw(ViewBag.ProjectProgressJson ?? "[]");
 
-        document.getElementById('projectSelect').addEventListener('change', function () {
-            const val = parseInt(this.value);
-            const hint = document.getElementById('projectDisabledHint');
-            if (!val) { hint.style.display = 'none'; return; }
-            const proj = projectProgressData.find(p => p.id === val);
-            hint.style.display = (proj && !proj.hasProgress) ? 'block' : 'none';
-        });
+        const projectSelectEl = document.getElementById('projectSelect');
+        if (projectSelectEl) {
+            projectSelectEl.addEventListener('change', function () {
+                const val = parseInt(this.value);
+                const hint = document.getElementById('projectDisabledHint');
+                if (!val) { hint.style.display = 'none'; return; }
+                const proj = projectProgressData.find(p => p.id === val);
+                hint.style.display = (proj && !proj.hasProgress) ? 'block' : 'none';
+            });
+        }
 
         // ── File drag & drop / preview ────────────────────────────────
         const dropZone = document.getElementById('dropZone');
