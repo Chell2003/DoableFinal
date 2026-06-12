@@ -4,6 +4,33 @@
     ViewData["Title"] = "Create Ticket";
 }
 
+<style>
+    .drop-zone {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 24px;
+        text-align: center;
+        background: #f8f9fa;
+        cursor: pointer;
+        transition: border-color .2s, background .2s;
+    }
+    .drop-zone.dragover { border-color: #0d6efd; background: #e8f0fe; }
+    .drop-zone:hover { border-color: #adb5bd; }
+    .file-preview-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        font-size: .875rem;
+    }
+    .file-preview-item .file-icon { font-size: 1.1rem; margin-right: 8px; }
+    .file-preview-item .remove-file { cursor: pointer; color: #dc3545; border: none; background: none; padding: 0; }
+</style>
+
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
@@ -11,44 +38,50 @@
         </div>
     </div>
 
-    
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger">
-            <pre>@TempData["Error"]</pre>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <pre class="mb-0">@TempData["Error"]</pre>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-
-   
+    @if (TempData["AttachmentWarning"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show">
+            <i class="fas fa-exclamation-triangle me-2"></i>@TempData["AttachmentWarning"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
     <div class="card">
         <div class="card-body">
             @if (TempData["ValidationError"] != null)
             {
-                <div class="alert alert-danger">
-                    @TempData["ValidationError"]
-                </div>
+                <div class="alert alert-danger">@TempData["ValidationError"]</div>
             }
-            <form asp-action="Create" asp-controller="Ticket" method="post" id="ticketForm">
+
+            <form asp-action="Create" asp-controller="Ticket" method="post"
+                  enctype="multipart/form-data" id="ticketForm">
                 @Html.AntiForgeryToken()
-                <div asp-validation-summary="All" class="text-danger"></div>
-                
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
                 <div class="mb-3">
-                    <label asp-for="Title" class="form-label">Title</label>
-                    <input asp-for="Title" class="form-control" required />
+                    <label asp-for="Title" class="form-label fw-semibold">Title</label>
+                    <input asp-for="Title" class="form-control" required placeholder="Brief summary of your issue" />
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Description" class="form-label">Description</label>
-                    <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                    <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="5"
+                              placeholder="Describe your issue in detail..."></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
 
                 <div class="row">
                     <div class="col-12 col-md-6">
                         <div class="mb-3">
-                            <label asp-for="Type" class="form-label">Type</label>
+                            <label asp-for="Type" class="form-label fw-semibold">Type</label>
                             <select asp-for="Type" asp-items="Model.TicketTypes" class="form-select">
                                 <option value="">Select Type</option>
                             </select>
@@ -57,7 +90,7 @@
                     </div>
                     <div class="col-12 col-md-6">
                         <div class="mb-3">
-                            <label asp-for="Priority" class="form-label">Priority</label>
+                            <label asp-for="Priority" class="form-label fw-semibold">Priority</label>
                             <select asp-for="Priority" asp-items="Model.PriorityLevels" class="form-select">
                                 <option value="">Select Priority</option>
                             </select>
@@ -66,21 +99,37 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-12 col-md-6">
-                        <div class="mb-3">
-                            <label asp-for="ProjectId" class="form-label">Project</label>
-                            <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
-                                <option value="">Select Project</option>
-                            </select>
-                            <span asp-validation-for="ProjectId" class="text-danger"></span>
-                        </div>
-                    </div>
-                 
+                <div class="mb-3">
+                    <label asp-for="ProjectId" class="form-label fw-semibold">Project <span class="text-muted fw-normal">(Optional)</span></label>
+                    <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                        <option value="">No project (general ticket)</option>
+                    </select>
+                    <span asp-validation-for="ProjectId" class="text-danger"></span>
                 </div>
 
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-primary" id="submitTicket" onclick="console.log('Submit button clicked')">Create Ticket</button>
+                <!-- Attachments -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        Attachments <span class="text-muted fw-normal">(Optional)</span>
+                    </label>
+                    <div class="drop-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                        <p class="mb-1 text-muted">
+                            Drag &amp; drop files here, or <span class="text-primary">click to browse</span>
+                        </p>
+                        <small class="text-muted">
+                            Allowed: JPG, PNG, GIF, PDF, DOC, DOCX, XLS, XLSX, TXT, ZIP, MP4, MOV &mdash; Max 10MB each
+                        </small>
+                        <input type="file" name="attachments" id="fileInput" class="d-none"
+                               multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.mp4,.mov" />
+                    </div>
+                    <div id="filePreviewList" class="mt-2"></div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i> Create Ticket
+                    </button>
                     <a asp-action="Index" class="btn btn-secondary">Back to List</a>
                 </div>
             </form>
@@ -91,42 +140,80 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     <script>
-        $(document).ready(function () {
-            console.log('Document ready');
-            
-            $('#ticketForm').on('submit', function (e) {
-                console.log('Form submit triggered');
-                
-                var formData = {
-                    Title: $('#Title').val(),
-                    Description: $('#Description').val(),
-                    Priority: $('#Priority').val(),
-                    Type: $('#Type').val(),
-                    ProjectId: $('#ProjectId').val(),
-                    AssignedToId: $('#AssignedToId').val()
-                };
-                
-                console.log('Form data:', formData);
-                
-                // Check if form is valid
-                if (!$(this).valid()) {
-                    console.log('Form validation failed');
-                    e.preventDefault();
-                    return false;
-                }
-                
-                console.log('Form validation passed, proceeding with submission');
-            });
+        // ── File drag & drop / preview ────────────────────────────────
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewList = document.getElementById('filePreviewList');
+        let selectedFiles = new DataTransfer();
 
-            // Add click handler to submit button
-            $('#submitTicket').on('click', function(e) {
-                console.log('Submit button clicked');
-            });
-
-            // Monitor validation errors
-            $('#ticketForm').on('invalid-form', function(e, validator) {
-                console.log('Validation errors:', validator.errorList);
-            });
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            addFiles(e.dataTransfer.files);
         });
+        fileInput.addEventListener('change', function () { addFiles(this.files); });
+
+        function addFiles(files) {
+            const maxSize = 10 * 1024 * 1024;
+            const allowed = ['.jpg','.jpeg','.png','.gif','.pdf','.doc','.docx','.xls','.xlsx','.txt','.zip','.mp4','.mov'];
+            for (const file of files) {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!allowed.includes(ext)) { alert(`"${file.name}" has an unsupported file type.`); continue; }
+                if (file.size > maxSize) { alert(`"${file.name}" exceeds the 10MB limit.`); continue; }
+                let isDup = false;
+                for (const f of selectedFiles.files) { if (f.name === file.name && f.size === file.size) { isDup = true; break; } }
+                if (!isDup) selectedFiles.items.add(file);
+            }
+            fileInput.files = selectedFiles.files;
+            renderPreviews();
+        }
+
+        function removeFile(index) {
+            const dt = new DataTransfer();
+            for (let i = 0; i < selectedFiles.files.length; i++) {
+                if (i !== index) dt.items.add(selectedFiles.files[i]);
+            }
+            selectedFiles = dt;
+            fileInput.files = selectedFiles.files;
+            renderPreviews();
+        }
+
+        function fileIcon(name) {
+            const ext = name.split('.').pop().toLowerCase();
+            if (['jpg','jpeg','png','gif'].includes(ext)) return '🖼️';
+            if (ext === 'pdf') return '📄';
+            if (['doc','docx'].includes(ext)) return '📝';
+            if (['xls','xlsx'].includes(ext)) return '📊';
+            if (ext === 'zip') return '🗜️';
+            if (['mp4','mov'].includes(ext)) return '🎥';
+            return '📎';
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function renderPreviews() {
+            previewList.innerHTML = '';
+            for (let i = 0; i < selectedFiles.files.length; i++) {
+                const f = selectedFiles.files[i];
+                const div = document.createElement('div');
+                div.className = 'file-preview-item';
+                div.innerHTML = `
+                    <span>
+                        <span class="file-icon">${fileIcon(f.name)}</span>
+                        ${f.name} <small class="text-muted">(${formatSize(f.size)})</small>
+                    </span>
+                    <button type="button" class="remove-file" onclick="removeFile(${i})" title="Remove">
+                        <i class="fas fa-times-circle"></i>
+                    </button>`;
+                previewList.appendChild(div);
+            }
+        }
     </script>
 }

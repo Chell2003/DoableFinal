@@ -205,7 +205,7 @@ namespace DoableFinal.Controllers
         [HttpPost]
 [ValidateAntiForgeryToken]
 [Authorize(Roles = "Client")]
-public async Task<IActionResult> Create(CreateTicketViewModel model)
+public async Task<IActionResult> Create(CreateTicketViewModel model, List<IFormFile>? attachments)
 {
     var debugInfo = new System.Text.StringBuilder();
     debugInfo.AppendLine($"ModelState.IsValid: {ModelState.IsValid}");
@@ -224,17 +224,10 @@ public async Task<IActionResult> Create(CreateTicketViewModel model)
         return View(model);
     }
 
-    if (user == null)
-    {
-        TempData["Error"] = "User not found.";
-        return RedirectToAction("Login", "Account");
-    }
-
     try
     {
         debugInfo.AppendLine("Starting ticket creation process...");
 
-       
         var ticket = new Ticket
         {
             Title = model.Title,
@@ -253,9 +246,7 @@ public async Task<IActionResult> Create(CreateTicketViewModel model)
         debugInfo.AppendLine("Added ticket to context");
 
         var saveResult = await _context.SaveChangesAsync();
-
-            
-                debugInfo.AppendLine($"SaveChangesAsync result: {saveResult}");
+        debugInfo.AppendLine($"SaveChangesAsync result: {saveResult}");
 
         if (saveResult <= 0)
         {
@@ -264,7 +255,41 @@ public async Task<IActionResult> Create(CreateTicketViewModel model)
 
         debugInfo.AppendLine($"Ticket saved successfully. ID: {ticket.Id}");
 
-       
+        // Handle file attachments
+        if (attachments != null && attachments.Any())
+        {
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".zip", ".mp4", ".mov" };
+            const long maxFileSize = 10 * 1024 * 1024; // 10MB
+
+            foreach (var file in attachments)
+            {
+                if (file.Length == 0) continue;
+                if (file.Length > maxFileSize) { TempData["AttachmentWarning"] = $"'{file.FileName}' exceeds 10MB and was skipped."; continue; }
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(ext)) { TempData["AttachmentWarning"] = $"File type '{ext}' is not allowed."; continue; }
+
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tickets", ticket.Id.ToString());
+                Directory.CreateDirectory(uploadsFolder);
+                var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                    await file.CopyToAsync(stream);
+
+                _context.TicketAttachments.Add(new TicketAttachment
+                {
+                    TicketId = ticket.Id,
+                    FileName = file.FileName,
+                    FilePath = $"/uploads/tickets/{ticket.Id}/{uniqueFileName}",
+                    FileType = file.ContentType,
+                    FileSize = file.Length,
+                    UploadedById = user.Id,
+                    UploadedAt = DateTime.UtcNow
+                });
+            }
+            await _context.SaveChangesAsync();
+        }
+
         debugInfo.AppendLine("Beginning notification process...");
 
       
