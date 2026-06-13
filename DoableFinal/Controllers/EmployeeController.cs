@@ -45,12 +45,12 @@ namespace DoableFinal.Controllers
         /// front-end can pop a toast without reloading the page.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetRecentUnread()
+        public async Task<IActionResult> GetRecentUnread(int minutes = 2)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var since = DateTime.UtcNow.AddMinutes(-2);
+            var since = DateTime.UtcNow.AddMinutes(-minutes);
             var items = await _context.Notifications
                 .Where(n => n.UserId == userId && !n.IsRead && n.CreatedAt >= since)
                 .OrderByDescending(n => n.CreatedAt)
