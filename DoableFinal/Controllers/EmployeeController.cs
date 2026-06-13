@@ -64,6 +64,42 @@ namespace DoableFinal.Controllers
             return Json(items);
         }
 
+        /// <summary>
+        /// Returns tasks assigned to the logged-in employee that are due tomorrow.
+        /// Called on every login to show immediate deadline pop-ups regardless of
+        /// whether the background reminder service has run.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetDeadlinesTomorrow()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var tomorrowStart = DateTime.UtcNow.Date.AddDays(1);
+            var tomorrowEnd   = tomorrowStart.AddDays(1);
+
+            var tasks = await _context.TaskAssignments
+                .Include(ta => ta.ProjectTask)
+                    .ThenInclude(t => t.Project)
+                .Where(ta =>
+                    ta.EmployeeId == userId &&
+                    ta.ProjectTask.Status != "Completed" &&
+                    !ta.ProjectTask.IsArchived &&
+                    ta.ProjectTask.DueDate >= tomorrowStart &&
+                    ta.ProjectTask.DueDate < tomorrowEnd)
+                .Select(ta => new
+                {
+                    id      = ta.ProjectTask.Id,
+                    title   = ta.ProjectTask.Title,
+                    project = ta.ProjectTask.Project != null ? ta.ProjectTask.Project.Name : "your project",
+                    dueDate = ta.ProjectTask.DueDate,
+                    link    = "/Employee/TaskDetails/" + ta.ProjectTask.Id
+                })
+                .ToListAsync();
+
+            return Json(tasks);
+        }
+
         [HttpPost]
         public async Task<IActionResult> MarkNotificationAsRead(int id, string? returnUrl = null)
         {

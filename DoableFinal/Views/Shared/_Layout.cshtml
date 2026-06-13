@@ -267,7 +267,7 @@
                     }
                     <li>
                         <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
-                            <a href="javascript:void(0)" onclick="document.getElementById('logoutForm').submit()">
+                            <a href="javascript:void(0)" onclick="sessionStorage.removeItem('loginPopupShown'); sessionStorage.removeItem('shownNotifIds'); document.getElementById('logoutForm').submit()">
                                 <i class="bi bi-box-arrow-right"></i>
                                 <span>Logout</span>
                             </a>
@@ -480,16 +480,23 @@
                 return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
             }
 
-            // loginPoll: on first login, fetch ALL unread notifications (no time limit)
+            // loginPoll: on login, directly check tasks due tomorrow — no dependency
+            // on background service having run first
             function loginPoll() {
                 if (loginShown) return;
-                fetch('/Employee/GetRecentUnread?all=true')
+                fetch('/Employee/GetDeadlinesTomorrow')
                     .then(function (r) { return r.ok ? r.json() : []; })
-                    .then(function (items) {
-                        items.forEach(function (n) {
-                            if (shownIds.indexOf(n.id) === -1) {
-                                showToast(n);
-                                shownIds.push(n.id);
+                    .then(function (tasks) {
+                        tasks.forEach(function (t) {
+                            var key = 'deadline-' + t.id;
+                            if (shownIds.indexOf(key) === -1) {
+                                showToast({
+                                    id:      key,
+                                    title:   '⏰ Deadline Tomorrow: ' + t.title,
+                                    message: 'Your task "' + t.title + '" in project "' + t.project + '" is due tomorrow. Please make sure it's completed on time.',
+                                    link:    t.link
+                                });
+                                shownIds.push(key);
                             }
                         });
                         sessionStorage.setItem('shownNotifIds', JSON.stringify(shownIds.slice(-50)));
