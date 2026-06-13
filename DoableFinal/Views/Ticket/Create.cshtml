@@ -101,9 +101,24 @@
 
                 <div class="mb-3">
                     <label asp-for="ProjectId" class="form-label fw-semibold">Project <span class="text-muted fw-normal">(Optional)</span></label>
-                    <select asp-for="ProjectId" asp-items="Model.Projects" class="form-select">
+                    <select asp-for="ProjectId" class="form-select" id="projectSelect">
                         <option value="">No project (general ticket)</option>
+                        @foreach (var item in Model.Projects)
+                        {
+                            if (item.Disabled)
+                            {
+                                <option value="@item.Value" disabled class="text-muted">@item.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
                     </select>
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Projects with no tasks are grayed out and cannot be selected.
+                    </small>
                     <span asp-validation-for="ProjectId" class="text-danger"></span>
                 </div>
 

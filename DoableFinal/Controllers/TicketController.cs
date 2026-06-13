@@ -34,35 +34,43 @@ namespace DoableFinal.Controllers
 
         private async Task ReloadFormData(CreateTicketViewModel model, string clientId)
         {
-            var projects = await _context.Projects
+            var projectsRaw = await _context.Projects
+                .Include(p => p.Tasks)
                 .Where(p => p.ClientId == clientId && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            model.Projects = projects.Select(p => new SelectListItem
+            model.Projects = projectsRaw.Select(p =>
             {
-                Value = p.Id.ToString(),
-                Text = p.Name
+                var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                var completedTasks = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
+                var progress = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
+                var hasProgress = totalTasks > 0;
+                return new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = hasProgress ? $"{p.Name} ({progress}% done)" : $"{p.Name} (no tasks yet)",
+                    Disabled = !hasProgress
+                };
             }).ToList();
 
-          
             model.Assignees = new List<SelectListItem>();
 
             model.PriorityLevels = new List<SelectListItem>
-    {
-        new SelectListItem { Value = "Low", Text = "Low" },
-        new SelectListItem { Value = "Medium", Text = "Medium" },
-        new SelectListItem { Value = "High", Text = "High" },
-        new SelectListItem { Value = "Critical", Text = "Critical" }
-    };
+            {
+                new SelectListItem { Value = "Low", Text = "Low" },
+                new SelectListItem { Value = "Medium", Text = "Medium" },
+                new SelectListItem { Value = "High", Text = "High" },
+                new SelectListItem { Value = "Critical", Text = "Critical" }
+            };
 
             model.TicketTypes = new List<SelectListItem>
-    {
-        new SelectListItem { Value = "Bug", Text = "Bug" },
-        new SelectListItem { Value = "Feature Request", Text = "Feature Request" },
-        new SelectListItem { Value = "Support", Text = "Support" },
-        new SelectListItem { Value = "Other", Text = "Other" }
-    };
+            {
+                new SelectListItem { Value = "Bug", Text = "Bug" },
+                new SelectListItem { Value = "Feature Request", Text = "Feature Request" },
+                new SelectListItem { Value = "Support", Text = "Support" },
+                new SelectListItem { Value = "Other", Text = "Other" }
+            };
         }
         public async Task<IActionResult> Index(
     string? q = "",
@@ -167,21 +175,30 @@ namespace DoableFinal.Controllers
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null) return Challenge();
 
-            var projects = await _context.Projects
+            var projectsRaw = await _context.Projects
+                .Include(p => p.Tasks)
                 .Where(p => p.ClientId == currentUser.Id && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            var viewModel = new CreateTicketViewModel
+            var projects = projectsRaw.Select(p =>
             {
-                Projects = projects.Select(p => new SelectListItem
+                var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                var completedTasks = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
+                var progress = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
+                var hasProgress = totalTasks > 0;
+                return new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = p.Name
-                }).ToList(),
-                
-                Assignees = new List<SelectListItem>(),
+                    Text = hasProgress ? $"{p.Name} ({progress}% done)" : $"{p.Name} (no tasks yet)",
+                    Disabled = !hasProgress
+                };
+            }).ToList();
 
+            var viewModel = new CreateTicketViewModel
+            {
+                Projects = projects,
+                Assignees = new List<SelectListItem>(),
                 PriorityLevels = new List<SelectListItem>
                 {
                     new SelectListItem { Value = "Low", Text = "Low" },
@@ -189,7 +206,6 @@ namespace DoableFinal.Controllers
                     new SelectListItem { Value = "High", Text = "High" },
                     new SelectListItem { Value = "Critical", Text = "Critical" }
                 },
-
                 TicketTypes = new List<SelectListItem>
                 {
                     new SelectListItem { Value = "Bug", Text = "Bug" },
@@ -301,6 +317,16 @@ public async Task<IActionResult> Create(CreateTicketViewModel model, List<IFormF
             if (!projectOwned)
             {
                 ModelState.AddModelError("ProjectId", "You can only link tickets to your own projects.");
+                await ReloadFormData(model, user.Id);
+                return View(model);
+            }
+
+            // Block zero-progress projects
+            var projectTasks = await _context.Tasks
+                .CountAsync(t => t.ProjectId == ticket.ProjectId && !t.IsArchived);
+            if (projectTasks == 0)
+            {
+                ModelState.AddModelError("ProjectId", "This project has no tasks yet and cannot be selected.");
                 await ReloadFormData(model, user.Id);
                 return View(model);
             }
