@@ -39,27 +39,6 @@ namespace DoableFinal.Controllers
             return View(notifications);
         }
 
-        /// <summary>
-        /// API endpoint polled by the client every 30 s.
-        /// Returns unread notifications created in the last 2 minutes so the
-        /// front-end can pop a toast without reloading the page.
-        /// </summary>
-        [HttpGet]
-        public async Task<IActionResult> GetRecentUnread()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-            var since = DateTime.UtcNow.AddMinutes(-2);
-            var items = await _context.Notifications
-                .Where(n => n.UserId == userId && !n.IsRead && n.CreatedAt >= since)
-                .OrderByDescending(n => n.CreatedAt)
-                .Select(n => new { n.Id, n.Title, n.Message, n.Link, n.CreatedAt })
-                .ToListAsync();
-
-            return Json(items);
-        }
-
         [HttpPost]
         public async Task<IActionResult> MarkNotificationAsRead(int id, string? returnUrl = null)
         {
