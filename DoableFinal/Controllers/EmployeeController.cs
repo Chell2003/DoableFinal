@@ -84,6 +84,7 @@ namespace DoableFinal.Controllers
                 .Where(ta =>
                     ta.EmployeeId == userId &&
                     ta.ProjectTask.Status != "Completed" &&
+                    ta.ProjectTask.Status != "Pending Approval" &&
                     !ta.ProjectTask.IsArchived &&
                     ta.ProjectTask.DueDate >= tomorrowStart &&
                     ta.ProjectTask.DueDate < tomorrowEnd)
