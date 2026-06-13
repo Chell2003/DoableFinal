@@ -287,11 +287,13 @@
                         <span class="navbar-text flex-grow-1 text-truncate" style="min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                             @ViewData["Title"]
                         </span>
-                        <div class="d-flex align-items-center ms-auto" style="gap:2rem;">
+                        <div class="d-flex align-items-center ms-auto">
                             @if (User.Identity?.IsAuthenticated == true)
                             {
-                                @await Html.PartialAsync("_MessagesBadge")
-                                @await Html.PartialAsync("_NotificationsBadgeAll")
+                                <ul class="navbar-nav flex-row align-items-center gap-1 mb-0">
+                                    @await Html.PartialAsync("_MessagesBadge")
+                                    @await Html.PartialAsync("_NotificationsBadgeAll")
+                                </ul>
                             }
                         </div>
                     </div>
