@@ -438,5 +438,74 @@
         }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    @if (User.IsInRole("Employee"))
+    {
+        <!-- Deadline reminder toast container -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:99999;" id="deadlineToastContainer"></div>
+
+        <script>
+        (function () {
+            var shownIds = JSON.parse(sessionStorage.getItem('shownNotifIds') || '[]');
+
+            function showToast(notif) {
+                var id = 'toast-' + notif.id;
+                var isDeadline = notif.title && notif.title.toLowerCase().includes('deadline');
+                var icon = isDeadline ? '⏰' : '🔔';
+                var bgClass = isDeadline ? 'bg-warning text-dark' : 'bg-primary text-white';
+
+                var html = '<div id="' + id + '" class="toast align-items-center border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="8000">' +
+                    '<div class="toast-header ' + bgClass + ' fw-semibold">' +
+                    '<span class="me-2" style="font-size:1.1rem">' + icon + '</span>' +
+                    '<strong class="me-auto">' + escHtml(notif.title) + '</strong>' +
+                    '<button type="button" class="btn-close' + (isDeadline ? '' : ' btn-close-white') + '" data-bs-dismiss="toast"></button>' +
+                    '</div>' +
+                    '<div class="toast-body bg-white">' + escHtml(notif.message) +
+                    (notif.link ? '<div class="mt-2"><a href="' + notif.link + '" class="btn btn-sm btn-outline-primary">View Task</a></div>' : '') +
+                    '</div></div>';
+
+                var container = document.getElementById('deadlineToastContainer');
+                container.insertAdjacentHTML('beforeend', html);
+                var el = document.getElementById(id);
+                var toast = new bootstrap.Toast(el, { delay: 8000 });
+                toast.show();
+                el.addEventListener('hidden.bs.toast', function () { el.remove(); });
+            }
+
+            function escHtml(s) {
+                return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            }
+
+            function poll() {
+                fetch('/Employee/GetRecentUnread')
+                    .then(function (r) { return r.ok ? r.json() : []; })
+                    .then(function (items) {
+                        items.forEach(function (n) {
+                            if (shownIds.indexOf(n.id) === -1) {
+                                showToast(n);
+                                shownIds.push(n.id);
+                            }
+                        });
+                        sessionStorage.setItem('shownNotifIds', JSON.stringify(shownIds.slice(-50)));
+
+                        // Update bell badge count
+                        var badge = document.querySelector('.badge.rounded-pill.bg-danger');
+                        if (badge) {
+                            fetch('/Employee/GetRecentUnread')
+                                .then(function () {
+                                    // trigger a lightweight badge refresh
+                                });
+                        }
+                    })
+                    .catch(function () {});
+            }
+
+            // First check after 5 seconds (catches notifications created just before page load)
+            setTimeout(poll, 5000);
+            // Then every 30 seconds
+            setInterval(poll, 30000);
+        })();
+        </script>
+    }
 </body>
 </html>
