@@ -448,8 +448,9 @@
         (function () {
             // shownIds persists per session — prevents same toast repeating every minute
             var shownIds = JSON.parse(sessionStorage.getItem('shownNotifIds') || '[]');
-            // loginShown: tracks whether we already did the on-login popup this session
-            var loginShown = sessionStorage.getItem('loginPopupShown') === '1';
+            // loginShown: keyed to current user so re-login always triggers popup
+            var currentUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+            var loginShown = sessionStorage.getItem('loginPopupShown') === currentUserId;
 
             function showToast(notif) {
                 var id = 'toast-' + notif.id;
@@ -479,10 +480,10 @@
                 return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
             }
 
-            // loginPoll: on first login, fetch unread from last 2 minutes and show all
+            // loginPoll: on first login, fetch ALL unread notifications (no time limit)
             function loginPoll() {
                 if (loginShown) return;
-                fetch('/Employee/GetRecentUnread?minutes=2')
+                fetch('/Employee/GetRecentUnread?all=true')
                     .then(function (r) { return r.ok ? r.json() : []; })
                     .then(function (items) {
                         items.forEach(function (n) {
@@ -492,7 +493,7 @@
                             }
                         });
                         sessionStorage.setItem('shownNotifIds', JSON.stringify(shownIds.slice(-50)));
-                        sessionStorage.setItem('loginPopupShown', '1');
+                        sessionStorage.setItem('loginPopupShown', currentUserId);
                         loginShown = true;
                     })
                     .catch(function () {});
