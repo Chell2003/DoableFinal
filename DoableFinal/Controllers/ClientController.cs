@@ -643,11 +643,11 @@ namespace DoableFinal.Controllers
                 var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
                 var completedTasks = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
                 var progress = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
-                var hasProgress = totalTasks > 0; // at least has tasks = has some progress setup
+                var hasProgress = progress > 0; // at least has tasks = has some progress setup
                 return new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = hasProgress ? $"{p.Name} ({progress}% done)" : $"{p.Name} (no tasks yet)",
+                    Text = hasProgress ? $"{p.Name} ({progress}% done)" : (totalTasks > 0 ? $"{p.Name} (0% progress)" : $"{p.Name} (no tasks yet)"),
                     Disabled = !hasProgress
                 };
             }).ToList();
@@ -717,11 +717,11 @@ namespace DoableFinal.Controllers
                         var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
                         var completedTasks = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
                         var progress = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
-                        var hasProgress = totalTasks > 0;
+                        var hasProgress = progress > 0;
                         return new SelectListItem
                         {
                             Value = p.Id.ToString(),
-                            Text = hasProgress ? $"{p.Name} ({progress}% done)" : $"{p.Name} (no tasks yet)",
+                            Text = hasProgress ? $"{p.Name} ({progress}% done)" : (totalTasks > 0 ? $"{p.Name} (0% progress)" : $"{p.Name} (no tasks yet)"),
                             Disabled = !hasProgress
                         };
                     }).ToList();
@@ -753,24 +753,30 @@ namespace DoableFinal.Controllers
                         .ToListAsync();
                     model.Projects = projectsRaw.Select(p =>
                     {
-                        var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
-                        var hasProgress = totalTasks > 0;
+                        var tot = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                        var don = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
+                        var pct = tot > 0 ? (int)Math.Round((double)don / tot * 100) : 0;
+                        var hp = pct > 0;
                         return new SelectListItem
                         {
                             Value = p.Id.ToString(),
-                            Text = hasProgress ? p.Name : $"{p.Name} (no tasks yet)",
-                            Disabled = !hasProgress
+                            Text = hp ? $"{p.Name} ({pct}% done)" : (tot > 0 ? $"{p.Name} (0% progress)" : $"{p.Name} (no tasks yet)"),
+                            Disabled = !hp
                         };
                     }).ToList();
                     TempData["Debug"] = "Project selection invalid";
                     return View(model);
                 }
 
-                // Reject if project has zero tasks (zero progress)
+                // Reject if project has zero progress (no tasks or 0% completion)
                 var totalProjectTasks = project.Tasks?.Count(t => !t.IsArchived) ?? 0;
-                if (totalProjectTasks == 0)
+                var completedProjectTasks = project.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
+                var projectProgress = totalProjectTasks > 0
+                    ? (int)Math.Round((double)completedProjectTasks / totalProjectTasks * 100)
+                    : 0;
+                if (projectProgress == 0)
                 {
-                    ModelState.AddModelError("ProjectId", "This project has no tasks yet and cannot be selected.");
+                    ModelState.AddModelError("ProjectId", "This project has 0% progress and cannot be selected.");
                     var projectsRaw2 = await _context.Projects
                         .Include(p => p.Tasks)
                         .Where(p => p.ClientId == user.Id && !p.IsArchived)
@@ -778,12 +784,15 @@ namespace DoableFinal.Controllers
                         .ToListAsync();
                     model.Projects = projectsRaw2.Select(p =>
                     {
-                        var hasProgress = (p.Tasks?.Count(t => !t.IsArchived) ?? 0) > 0;
+                        var tot2 = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                        var don2 = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
+                        var pct2 = tot2 > 0 ? (int)Math.Round((double)don2 / tot2 * 100) : 0;
+                        var hp2 = pct2 > 0;
                         return new SelectListItem
                         {
                             Value = p.Id.ToString(),
-                            Text = hasProgress ? p.Name : $"{p.Name} (no tasks yet)",
-                            Disabled = !hasProgress
+                            Text = hp2 ? $"{p.Name} ({pct2}% done)" : (tot2 > 0 ? $"{p.Name} (0% progress)" : $"{p.Name} (no tasks yet)"),
+                            Disabled = !hp2
                         };
                     }).ToList();
                     return View(model);
@@ -905,12 +914,15 @@ namespace DoableFinal.Controllers
                     .ToListAsync();
                 model.Projects = catchProjects.Select(p =>
                 {
-                    var hasProgress = (p.Tasks?.Count(t => !t.IsArchived) ?? 0) > 0;
+                    var totC = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                    var donC = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
+                    var pctC = totC > 0 ? (int)Math.Round((double)donC / totC * 100) : 0;
+                    var hpC = pctC > 0;
                     return new SelectListItem
                     {
                         Value = p.Id.ToString(),
-                        Text = hasProgress ? p.Name : $"{p.Name} (no tasks yet)",
-                        Disabled = !hasProgress
+                        Text = hpC ? $"{p.Name} ({pctC}% done)" : (totC > 0 ? $"{p.Name} (0% progress)" : $"{p.Name} (no tasks yet)"),
+                        Disabled = !hpC
                     };
                 }).ToList();
                 return View(model);

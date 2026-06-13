@@ -45,11 +45,11 @@ namespace DoableFinal.Controllers
                 var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
                 var completedTasks = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
                 var progress = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
-                var hasProgress = totalTasks > 0;
+                var hasProgress = progress > 0;
                 return new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = hasProgress ? $"{p.Name} ({progress}% done)" : $"{p.Name} (no tasks yet)",
+                    Text = hasProgress ? $"{p.Name} ({progress}% done)" : (totalTasks > 0 ? $"{p.Name} (0% progress)" : $"{p.Name} (no tasks yet)"),
                     Disabled = !hasProgress
                 };
             }).ToList();
@@ -186,11 +186,11 @@ namespace DoableFinal.Controllers
                 var totalTasks = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
                 var completedTasks = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
                 var progress = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
-                var hasProgress = totalTasks > 0;
+                var hasProgress = progress > 0;
                 return new SelectListItem
                 {
                     Value = p.Id.ToString(),
-                    Text = hasProgress ? $"{p.Name} ({progress}% done)" : $"{p.Name} (no tasks yet)",
+                    Text = hasProgress ? $"{p.Name} ({progress}% done)" : (totalTasks > 0 ? $"{p.Name} (0% progress)" : $"{p.Name} (no tasks yet)"),
                     Disabled = !hasProgress
                 };
             }).ToList();
@@ -321,12 +321,17 @@ public async Task<IActionResult> Create(CreateTicketViewModel model, List<IFormF
                 return View(model);
             }
 
-            // Block zero-progress projects
-            var projectTasks = await _context.Tasks
+            // Block zero-progress projects (no tasks OR all tasks not yet started)
+            var totalProjectTasks = await _context.Tasks
                 .CountAsync(t => t.ProjectId == ticket.ProjectId && !t.IsArchived);
-            if (projectTasks == 0)
+            var completedProjectTasks = await _context.Tasks
+                .CountAsync(t => t.ProjectId == ticket.ProjectId && !t.IsArchived && t.Status == "Completed");
+            var projectProgress = totalProjectTasks > 0
+                ? (int)Math.Round((double)completedProjectTasks / totalProjectTasks * 100)
+                : 0;
+            if (projectProgress == 0)
             {
-                ModelState.AddModelError("ProjectId", "This project has no tasks yet and cannot be selected.");
+                ModelState.AddModelError("ProjectId", "This project has 0% progress and cannot be selected.");
                 await ReloadFormData(model, user.Id);
                 return View(model);
             }
