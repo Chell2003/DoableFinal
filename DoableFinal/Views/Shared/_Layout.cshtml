@@ -267,7 +267,7 @@
                     }
                     <li>
                         <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm">
-                            <a href="javascript:void(0)" onclick="sessionStorage.removeItem('loginPopupShown'); sessionStorage.removeItem('shownNotifIds'); document.getElementById('logoutForm').submit()">
+                            <a href="javascript:void(0)" onclick="document.getElementById('logoutForm').submit()">
                                 <i class="bi bi-box-arrow-right"></i>
                                 <span>Logout</span>
                             </a>
@@ -446,85 +446,61 @@
 
         <script>
         (function () {
-            // shownIds persists per session — prevents same toast repeating every minute
-            var shownIds = JSON.parse(sessionStorage.getItem('shownNotifIds') || '[]');
-            // loginShown: keyed to current user so re-login always triggers popup
-            var currentUserId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
-            var loginShown = sessionStorage.getItem('loginPopupShown') === currentUserId;
-
-            function showToast(notif) {
-                var id = 'toast-' + notif.id;
-                var isDeadline = notif.title && notif.title.toLowerCase().includes('deadline');
-                var icon = isDeadline ? '⏰' : '🔔';
-                var bgClass = isDeadline ? 'bg-warning text-dark' : 'bg-primary text-white';
-
-                var html = '<div id="' + id + '" class="toast align-items-center border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="8000">' +
-                    '<div class="toast-header ' + bgClass + ' fw-semibold">' +
-                    '<span class="me-2" style="font-size:1.1rem">' + icon + '</span>' +
-                    '<strong class="me-auto">' + escHtml(notif.title) + '</strong>' +
-                    '<button type="button" class="btn-close' + (isDeadline ? '' : ' btn-close-white') + '" data-bs-dismiss="toast"></button>' +
-                    '</div>' +
-                    '<div class="toast-body bg-white">' + escHtml(notif.message) +
-                    (notif.link ? '<div class="mt-2"><a href="' + notif.link + '" class="btn btn-sm btn-outline-primary">View Task</a></div>' : '') +
-                    '</div></div>';
+            function showToast(title, message, link) {
+                var uid = 'dt-' + Math.random().toString(36).substr(2,9);
+                var html =
+                    '<div id="' + uid + '" class="toast align-items-center border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">' +
+                        '<div class="toast-header bg-warning text-dark fw-semibold">' +
+                            '<span class="me-2" style="font-size:1.1rem">&#9200;</span>' +
+                            '<strong class="me-auto">' + title + '</strong>' +
+                            '<button type="button" class="btn-close" data-bs-dismiss="toast"></button>' +
+                        '</div>' +
+                        '<div class="toast-body bg-white">' +
+                            message +
+                            (link ? '<div class="mt-2"><a href="' + link + '" class="btn btn-sm btn-outline-primary">View Task</a></div>' : '') +
+                        '</div>' +
+                    '</div>';
 
                 var container = document.getElementById('deadlineToastContainer');
                 container.insertAdjacentHTML('beforeend', html);
-                var el = document.getElementById(id);
-                var toast = new bootstrap.Toast(el, { delay: 8000 });
-                toast.show();
+                var el = document.getElementById(uid);
+                new bootstrap.Toast(el).show();
                 el.addEventListener('hidden.bs.toast', function () { el.remove(); });
             }
 
-            function escHtml(s) {
-                return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-            }
+            // Always run on every page load — show all tasks due tomorrow
+            fetch('/Employee/GetDeadlinesTomorrow')
+                .then(function(r) { return r.ok ? r.json() : []; })
+                .then(function(tasks) {
+                    // Only show once per page load (guard against double-fire)
+                    if (window._deadlineShown) return;
+                    window._deadlineShown = true;
 
-            // loginPoll: on login, directly check tasks due tomorrow — no dependency
-            // on background service having run first
-            function loginPoll() {
-                if (loginShown) return;
-                fetch('/Employee/GetDeadlinesTomorrow')
-                    .then(function (r) { return r.ok ? r.json() : []; })
-                    .then(function (tasks) {
-                        tasks.forEach(function (t) {
-                            var key = 'deadline-' + t.id;
-                            if (shownIds.indexOf(key) === -1) {
-                                showToast({
-                                    id:      key,
-                                    title:   '⏰ Deadline Tomorrow: ' + t.title,
-                                    message: 'Your task "' + t.title + '" in project "' + t.project + '" is due tomorrow. Please make sure it's completed on time.',
-                                    link:    t.link
-                                });
-                                shownIds.push(key);
-                            }
-                        });
-                        sessionStorage.setItem('shownNotifIds', JSON.stringify(shownIds.slice(-50)));
-                        sessionStorage.setItem('loginPopupShown', currentUserId);
-                        loginShown = true;
-                    })
-                    .catch(function () {});
-            }
+                    tasks.forEach(function(t) {
+                        showToast(
+                            'Deadline Tomorrow: ' + t.title,
+                            'Your task <strong>' + t.title + '</strong> in project <strong>' + t.project + '</strong> is due tomorrow. Please complete it on time.',
+                            t.link
+                        );
+                    });
+                })
+                .catch(function() {});
 
-            // regularPoll: every 60s, show any NEW unread notifications
+            // Also poll every 60s for new unread notifications
             function poll() {
                 fetch('/Employee/GetRecentUnread?minutes=2')
-                    .then(function (r) { return r.ok ? r.json() : []; })
-                    .then(function (items) {
-                        items.forEach(function (n) {
-                            if (shownIds.indexOf(n.id) === -1) {
-                                showToast(n);
-                                shownIds.push(n.id);
+                    .then(function(r) { return r.ok ? r.json() : []; })
+                    .then(function(items) {
+                        items.forEach(function(n) {
+                            var key = 'notif-' + n.id;
+                            if (!sessionStorage.getItem(key)) {
+                                sessionStorage.setItem(key, '1');
+                                showToast(n.title, n.message, n.link);
                             }
                         });
-                        sessionStorage.setItem('shownNotifIds', JSON.stringify(shownIds.slice(-50)));
                     })
-                    .catch(function () {});
+                    .catch(function() {});
             }
-
-            // On login: show popup after 3 seconds
-            setTimeout(loginPoll, 3000);
-            // Then poll every 60 seconds for new notifications
             setInterval(poll, 60000);
         })();
         </script>
