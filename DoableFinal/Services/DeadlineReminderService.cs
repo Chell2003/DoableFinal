@@ -53,56 +53,69 @@ namespace DoableFinal.Services
             }
         }
 
-        private async Task SendDeadlineRemindersAsync(CancellationToken ct)
+        public async Task SendDeadlineRemindersAsync(CancellationToken ct = default)
         {
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var notificationService = scope.ServiceProvider.GetRequiredService<NotificationService>();
 
             var now = DateTime.UtcNow;
-            // Define "tomorrow" as the calendar day that starts 24 h from now
-            var tomorrowStart = now.Date.AddDays(1);       // e.g. 2026-06-11 00:00
-            var tomorrowEnd   = tomorrowStart.AddDays(1);  // e.g. 2026-06-12 00:00
 
-            // Find all incomplete tasks whose DueDate falls in tomorrow's window
+            // Window: tasks due any time in the next 24–48 hours
+            // (catches tasks regardless of exact time-of-day stored in DueDate)
+            var windowStart = now;
+            var windowEnd   = now.AddHours(48);
+
+            _logger.LogInformation(
+                "DeadlineReminderService: scanning tasks due between {Start} and {End} UTC.",
+                windowStart, windowEnd);
+
+            // Find all incomplete tasks whose DueDate is within the next 24-48h
             var dueTasks = await db.Tasks
                 .Include(t => t.TaskAssignments)
                 .Include(t => t.Project)
                 .Where(t =>
                     t.Status != "Completed" &&
                     !t.IsArchived &&
-                    t.DueDate >= tomorrowStart &&
-                    t.DueDate < tomorrowEnd)
+                    t.DueDate >= windowStart &&
+                    t.DueDate <= windowEnd)
                 .ToListAsync(ct);
 
-            if (!dueTasks.Any())
-                return;
-
-            _logger.LogInformation("DeadlineReminderService: {Count} task(s) due tomorrow.", dueTasks.Count);
+            _logger.LogInformation(
+                "DeadlineReminderService: {Count} task(s) due in window.", dueTasks.Count);
 
             foreach (var task in dueTasks)
             {
                 var assigneeIds = task.TaskAssignments.Select(ta => ta.EmployeeId).ToList();
 
+                _logger.LogInformation(
+                    "Task '{Title}' (Id={Id}) has {N} assignee(s).",
+                    task.Title, task.Id, assigneeIds.Count);
+
                 foreach (var employeeId in assigneeIds)
                 {
-                    // De-duplicate: skip if we already sent this reminder today
+                    // De-duplicate: skip if we already sent this reminder in the last 20 hours
                     var alreadySent = await db.Notifications.AnyAsync(n =>
                         n.UserId == employeeId &&
                         n.Title == $"Deadline Tomorrow: {task.Title}" &&
-                        n.CreatedAt >= now.Date,
+                        n.CreatedAt >= now.AddHours(-20),
                         ct);
 
                     if (alreadySent)
+                    {
+                        _logger.LogInformation(
+                            "Skipping duplicate reminder for employee {Id}, task '{Title}'.",
+                            employeeId, task.Title);
                         continue;
+                    }
 
                     var projectName = task.Project?.Name ?? "your project";
-                    var dueFormatted = task.DueDate.ToLocalTime().ToString("MMM dd, yyyy h:mm tt");
+                    var dueFormatted = task.DueDate.ToString("MMM dd, yyyy h:mm tt") + " UTC";
 
                     await notificationService.CreateNotification(
                         userId: employeeId,
                         title: $"Deadline Tomorrow: {task.Title}",
-                        message: $"Your task \"{task.Title}\" in project \"{projectName}\" is due tomorrow on {dueFormatted}. Please make sure it's completed on time.",
+                        message: $"Your task "{task.Title}" in project "{projectName}" is due on {dueFormatted}. Please make sure it's completed on time.",
                         link: $"/Employee/TaskDetails/{task.Id}"
                     );
 
