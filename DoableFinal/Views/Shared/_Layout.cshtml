@@ -279,18 +279,18 @@
             <!-- Page Content -->
             <div id="content">
                 <!-- Top Navigation -->
-                <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
-                    <div class="container-fluid d-flex align-items-center flex-nowrap" style="min-width:0;">
-                        <button type="button" id="sidebarCollapseShow" class="btn btn-link d-md-none me-2">
-                            <i class="bi bi-list"></i>
+                <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom" style="min-height:52px; padding:0 0;">
+                    <div class="container-fluid d-flex align-items-center flex-nowrap px-3" style="min-width:0; height:52px;">
+                        <button type="button" id="sidebarCollapseShow" class="btn btn-link d-md-none me-2 p-0" style="color:#495057;">
+                            <i class="bi bi-list fs-5"></i>
                         </button>
-                        <span class="navbar-text flex-grow-1 text-truncate" style="min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        <span class="navbar-text flex-grow-1 text-truncate fw-semibold" style="min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.95rem; color:#212529;">
                             @ViewData["Title"]
                         </span>
                         <div class="d-flex align-items-center ms-auto">
                             @if (User.Identity?.IsAuthenticated == true)
                             {
-                                <ul class="navbar-nav flex-row align-items-center gap-1 mb-0">
+                                <ul class="navbar-nav flex-row align-items-center gap-0 mb-0">
                                     @await Html.PartialAsync("_MessagesBadge")
                                     @await Html.PartialAsync("_NotificationsBadgeAll")
                                 </ul>

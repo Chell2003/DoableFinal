@@ -11,11 +11,15 @@
 }
 
 <li class="nav-item">
-    <a asp-controller="@controller" asp-action="Notifications" class="nav-link position-relative">
-        <i class="bi bi-bell fs-5"></i>
+    <a asp-controller="@controller" asp-action="Notifications"
+       class="nav-link position-relative d-flex align-items-center justify-content-center"
+       style="width:36px; height:36px; border-radius:8px; color:#495057;"
+       title="Notifications">
+        <i class="bi bi-bell" style="font-size:1.1rem;"></i>
         @if (unreadCount > 0)
         {
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            <span class="position-absolute badge rounded-pill bg-danger"
+                  style="top:2px; right:2px; font-size:.6rem; padding:2px 5px; min-width:16px;">
                 @unreadCount
                 <span class="visually-hidden">unread notifications</span>
             </span>
