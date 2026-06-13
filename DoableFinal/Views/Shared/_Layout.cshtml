@@ -446,7 +446,7 @@
 
         <script>
         (function () {
-            var shownIds = JSON.parse(localStorage.getItem('shownNotifIds') || '[]');
+            var shownIds = JSON.parse(sessionStorage.getItem('shownNotifIds') || '[]');
 
             function showToast(notif) {
                 var id = 'toast-' + notif.id;
@@ -486,7 +486,7 @@
                                 shownIds.push(n.id);
                             }
                         });
-                        localStorage.setItem('shownNotifIds', JSON.stringify(shownIds.slice(-50)));
+                        sessionStorage.setItem('shownNotifIds', JSON.stringify(shownIds.slice(-50)));
 
                         // Update bell badge count
                         var badge = document.querySelector('.badge.rounded-pill.bg-danger');

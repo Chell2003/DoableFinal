@@ -41,8 +41,8 @@ namespace DoableFinal.Controllers
 
         /// <summary>
         /// API endpoint polled by the client every 30 s.
-        /// Returns ALL unread notifications so the front-end can pop toasts
-        /// for any unseen notifications, not just ones from the last 2 minutes.
+        /// Returns unread notifications created in the last 2 minutes so the
+        /// front-end can pop a toast without reloading the page.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetRecentUnread()
@@ -50,8 +50,7 @@ namespace DoableFinal.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            // Return all unread notifications created in the last 24 hours
-            var since = DateTime.UtcNow.AddHours(-24);
+            var since = DateTime.UtcNow.AddMinutes(-2);
             var items = await _context.Notifications
                 .Where(n => n.UserId == userId && !n.IsRead && n.CreatedAt >= since)
                 .OrderByDescending(n => n.CreatedAt)
@@ -59,23 +58,6 @@ namespace DoableFinal.Controllers
                 .ToListAsync();
 
             return Json(items);
-        }
-
-        /// <summary>
-        /// Manual trigger for deadline reminders — useful for testing.
-        /// Only accessible by employees.
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> TriggerDeadlineCheck()
-        {
-            var reminderService = HttpContext.RequestServices
-                .GetService(typeof(DoableFinal.Services.DeadlineReminderService))
-                as DoableFinal.Services.DeadlineReminderService;
-
-            if (reminderService != null)
-                await reminderService.SendDeadlineRemindersAsync();
-
-            return RedirectToAction(nameof(Notifications));
         }
 
         [HttpPost]
