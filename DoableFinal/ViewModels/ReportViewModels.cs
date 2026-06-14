@@ -181,4 +181,31 @@ namespace DoableFinal.ViewModels
         public string? Category { get; set; }
         public string? Status { get; set; }
     }
+
+    public class ProjectCategoryReportGroup
+    {
+        public string Category { get; set; }
+        public List<ProjectSummaryRow> Projects { get; set; } = new();
+        public int TotalProjects => Projects.Count;
+        public int TotalTasks => Projects.Sum(p => p.TotalTasks);
+        public int CompletedTasks => Projects.Sum(p => p.CompletedTasks);
+        public int InProgressTasks => Projects.Sum(p => p.InProgressTasks);
+        public int NotStartedTasks => Projects.Sum(p => p.NotStartedTasks);
+        public int AvgProgress => Projects.Count > 0 ? (int)Math.Round(Projects.Average(p => (double)p.Progress)) : 0;
+    }
+
+    public class ProjectSummaryRow
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Status { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int TotalTasks { get; set; }
+        public int CompletedTasks { get; set; }
+        public int InProgressTasks { get; set; }
+        public int NotStartedTasks { get; set; }
+        public int Progress { get; set; }
+        public string ClientName { get; set; }
+    }
 }

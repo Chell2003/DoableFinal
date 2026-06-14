@@ -87,8 +87,88 @@ namespace DoableFinal.Controllers
             return View(filterViewModel);
         }
 
-        // GET: Report/Status/5
-        public async Task<IActionResult> Status(int id)
+        // GET: Report/ProjectsSummary
+        public async Task<IActionResult> ProjectsSummary(DateTime? fromDate = null, DateTime? toDate = null, string? category = null)
+        {
+            var currentUser = await GetCurrentUser();
+            var from = fromDate ?? new DateTime(DateTime.UtcNow.Year, 1, 1);
+            var to = toDate ?? DateTime.UtcNow;
+
+            var projectsQuery = _context.Projects
+                .Include(p => p.Tasks)
+                .Include(p => p.Client)
+                .Where(p => !p.IsArchived)
+                .AsQueryable();
+
+            if (currentUser != null)
+            {
+                bool isAdmin = await _userManager.IsInRoleAsync(currentUser, "Admin");
+                bool isClient = await _userManager.IsInRoleAsync(currentUser, "Client");
+                bool isPM = await _userManager.IsInRoleAsync(currentUser, "Project Manager") ||
+                            await _userManager.IsInRoleAsync(currentUser, "ProjectManager");
+
+                if (isClient) projectsQuery = projectsQuery.Where(p => p.ClientId == currentUser.Id);
+                else if (isPM) projectsQuery = projectsQuery.Where(p => p.ProjectManagerId == currentUser.Id);
+            }
+
+            // Date filter on project start date
+            projectsQuery = projectsQuery.Where(p => p.StartDate >= from && p.StartDate <= to);
+
+            // Category filter
+            if (!string.IsNullOrEmpty(category))
+                projectsQuery = projectsQuery.Where(p => p.Category == category);
+
+            var projects = await projectsQuery.OrderBy(p => p.Category).ThenBy(p => p.Name).ToListAsync();
+
+            // Group by category
+            var grouped = projects
+                .GroupBy(p => string.IsNullOrEmpty(p.Category) ? "Uncategorized" : p.Category)
+                .OrderBy(g => g.Key == "Uncategorized" ? "zzz" : g.Key)
+                .Select(g => new ProjectCategoryReportGroup
+                {
+                    Category = g.Key,
+                    Projects = g.Select(p =>
+                    {
+                        var total = p.Tasks?.Count(t => !t.IsArchived) ?? 0;
+                        var done = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Completed") ?? 0;
+                        var inProgress = p.Tasks?.Count(t => !t.IsArchived && t.Status == "In Progress") ?? 0;
+                        var notStarted = p.Tasks?.Count(t => !t.IsArchived && t.Status == "Not Started") ?? 0;
+                        var pct = total > 0 ? (int)Math.Round((double)done / total * 100) : 0;
+                        return new ProjectSummaryRow
+                        {
+                            Id = p.Id,
+                            Name = p.Name,
+                            Status = p.Status,
+                            StartDate = p.StartDate,
+                            EndDate = p.EndDate,
+                            TotalTasks = total,
+                            CompletedTasks = done,
+                            InProgressTasks = inProgress,
+                            NotStartedTasks = notStarted,
+                            Progress = pct,
+                            ClientName = p.Client != null ? $"{p.Client.FirstName} {p.Client.LastName}" : "—"
+                        };
+                    }).ToList()
+                }).ToList();
+
+            // Available categories for filter dropdown
+            var allCategories = await _context.Projects
+                .Where(p => !p.IsArchived && p.Category != null)
+                .Select(p => p.Category)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            ViewBag.FromDate = from.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = to.ToString("yyyy-MM-dd");
+            ViewBag.SelectedCategory = category;
+            ViewBag.AllCategories = allCategories;
+            ViewBag.TotalProjects = projects.Count;
+            ViewBag.FromDateDisplay = from.ToString("MMM dd, yyyy");
+            ViewBag.ToDateDisplay = to.ToString("MMM dd, yyyy");
+
+            return View(grouped);
+        }
         {
             var projectId = id;
             if (projectId == 0 && int.TryParse(Request.Query["projectId"].ToString(), out var parsedQueryProjectId)) projectId = parsedQueryProjectId;
