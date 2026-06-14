@@ -50,8 +50,13 @@ namespace DoableFinal.Controllers
 
                 if (!isAdmin && !isClient && !isProjectManager)
                 {
-                    // User has no assigned roles - return empty list
-                    projectsQuery = projectsQuery.Where(p => false);
+                    // Employee — show projects they have tasks assigned in
+                    var employeeProjectIds = await _context.TaskAssignments
+                        .Where(ta => ta.EmployeeId == currentUser.Id)
+                        .Select(ta => ta.ProjectTask.ProjectId)
+                        .Distinct()
+                        .ToListAsync();
+                    projectsQuery = projectsQuery.Where(p => employeeProjectIds.Contains(p.Id));
                 }
                 else if (isClient)
                 {
