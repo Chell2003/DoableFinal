@@ -169,6 +169,9 @@ namespace DoableFinal.Controllers
 
             return View(grouped);
         }
+
+        // GET: Report/Status/5
+        public async Task<IActionResult> Status(int id)
         {
             var projectId = id;
             if (projectId == 0 && int.TryParse(Request.Query["projectId"].ToString(), out var parsedQueryProjectId)) projectId = parsedQueryProjectId;
