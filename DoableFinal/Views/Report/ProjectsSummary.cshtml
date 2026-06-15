@@ -1,200 +1,377 @@
 @model List<DoableFinal.ViewModels.ProjectCategoryReportGroup>
 
 @{
-    ViewData["Title"] = "Projects Summary Report";
+    ViewData["Title"] = "Projects Report";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    var from = ViewBag.FromDateDisplay as string ?? "—";
-    var to   = ViewBag.ToDateDisplay as string ?? "—";
-    var totalProjects = (int)(ViewBag.TotalProjects ?? 0);
+
+    var fromDate      = ViewBag.FromDate as string ?? "";
+    var toDate        = ViewBag.ToDate   as string ?? "";
+    var fromDisplay   = ViewBag.FromDateDisplay as string ?? "";
+    var toDisplay     = ViewBag.ToDateDisplay   as string ?? "";
     var selectedCat   = ViewBag.SelectedCategory as string;
     var allCategories = ViewBag.AllCategories as List<string> ?? new List<string>();
+    var totalProjects = (int)(ViewBag.TotalProjects ?? 0);
+
+    // Grand totals
+    var grandTasks       = Model.Sum(g => g.TotalTasks);
+    var grandCompleted   = Model.Sum(g => g.CompletedTasks);
+    var grandInProgress  = Model.Sum(g => g.InProgressTasks);
+    var grandNotStarted  = Model.Sum(g => g.NotStartedTasks);
+    var grandAvg         = Model.Any() ? (int)Math.Round(Model.Average(g => (double)g.AvgProgress)) : 0;
 }
 
 <style>
-    .rpt-header { background:linear-gradient(135deg,#1e3a5f 0%,#2d6a9f 100%); border-radius:12px; padding:1.5rem 2rem; color:#fff; margin-bottom:1.5rem; }
-    .filter-bar { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.5rem; }
-    .filter-bar label { font-size:.78rem; font-weight:600; color:#374151; }
-    .cat-section { margin-bottom:2rem; }
-    .cat-section-head {
-        background:#1e3a5f; color:#fff; border-radius:8px 8px 0 0;
-        padding:.65rem 1.1rem; font-size:.9rem; font-weight:700;
-        display:flex; align-items:center; justify-content:space-between;
+    /* ── Page ─────────────────────────────── */
+    .rpt-page { font-family: 'Segoe UI', Arial, sans-serif; color: #222; }
+
+    /* ── Breadcrumb ──────────────────────── */
+    .rpt-bc { font-size: .78rem; color: #888; margin-bottom: 6px; }
+    .rpt-bc a { color: #888; text-decoration: none; }
+    .rpt-bc a:hover { text-decoration: underline; }
+
+    /* ── Page title row ──────────────────── */
+    .rpt-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
     }
-    .cat-totals-row td { background:#f1f5f9; font-weight:700; font-size:.82rem; }
-    .progress-xs { height:6px; border-radius:3px; background:#e9ecef; overflow:hidden; min-width:60px; display:inline-block; vertical-align:middle; }
-    .progress-xs .fill { height:100%; border-radius:3px; background:#3b82f6; }
-    .summary-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.75rem; margin-bottom:1.5rem; }
-    .kpi-pill { background:#fff; border:1px solid #e2e8f0; border-radius:9px; padding:.75rem 1rem; border-left:4px solid; }
-    .kpi-pill .num { font-size:1.5rem; font-weight:800; line-height:1.1; }
-    .kpi-pill .lbl { font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:#6c757d; }
-    .badge-status { display:inline-block; padding:1px 8px; border-radius:12px; font-size:.72rem; font-weight:700; }
+    .rpt-title { font-size: 1.35rem; font-weight: 700; color: #1a1a2e; margin: 0; }
+    .rpt-print-btn {
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: .82rem;
+        color: #444;
+        display: flex; align-items: center; gap: 5px;
+    }
+    .rpt-print-btn:hover { background: #f5f5f5; }
+
+    /* ── Filter panel ────────────────────── */
+    .filter-panel {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #f9f9f9;
+        margin-bottom: 18px;
+    }
+    .filter-panel .fp-head {
+        padding: 8px 14px;
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #555;
+        border-bottom: 1px solid #ddd;
+    }
+    .filter-panel .fp-body {
+        padding: 14px 16px;
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .filter-panel .fp-field label {
+        display: block;
+        font-size: .78rem;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 4px;
+    }
+    .filter-panel .fp-field input,
+    .filter-panel .fp-field select {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 6px 10px;
+        font-size: .85rem;
+        color: #222;
+        background: #fff;
+        height: 34px;
+        min-width: 160px;
+    }
+    .generate-btn {
+        background: #1a73e8;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 0 20px;
+        height: 34px;
+        font-size: .85rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .generate-btn:hover { background: #1558c0; }
+
+    /* ── Report section ──────────────────── */
+    .report-section {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+    }
+    .report-section .rs-head {
+        padding: 8px 14px;
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #555;
+        border-bottom: 1px solid #eee;
+    }
+    .report-section .rs-body { padding: 22px 24px 18px; }
+
+    /* ── Report inner title ──────────────── */
+    .report-inner-title { font-size: 1.4rem; font-weight: 800; margin: 0 0 2px; color: #111; }
+    .report-date-range  { font-size: .82rem; color: #666; margin-bottom: 18px; }
+
+    /* ── Table ───────────────────────────── */
+    .rpt-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+    .rpt-table th {
+        background: #f1f1f1;
+        border: 1px solid #ddd;
+        padding: 7px 10px;
+        text-align: right;
+        font-weight: 700;
+        font-size: .78rem;
+        color: #333;
+        white-space: nowrap;
+    }
+    .rpt-table th:first-child { text-align: left; }
+    .rpt-table td {
+        border: 1px solid #e8e8e8;
+        padding: 6px 10px;
+        text-align: right;
+        color: #222;
+    }
+    .rpt-table td:first-child { text-align: left; }
+
+    /* Category header row */
+    .rpt-table tr.cat-year-row td {
+        background: #f7f7f7;
+        font-weight: 700;
+        color: #222;
+        font-size: .82rem;
+    }
+    /* Active rows (has data) — first-col link */
+    .rpt-table tr.has-data td:first-child a {
+        color: #1a73e8;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .rpt-table tr.has-data td:first-child a:hover { text-decoration: underline; }
+    /* Inactive rows */
+    .rpt-table tr.no-data td { color: #aaa; }
+
+    /* Total row */
+    .rpt-table tr.total-row td {
+        background: #f1f1f1;
+        font-weight: 800;
+        border-top: 2px solid #bbb;
+        color: #111;
+    }
+
+    /* Progress bar inside cell */
+    .inline-bar {
+        display: inline-block;
+        width: 60px;
+        height: 7px;
+        background: #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+        vertical-align: middle;
+        margin-right: 5px;
+    }
+    .inline-bar .fill { height: 100%; border-radius: 4px; background: #1a73e8; }
+
+    /* Status badge */
+    .s-badge {
+        display: inline-block;
+        padding: 1px 7px;
+        border-radius: 10px;
+        font-size: .72rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    @@media print {
+        .no-print { display: none !important; }
+        .filter-panel { display: none !important; }
+        body { font-size: 10pt; }
+    }
 </style>
 
-<div class="container-fluid px-4">
-    <!-- Header -->
-    <div class="rpt-header no-print">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-            <div>
-                <div style="font-size:.78rem; opacity:.7;">
-                    <a href="@Url.Action("Index")" style="color:rgba(255,255,255,.8); text-decoration:none;">Reports</a> / Projects Summary
-                </div>
-                <h2 class="fw-bold mb-1" style="font-size:1.4rem;">📊 Projects Summary Report</h2>
-                <div style="font-size:.82rem; opacity:.8;">
-                    Period: <strong>@from</strong> — <strong>@to</strong>
-                    @if (!string.IsNullOrEmpty(selectedCat)) { <span class="ms-2">· Category: <strong>@selectedCat</strong></span> }
-                </div>
-            </div>
-            <div class="d-flex gap-2">
-                <button onclick="window.print()" class="btn btn-light btn-sm">
-                    <i class="fas fa-print me-1"></i> Print
-                </button>
-                <a href="@Url.Action("Index")" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-arrow-left me-1"></i> Back
-                </a>
-            </div>
-        </div>
+<div class="rpt-page container-fluid px-4">
+
+    <!-- Breadcrumb -->
+    <div class="rpt-bc">
+        <a href="@Url.Action("Index")">Reports</a> / Projects Report
     </div>
 
-    <!-- Filter bar -->
-    <div class="filter-bar no-print">
-        <form method="get" asp-action="ProjectsSummary" class="row g-2 align-items-end">
-            <div class="col-md-2">
-                <label>From Date</label>
-                <input type="date" name="fromDate" class="form-control form-control-sm" value="@ViewBag.FromDate" />
-            </div>
-            <div class="col-md-2">
-                <label>To Date</label>
-                <input type="date" name="toDate" class="form-control form-control-sm" value="@ViewBag.ToDate" />
-            </div>
-            <div class="col-md-3">
-                <label>Category</label>
-                <select name="category" class="form-select form-select-sm">
-                    <option value="">All Categories</option>
-                    @foreach (var c in allCategories)
-                    {
-                        <option value="@c" selected="@(selectedCat==c?"selected":null)">@c</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-3 d-flex gap-1">
-                <button class="btn btn-primary btn-sm flex-grow-1" type="submit">
-                    <i class="fas fa-search me-1"></i> Generate Report
-                </button>
-                <a href="@Url.Action("ProjectsSummary")" class="btn btn-outline-secondary btn-sm">✕</a>
+    <!-- Title + print -->
+    <div class="rpt-title-row">
+        <h1 class="rpt-title">PROJECTS REPORT</h1>
+        <button class="rpt-print-btn no-print" onclick="window.print()">
+            🖨 Print
+        </button>
+    </div>
+
+    <!-- Filter panel -->
+    <div class="filter-panel no-print">
+        <div class="fp-head">Filter</div>
+        <form method="get" asp-action="ProjectsSummary">
+            <div class="fp-body">
+                <div class="fp-field">
+                    <label>From</label>
+                    <input type="date" name="fromDate" value="@fromDate" />
+                </div>
+                <div class="fp-field">
+                    <label>To</label>
+                    <input type="date" name="toDate" value="@toDate" />
+                </div>
+                @if (allCategories.Any())
+                {
+                    <div class="fp-field">
+                        <label>Category</label>
+                        <select name="category">
+                            <option value="">All Categories</option>
+                            @foreach (var c in allCategories)
+                            {
+                                <option value="@c" selected="@(selectedCat == c ? "selected" : null)">@c</option>
+                            }
+                        </select>
+                    </div>
+                }
+                <button type="submit" class="generate-btn">Generate Report</button>
+                @if (!string.IsNullOrEmpty(selectedCat) || !string.IsNullOrEmpty(fromDate))
+                {
+                    <a href="@Url.Action("ProjectsSummary")" style="font-size:.8rem; color:#888; align-self:center;">✕ Reset</a>
+                }
             </div>
         </form>
     </div>
 
-    @if (!Model.Any())
-    {
-        <div class="text-center py-5 text-muted">
-            <i class="fas fa-folder-open fa-3x mb-3 d-block opacity-40"></i>
-            <h5>No projects found for the selected filters.</h5>
-            <a href="@Url.Action("ProjectsSummary")" class="btn btn-outline-secondary btn-sm mt-2">Clear Filters</a>
-        </div>
-    }
-    else
-    {
-        <!-- Summary KPIs -->
-        <div class="summary-kpis">
-            <div class="kpi-pill" style="border-color:#1e3a5f;">
-                <div class="num" style="color:#1e3a5f;">@totalProjects</div>
-                <div class="lbl">Total Projects</div>
-            </div>
-            <div class="kpi-pill" style="border-color:#10b981;">
-                <div class="num" style="color:#10b981;">@Model.Sum(g => g.CompletedTasks)</div>
-                <div class="lbl">Completed Tasks</div>
-            </div>
-            <div class="kpi-pill" style="border-color:#3b82f6;">
-                <div class="num" style="color:#3b82f6;">@Model.Sum(g => g.InProgressTasks)</div>
-                <div class="lbl">In Progress</div>
-            </div>
-            <div class="kpi-pill" style="border-color:#f59e0b;">
-                <div class="num" style="color:#f59e0b;">@Model.Sum(g => g.NotStartedTasks)</div>
-                <div class="lbl">Not Started</div>
-            </div>
-            <div class="kpi-pill" style="border-color:#8b5cf6;">
-                <div class="num" style="color:#8b5cf6;">@(Model.Any() ? (int)Math.Round(Model.Average(g => g.AvgProgress)) : 0)%</div>
-                <div class="lbl">Avg Progress</div>
-            </div>
-        </div>
+    <!-- Report output -->
+    <div class="report-section">
+        <div class="rs-head">Report</div>
+        <div class="rs-body">
 
-        <!-- Per-category tables -->
-        @foreach (var group in Model)
-        {
-            <div class="cat-section">
-                <div class="cat-section-head">
-                    <span>📁 @group.Category <small style="font-weight:400; opacity:.8;">(@group.TotalProjects project@(group.TotalProjects!=1?"s":""))</small></span>
-                    <span style="font-size:.8rem; opacity:.8;">Avg @group.AvgProgress% complete · @group.CompletedTasks/@group.TotalTasks tasks done</span>
+            <div class="report-inner-title">
+                @(string.IsNullOrEmpty(selectedCat) ? "ALL PROJECTS" : selectedCat.ToUpper())
+            </div>
+            <div class="report-date-range">
+                @fromDisplay.ToUpper() — @toDisplay.ToUpper()
+                @if (!string.IsNullOrEmpty(selectedCat))
+                {
+                    <span style="margin-left:8px; color:#1a73e8; font-weight:600;">· @selectedCat</span>
+                }
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div style="color:#888; padding:2rem 0; text-align:center;">
+                    No projects found for the selected filters.
                 </div>
-                <div class="table-responsive" style="border:1px solid #e2e8f0; border-top:none; border-radius:0 0 8px 8px;">
-                    <table class="table table-sm table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Project</th>
-                                <th>Client</th>
-                                <th>Status</th>
-                                <th>Start</th>
-                                <th>Due</th>
-                                <th style="min-width:120px;">Progress</th>
-                                <th class="text-center">Total</th>
-                                <th class="text-center">Done</th>
-                                <th class="text-center">In Progress</th>
-                                <th class="text-center">Not Started</th>
-                                <th></th>
+            }
+            else
+            {
+                <table class="rpt-table">
+                    <thead>
+                        <tr>
+                            <th style="width:32%;">Project</th>
+                            <th>Client</th>
+                            <th>Status</th>
+                            <th>Start</th>
+                            <th>Due</th>
+                            <th>Total Tasks</th>
+                            <th>Completed</th>
+                            <th>In Progress</th>
+                            <th>Not Started</th>
+                            <th>Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var group in Model)
+                        {
+                            <!-- Category header row -->
+                            <tr class="cat-year-row">
+                                <td colspan="10">📁 @group.Category</td>
                             </tr>
-                        </thead>
-                        <tbody>
+
                             @foreach (var p in group.Projects)
                             {
-                                var sc = p.Status switch {
+                                var hasData = p.TotalTasks > 0;
+                                var rowClass = hasData ? "has-data" : "no-data";
+                                var statusColor = p.Status switch {
                                     "Completed"   => "#10b981",
                                     "In Progress" => "#3b82f6",
                                     "On Hold"     => "#f59e0b",
-                                    _             => "#6c757d"
+                                    _             => "#9ca3af"
                                 };
-                                <tr>
-                                    <td class="fw-semibold">@p.Name</td>
-                                    <td><small class="text-muted">@p.ClientName</small></td>
+
+                                <tr class="@rowClass">
                                     <td>
-                                        <span class="badge-status" style="background:@sc; color:#fff;">@p.Status</span>
+                                        @if (hasData)
+                                        {
+                                            <a asp-controller="Report" asp-action="Status" asp-route-id="@p.Id">@p.Name</a>
+                                        }
+                                        else
+                                        {
+                                            @p.Name
+                                        }
                                     </td>
-                                    <td><small>@p.StartDate.ToString("MMM dd, yy")</small></td>
-                                    <td><small>@(p.EndDate?.ToString("MMM dd, yy") ?? "—")</small></td>
+                                    <td>@p.ClientName</td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="progress-xs" style="width:70px;">
-                                                <div class="fill" style="width:@p.Progress%; background:@sc;"></div>
-                                            </div>
-                                            <small class="fw-bold">@p.Progress%</small>
+                                        <span class="s-badge" style="background:@statusColor;">@p.Status</span>
+                                    </td>
+                                    <td>@p.StartDate.ToString("MMM dd, yyyy")</td>
+                                    <td>@(p.EndDate?.ToString("MMM dd, yyyy") ?? "—")</td>
+                                    <td>@p.TotalTasks</td>
+                                    <td style="color:#10b981; font-weight:@(hasData?"700":"400");">@p.CompletedTasks</td>
+                                    <td style="color:#3b82f6; font-weight:@(hasData?"700":"400");">@p.InProgressTasks</td>
+                                    <td>@p.NotStartedTasks</td>
+                                    <td>
+                                        <div class="inline-bar">
+                                            <div class="fill" style="width:@p.Progress%;"></div>
                                         </div>
-                                    </td>
-                                    <td class="text-center">@p.TotalTasks</td>
-                                    <td class="text-center"><span style="color:#10b981; font-weight:700;">@p.CompletedTasks</span></td>
-                                    <td class="text-center"><span style="color:#3b82f6; font-weight:700;">@p.InProgressTasks</span></td>
-                                    <td class="text-center"><span style="color:#6c757d;">@p.NotStartedTasks</span></td>
-                                    <td>
-                                        <a asp-controller="Report" asp-action="Status" asp-route-id="@p.Id"
-                                           class="btn btn-xs btn-outline-primary" style="font-size:.72rem; padding:2px 8px; border-radius:5px;">
-                                            View
-                                        </a>
+                                        @p.Progress%
                                     </td>
                                 </tr>
                             }
-                        </tbody>
-                        <tfoot>
-                            <tr class="cat-totals-row">
-                                <td colspan="6">Category Total</td>
-                                <td class="text-center">@group.TotalTasks</td>
-                                <td class="text-center">@group.CompletedTasks</td>
-                                <td class="text-center">@group.InProgressTasks</td>
-                                <td class="text-center">@group.NotStartedTasks</td>
+
+                            <!-- Category subtotal -->
+                            <tr class="total-row">
+                                <td style="text-align:left;">Subtotal — @group.Category</td>
                                 <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>@group.TotalTasks</td>
+                                <td style="color:#10b981;">@group.CompletedTasks</td>
+                                <td style="color:#3b82f6;">@group.InProgressTasks</td>
+                                <td>@group.NotStartedTasks</td>
+                                <td>@group.AvgProgress%</td>
                             </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        }
-    }
+                        }
+
+                        <!-- Grand total -->
+                        <tr class="total-row">
+                            <td style="text-align:left;">TOTAL</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>@grandTasks</td>
+                            <td style="color:#10b981;">@grandCompleted</td>
+                            <td style="color:#3b82f6;">@grandInProgress</td>
+                            <td>@grandNotStarted</td>
+                            <td>@grandAvg%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            }
+
+        </div>
+    </div>
+
 </div>

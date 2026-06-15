@@ -4,6 +4,7 @@
     ViewData["Title"] = "My Projects";
     var query = Context.Request.Query["q"].ToString();
     var statusFilter = Context.Request.Query["statusFilter"].ToString();
+    var categoryFilter = Context.Request.Query["categoryFilter"].ToString();
     var fromDate = Context.Request.Query["fromDate"].ToString();
     var toDate = Context.Request.Query["toDate"].ToString();
 }
@@ -31,6 +32,11 @@
             <h1 class="h3 mb-0">My Projects</h1>
             <p class="text-muted small mb-0">View and manage the projects assigned to you</p>
         </div>
+        <a asp-controller="Report" asp-action="Index"
+           asp-route-category="@categoryFilter"
+           class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-bar-chart me-1"></i> Reports@(!string.IsNullOrEmpty(categoryFilter) ? $" · {categoryFilter}" : "")
+        </a>
     </div>
 
     <div class="card mb-4">
@@ -56,10 +62,27 @@
                 </div>
 
                 <div class="col-12 col-md-3">
-                    <label for="applyBtn" class="form-label">&nbsp;</label>
-                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
+                    <label for="categoryFilter" class="form-label">Category</label>
+                    <input type="text" id="categoryFilter" name="categoryFilter" class="form-control"
+                           placeholder="e.g. Bug Fix, New Module" value="@categoryFilter" list="catOptions" />
+                    <datalist id="catOptions">
+                        <option value="Additional Feature"></option>
+                        <option value="Bug Fix"></option>
+                        <option value="New Module"></option>
+                        <option value="Maintenance"></option>
+                        <option value="Research"></option>
+                        <option value="Client Request"></option>
+                        <option value="Internal Project"></option>
+                    </datalist>
+                </div>
+
+                <div class="col-12 col-md-12">
+                    <button id="applyBtn" class="btn btn-primary" type="submit">
                         <i class="bi bi-search"></i> Apply Filters
                     </button>
+                    <a href="@Url.Action("MyProjects")" class="btn btn-outline-secondary ms-2">
+                        <i class="bi bi-x-circle"></i> Reset
+                    </a>
                 </div>
 
                 <div class="col-12">
@@ -113,7 +136,16 @@
                     <div class="card h-100">
                         <div class="card-body">
                             <h5 class="card-title">@project.Name</h5>
-                            
+
+                            @if (!string.IsNullOrEmpty(project.Category))
+                            {
+                                <p class="mb-2">
+                                    <span class="badge bg-light text-secondary border" style="font-size:.75rem;">
+                                        <i class="bi bi-tag me-1"></i>@project.Category
+                                    </span>
+                                </p>
+                            }
+
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <small class="text-muted">Progress</small>

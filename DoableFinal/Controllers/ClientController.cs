@@ -104,7 +104,7 @@ namespace DoableFinal.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Projects(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
+        public async Task<IActionResult> Projects(string? q = "", string? statusFilter = "", string? categoryFilter = "", string? fromDate = "", string? toDate = "")
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser?.Id == null)
@@ -130,6 +130,12 @@ namespace DoableFinal.Controllers
                 query = query.Where(p => p.Status == statusFilter);
             }
 
+            // Filter by category
+            if (!string.IsNullOrEmpty(categoryFilter))
+            {
+                query = query.Where(p => p.Category != null && p.Category.ToLower().Contains(categoryFilter.ToLower()));
+            }
+
             // Date range filtering
             if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
             {
@@ -148,6 +154,7 @@ namespace DoableFinal.Controllers
             ViewBag.ProjectProgress = await GetProjectProgress(projects);
             ViewBag.SearchQuery = q;
             ViewBag.StatusFilter = statusFilter;
+            ViewBag.CategoryFilter = categoryFilter;
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
             ViewBag.AvailableStatuses = new List<string> { "Not Started", "In Progress", "On Hold", "Completed" };

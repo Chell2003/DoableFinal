@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "Reports";
+    var preselectedCategory = ViewBag.PreselectedCategory as string ?? "";
     var grouped = Model.Projects
         .GroupBy(p => string.IsNullOrEmpty(p.Category) ? "Uncategorized" : p.Category)
         .OrderBy(g => g.Key == "Uncategorized" ? "zzz" : g.Key)
@@ -216,7 +217,7 @@
                             <option value="">All Categories</option>
                             @foreach (var g in grouped)
                             {
-                                <option value="@g.Key">@g.Key (@g.Count() project@(g.Count()!=1?"s":""))</option>
+                                <option value="@g.Key" selected="@(preselectedCategory == g.Key ? "selected" : null)">@g.Key (@g.Count() project@(g.Count()!=1?"s":""))</option>
                             }
                         </select>
                     </div>
@@ -314,6 +315,13 @@
 </div>
 
 <script>
+    // Auto-apply preselected category from URL
+    const preselectedCat = '@Html.Raw(preselectedCategory)';
+    if (preselectedCat) {
+        const cf = document.getElementById('catFilter');
+        if (cf) { cf.value = preselectedCat; filterProjects(); }
+    }
+
     function filterProjects() {
         const cat = document.getElementById('catFilter').value;
         const sel = document.getElementById('projectSelect');

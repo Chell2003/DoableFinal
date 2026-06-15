@@ -33,7 +33,7 @@ namespace DoableFinal.Controllers
         }
 
         // GET: Report
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? category = null)
         {
             var currentUser = await GetCurrentUser();
 
@@ -84,6 +84,7 @@ namespace DoableFinal.Controllers
                 EndDate = DateTime.UtcNow
             };
 
+            ViewBag.PreselectedCategory = category;
             return View(filterViewModel);
         }
 
