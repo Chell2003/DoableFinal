@@ -1,0 +1,67 @@
+@using DoableFinal.ViewModels
+@model AllProjectsReportViewModel
+@{ Layout = null; }
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
+<title>All Projects Report</title>
+<link href="/css/reports-print.css" rel="stylesheet"/></head>
+<body><div class="rpt-page">
+  <div class="rpt-cover">
+    <div class="rpt-cover-left">
+      <div class="rpt-report-type">All Projects Overview Report</div>
+      <div class="rpt-title">Projects Report</div>
+      <div class="rpt-meta">
+        <span><strong>Total Projects</strong></span><span>@Model.TotalProjects</span>
+        <span><strong>Overall Completion</strong></span><span>@Model.OverallCompletion%</span>
+        @if (!string.IsNullOrEmpty(Model.FilterStatus)){<span><strong>Status Filter</strong></span><span>@Model.FilterStatus</span>}
+        <span><strong>Generated</strong></span><span>@Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC</span>
+      </div>
+    </div>
+    <img src="/images/logo-combined2.png" alt="Doable" class="rpt-logo"/>
+  </div>
+  <div class="rpt-watermark-bar"><span>Doable Project Management System</span><span>CONFIDENTIAL</span></div>
+  <div class="rpt-kpi-grid cols-4">
+    <div class="rpt-kpi blue"><div class="rpt-kpi-val">@Model.TotalProjects</div><div class="rpt-kpi-lbl">Total Projects</div></div>
+    <div class="rpt-kpi teal"><div class="rpt-kpi-val">@Model.ActiveProjects</div><div class="rpt-kpi-lbl">Active</div></div>
+    <div class="rpt-kpi green"><div class="rpt-kpi-val">@Model.CompletedTasks</div><div class="rpt-kpi-lbl">Tasks Done</div></div>
+    <div class="rpt-kpi red"><div class="rpt-kpi-val">@Model.OverdueTasks</div><div class="rpt-kpi-lbl">Overdue Tasks</div></div>
+  </div>
+  @if (Model.ByCategory.Any())
+  {
+    <div class="rpt-section">
+      <div class="rpt-section-head yellow"><div class="rpt-sec-icon">🏷</div><h3>By Category</h3></div>
+      <div class="rpt-cat-grid">
+        @foreach (var c in Model.ByCategory)
+        {
+          <div class="rpt-cat-card">
+            <div class="rpt-cat-name">@c.Category</div>
+            <div class="rpt-cat-stat">@c.ProjectCount projects · @c.CompletedTasks/@c.TotalTasks tasks · @c.CompletionPct%</div>
+            <div class="rpt-mini-progress-wrap"><div class="rpt-mini-progress-fill" style="width:@c.CompletionPct%"></div></div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+  <div class="rpt-section">
+    <div class="rpt-section-head blue"><div class="rpt-sec-icon">📁</div><h3>All Projects</h3><span class="rpt-count">@Model.Projects.Count</span></div>
+    <table class="rpt-table">
+      <thead><tr><th style="width:30%">Project</th><th>Category</th><th>Manager</th><th>Status</th><th style="text-align:center">Tasks</th><th style="text-align:center">Done</th><th style="text-align:center">Overdue</th><th style="text-align:center">Progress</th></tr></thead>
+      <tbody>
+        @foreach (var p in Model.Projects)
+        {
+          var sc = p.Status switch {"Completed"=>"success","In Progress"=>"primary","On Hold"=>"warning",_=>"muted"};
+          <tr>
+            <td><strong>@p.ProjectName</strong></td>
+            <td><span class="rpt-badge primary">@p.Category</span></td>
+            <td>@p.ProjectManager</td>
+            <td><span class="rpt-badge @sc">@p.Status</span></td>
+            <td style="text-align:center">@p.TotalTasks</td>
+            <td style="text-align:center"><span class="rpt-badge success">@p.CompletedTasks</span></td>
+            <td style="text-align:center">@(p.OverdueTasks>0?p.OverdueTasks.ToString():"—")</td>
+            <td style="text-align:center"><span class="rpt-badge @(p.CompletionPct>=75?"success":p.CompletionPct>=40?"warning":"danger")">@p.CompletionPct%</span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="rpt-footer"><div><strong>Doable</strong> Project Management System</div><div>Generated @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC</div></div>
+</div><script>window.onload=function(){window.print();}</script></body></html>

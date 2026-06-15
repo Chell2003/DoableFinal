@@ -1,0 +1,79 @@
+@using DoableFinal.ViewModels
+@model TeamPerformanceReportViewModel
+@{ ViewData["Title"] = "Team Performance Report"; }
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a href="/Report" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        <a href="/Report/TeamPerformance?from=@Model.FromDate?.ToString("yyyy-MM-dd")&to=@Model.ToDate?.ToString("yyyy-MM-dd")&print=1"
+           target="_blank" class="btn btn-sm btn-outline-primary ms-auto"><i class="bi bi-printer me-1"></i>Print</a>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#1a3060,#2d6a9f);border-radius:14px;padding:1.75rem 2rem;color:#fff;margin-bottom:1.5rem;">
+        <div>
+            <div style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;opacity:.7">Team Performance</div>
+            <h2 class="fw-bold mb-1">Employee Performance Report</h2>
+            <div style="opacity:.8;font-size:.85rem;">Generated @Model.GeneratedDate.ToString("MMMM dd, yyyy")</div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        @foreach (var (val,lbl,col) in new[]{
+            (Model.TotalEmployees.ToString(),"Employees","primary"),
+            (Model.TotalTasksAssigned.ToString(),"Total Assigned","info"),
+            (Model.TotalTasksCompleted.ToString(),"Completed","success"),
+            (Model.TotalOverdue.ToString(),"Overdue","danger")})
+        {
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="fw-bold text-@col" style="font-size:1.8rem;">@val</div>
+                    <div class="text-muted small">@lbl</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold"><i class="bi bi-people me-2 text-info"></i>Employee Breakdown</div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 no-sort" data-page-size="15">
+                <thead class="table-dark">
+                    <tr><th>Employee</th><th>Position</th><th class="text-center">Assigned</th>
+                        <th class="text-center">Completed</th><th class="text-center">In Progress</th>
+                        <th class="text-center">Overdue</th><th class="text-center">Rate</th><th>Categories</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model.Employees.OrderByDescending(x => x.CompletionRate))
+                    {
+                        var rc = e.CompletionRate >= 75 ? "success" : e.CompletionRate >= 40 ? "warning" : "danger";
+                        <tr>
+                            <td class="dashboard-td fw-semibold">@e.EmployeeName</td>
+                            <td class="dashboard-td small text-muted">@e.Position</td>
+                            <td class="text-center dashboard-td">@e.TotalAssigned</td>
+                            <td class="text-center dashboard-td"><span class="badge bg-success">@e.Completed</span></td>
+                            <td class="text-center dashboard-td"><span class="badge bg-primary">@e.InProgress</span></td>
+                            <td class="text-center dashboard-td">
+                                @if (e.Overdue > 0) { <span class="badge bg-danger">@e.Overdue</span> } else { <span class="text-muted">—</span> }
+                            </td>
+                            <td class="dashboard-td" style="min-width:110px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-fill" style="height:6px;">
+                                        <div class="progress-bar bg-@rc" style="width:@e.CompletionRate%"></div>
+                                    </div>
+                                    <small class="fw-bold text-@rc">@e.CompletionRate%</small>
+                                </div>
+                            </td>
+                            <td class="dashboard-td">
+                                @foreach (var c in e.Categories.Take(3))
+                                {
+                                    <span class="badge bg-light text-dark border me-1" style="font-size:.65rem;">@c</span>
+                                }
+                                @if (e.Categories.Count > 3) { <span class="text-muted small">+@(e.Categories.Count-3)</span> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

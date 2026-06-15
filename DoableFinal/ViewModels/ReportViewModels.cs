@@ -209,3 +209,98 @@ namespace DoableFinal.ViewModels
         public string ClientName { get; set; }
     }
 }
+
+    // ── Cross-project / Overview report models ────────────────────────
+
+    public class CategoryReportViewModel
+    {
+        public string Category { get; set; }
+        public DateTime GeneratedDate { get; set; } = DateTime.UtcNow;
+        public List<CategoryProjectSummary> Projects { get; set; } = new();
+        public int TotalProjects  { get; set; }
+        public int TotalTasks     { get; set; }
+        public int CompletedTasks { get; set; }
+        public int OverdueTasks   { get; set; }
+        public int InProgressTasks{ get; set; }
+        public decimal OverallCompletion { get; set; }
+    }
+
+    public class CategoryProjectSummary
+    {
+        public int    ProjectId          { get; set; }
+        public string ProjectName        { get; set; }
+        public string Status             { get; set; }
+        public string ProjectManager     { get; set; }
+        public int    TotalTasks         { get; set; }
+        public int    CompletedTasks     { get; set; }
+        public int    InProgressTasks    { get; set; }
+        public int    OverdueTasks       { get; set; }
+        public decimal CompletionPct     { get; set; }
+        public DateTime? EndDate         { get; set; }
+    }
+
+    public class AllProjectsReportViewModel
+    {
+        public DateTime GeneratedDate    { get; set; } = DateTime.UtcNow;
+        public string? FilterStatus      { get; set; }
+        public DateTime? FromDate        { get; set; }
+        public DateTime? ToDate          { get; set; }
+        public int TotalProjects         { get; set; }
+        public int TotalTasks            { get; set; }
+        public int CompletedTasks        { get; set; }
+        public int OverdueTasks          { get; set; }
+        public int ActiveProjects        { get; set; }
+        public decimal OverallCompletion { get; set; }
+        public List<AllProjectRow> Projects { get; set; } = new();
+        public List<CategorySummaryRow> ByCategory { get; set; } = new();
+    }
+
+    public class AllProjectRow
+    {
+        public int    ProjectId       { get; set; }
+        public string ProjectName     { get; set; }
+        public string Category        { get; set; }
+        public string Status          { get; set; }
+        public string ProjectManager  { get; set; }
+        public int    TotalTasks      { get; set; }
+        public int    CompletedTasks  { get; set; }
+        public int    OverdueTasks    { get; set; }
+        public decimal CompletionPct  { get; set; }
+        public DateTime? EndDate      { get; set; }
+        public DateTime  StartDate    { get; set; }
+    }
+
+    public class CategorySummaryRow
+    {
+        public string Category        { get; set; }
+        public int    ProjectCount    { get; set; }
+        public int    TotalTasks      { get; set; }
+        public int    CompletedTasks  { get; set; }
+        public int    OverdueTasks    { get; set; }
+        public decimal CompletionPct  { get; set; }
+    }
+
+    public class TeamPerformanceReportViewModel
+    {
+        public DateTime GeneratedDate     { get; set; } = DateTime.UtcNow;
+        public DateTime? FromDate         { get; set; }
+        public DateTime? ToDate           { get; set; }
+        public int TotalEmployees         { get; set; }
+        public int TotalTasksAssigned     { get; set; }
+        public int TotalTasksCompleted    { get; set; }
+        public int TotalOverdue           { get; set; }
+        public List<EmployeePerformanceRow> Employees { get; set; } = new();
+    }
+
+    public class EmployeePerformanceRow
+    {
+        public string EmployeeId         { get; set; }
+        public string EmployeeName       { get; set; }
+        public string Position           { get; set; }
+        public int    TotalAssigned      { get; set; }
+        public int    Completed          { get; set; }
+        public int    InProgress         { get; set; }
+        public int    Overdue            { get; set; }
+        public decimal CompletionRate    { get; set; }
+        public List<string> Categories  { get; set; } = new();
+    }

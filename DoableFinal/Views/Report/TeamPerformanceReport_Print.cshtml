@@ -1,0 +1,50 @@
+@using DoableFinal.ViewModels
+@model TeamPerformanceReportViewModel
+@{ Layout = null; }
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
+<title>Team Performance Report</title>
+<link href="/css/reports-print.css" rel="stylesheet"/></head>
+<body><div class="rpt-page">
+  <div class="rpt-cover">
+    <div class="rpt-cover-left">
+      <div class="rpt-report-type">Team Performance Report</div>
+      <div class="rpt-title">Employee Performance</div>
+      <div class="rpt-meta">
+        <span><strong>Employees</strong></span><span>@Model.TotalEmployees</span>
+        <span><strong>Period</strong></span><span>@(Model.FromDate?.ToString("MMM dd, yyyy") ?? "All time") – @(Model.ToDate?.ToString("MMM dd, yyyy") ?? "Now")</span>
+        <span><strong>Generated</strong></span><span>@Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC</span>
+      </div>
+    </div>
+    <img src="/images/logo-combined2.png" alt="Doable" class="rpt-logo"/>
+  </div>
+  <div class="rpt-watermark-bar"><span>Doable Project Management System</span><span>CONFIDENTIAL</span></div>
+  <div class="rpt-kpi-grid cols-4">
+    <div class="rpt-kpi blue"><div class="rpt-kpi-val">@Model.TotalEmployees</div><div class="rpt-kpi-lbl">Employees</div></div>
+    <div class="rpt-kpi teal"><div class="rpt-kpi-val">@Model.TotalTasksAssigned</div><div class="rpt-kpi-lbl">Assigned</div></div>
+    <div class="rpt-kpi green"><div class="rpt-kpi-val">@Model.TotalTasksCompleted</div><div class="rpt-kpi-lbl">Completed</div></div>
+    <div class="rpt-kpi red"><div class="rpt-kpi-val">@Model.TotalOverdue</div><div class="rpt-kpi-lbl">Overdue</div></div>
+  </div>
+  <div class="rpt-section">
+    <div class="rpt-section-head blue"><div class="rpt-sec-icon">👥</div><h3>Employee Performance</h3><span class="rpt-count">@Model.Employees.Count</span></div>
+    <table class="rpt-table">
+      <thead><tr><th>Employee</th><th>Position</th><th style="text-align:center">Assigned</th><th style="text-align:center">Completed</th><th style="text-align:center">In Progress</th><th style="text-align:center">Overdue</th><th style="text-align:center">Rate</th><th>Categories</th></tr></thead>
+      <tbody>
+        @foreach (var e in Model.Employees.OrderByDescending(x => x.CompletionRate))
+        {
+          var rc = e.CompletionRate>=75?"success":e.CompletionRate>=40?"warning":"danger";
+          <tr>
+            <td><strong>@e.EmployeeName</strong></td>
+            <td style="color:#64748b;font-size:8.5pt">@e.Position</td>
+            <td style="text-align:center">@e.TotalAssigned</td>
+            <td style="text-align:center"><span class="rpt-badge success">@e.Completed</span></td>
+            <td style="text-align:center"><span class="rpt-badge primary">@e.InProgress</span></td>
+            <td style="text-align:center">@(e.Overdue>0?$"<span class=\"rpt-badge danger\">{e.Overdue}</span>":"—")</td>
+            <td style="text-align:center"><span class="rpt-badge @rc">@e.CompletionRate%</span></td>
+            <td style="font-size:8pt">@string.Join(", ", e.Categories.Take(4))@(e.Categories.Count>4?" …":"")</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="rpt-footer"><div><strong>Doable</strong> Project Management System</div><div>Generated @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC</div></div>
+</div><script>window.onload=function(){window.print();}</script></body></html>

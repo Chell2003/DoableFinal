@@ -351,5 +351,226 @@ namespace DoableFinal.Controllers
                 return false;
             }
         }
+
+        // ── GET: Report/CategoryReport?category=Bug+Fix ───────────────────
+        public async Task<IActionResult> CategoryReport(string category)
+        {
+            var currentUser = await GetCurrentUser();
+            var projects = await GetAccessibleProjects(currentUser);
+
+            var filtered = projects.Where(p =>
+                string.Equals(p.Category ?? "Uncategorized", category ?? "Uncategorized",
+                    StringComparison.OrdinalIgnoreCase)).ToList();
+
+            var projectIds = filtered.Select(p => p.Id).ToList();
+
+            var tasks = await _context.Tasks
+                .Where(t => projectIds.Contains(t.ProjectId) && !t.IsArchived)
+                .ToListAsync();
+
+            var now = DateTime.UtcNow;
+            var vm = new CategoryReportViewModel
+            {
+                Category         = category ?? "Uncategorized",
+                TotalProjects    = filtered.Count,
+                TotalTasks       = tasks.Count,
+                CompletedTasks   = tasks.Count(t => t.Status == "Completed"),
+                InProgressTasks  = tasks.Count(t => t.Status == "In Progress"),
+                OverdueTasks     = tasks.Count(t => t.Status != "Completed" && t.DueDate < now),
+            };
+            vm.OverallCompletion = vm.TotalTasks > 0
+                ? Math.Round((decimal)vm.CompletedTasks / vm.TotalTasks * 100, 1) : 0;
+
+            foreach (var p in filtered)
+            {
+                var ptasks = tasks.Where(t => t.ProjectId == p.Id).ToList();
+                var comp   = ptasks.Count(t => t.Status == "Completed");
+                var total  = ptasks.Count;
+                var pm     = p.ProjectManager != null
+                    ? $"{p.ProjectManager.FirstName} {p.ProjectManager.LastName}" : "—";
+                vm.Projects.Add(new CategoryProjectSummary
+                {
+                    ProjectId      = p.Id,
+                    ProjectName    = p.Name,
+                    Status         = p.Status,
+                    ProjectManager = pm,
+                    TotalTasks     = total,
+                    CompletedTasks = comp,
+                    InProgressTasks= ptasks.Count(t => t.Status == "In Progress"),
+                    OverdueTasks   = ptasks.Count(t => t.Status != "Completed" && t.DueDate < now),
+                    CompletionPct  = total > 0 ? Math.Round((decimal)comp / total * 100, 1) : 0,
+                    EndDate        = p.EndDate
+                });
+            }
+
+            if (Request.Query["print"] == "1")
+                return View("CategoryReport_Print", vm);
+            return View("CategoryReport", vm);
+        }
+
+        // ── GET: Report/AllProjects ────────────────────────────────────────
+        public async Task<IActionResult> AllProjects(string? status = null, DateTime? from = null, DateTime? to = null)
+        {
+            var currentUser = await GetCurrentUser();
+            var projects = await GetAccessibleProjects(currentUser);
+
+            if (!string.IsNullOrEmpty(status))
+                projects = projects.Where(p => p.Status == status).ToList();
+            if (from.HasValue)
+                projects = projects.Where(p => p.StartDate >= from.Value).ToList();
+            if (to.HasValue)
+                projects = projects.Where(p => p.StartDate <= to.Value).ToList();
+
+            var projectIds = projects.Select(p => p.Id).ToList();
+            var tasks = await _context.Tasks
+                .Where(t => projectIds.Contains(t.ProjectId) && !t.IsArchived)
+                .ToListAsync();
+
+            var now = DateTime.UtcNow;
+            var vm = new AllProjectsReportViewModel
+            {
+                FilterStatus     = status,
+                FromDate         = from,
+                ToDate           = to,
+                TotalProjects    = projects.Count,
+                ActiveProjects   = projects.Count(p => p.Status == "In Progress"),
+                TotalTasks       = tasks.Count,
+                CompletedTasks   = tasks.Count(t => t.Status == "Completed"),
+                OverdueTasks     = tasks.Count(t => t.Status != "Completed" && t.DueDate < now),
+            };
+            vm.OverallCompletion = vm.TotalTasks > 0
+                ? Math.Round((decimal)vm.CompletedTasks / vm.TotalTasks * 100, 1) : 0;
+
+            foreach (var p in projects.OrderBy(x => x.Category).ThenBy(x => x.Name))
+            {
+                var pt   = tasks.Where(t => t.ProjectId == p.Id).ToList();
+                var comp = pt.Count(t => t.Status == "Completed");
+                var total= pt.Count;
+                var pm   = p.ProjectManager != null
+                    ? $"{p.ProjectManager.FirstName} {p.ProjectManager.LastName}" : "—";
+                vm.Projects.Add(new AllProjectRow
+                {
+                    ProjectId      = p.Id,
+                    ProjectName    = p.Name,
+                    Category       = string.IsNullOrEmpty(p.Category) ? "Uncategorized" : p.Category,
+                    Status         = p.Status,
+                    ProjectManager = pm,
+                    StartDate      = p.StartDate,
+                    EndDate        = p.EndDate,
+                    TotalTasks     = total,
+                    CompletedTasks = comp,
+                    OverdueTasks   = pt.Count(t => t.Status != "Completed" && t.DueDate < now),
+                    CompletionPct  = total > 0 ? Math.Round((decimal)comp / total * 100, 1) : 0
+                });
+            }
+
+            vm.ByCategory = vm.Projects
+                .GroupBy(p => p.Category)
+                .Select(g => new CategorySummaryRow
+                {
+                    Category      = g.Key,
+                    ProjectCount  = g.Count(),
+                    TotalTasks    = g.Sum(p => p.TotalTasks),
+                    CompletedTasks= g.Sum(p => p.CompletedTasks),
+                    OverdueTasks  = g.Sum(p => p.OverdueTasks),
+                    CompletionPct = g.Sum(p => p.TotalTasks) > 0
+                        ? Math.Round((decimal)g.Sum(p => p.CompletedTasks) / g.Sum(p => p.TotalTasks) * 100, 1) : 0
+                })
+                .OrderBy(x => x.Category)
+                .ToList();
+
+            if (Request.Query["print"] == "1")
+                return View("AllProjectsReport_Print", vm);
+            return View("AllProjectsReport", vm);
+        }
+
+        // ── GET: Report/TeamPerformance ───────────────────────────────────
+        public async Task<IActionResult> TeamPerformance(DateTime? from = null, DateTime? to = null)
+        {
+            var currentUser = await GetCurrentUser();
+            var projects = await GetAccessibleProjects(currentUser);
+            var projectIds = projects.Select(p => p.Id).ToList();
+
+            var assignments = await _context.TaskAssignments
+                .Include(ta => ta.Employee)
+                .Include(ta => ta.ProjectTask)
+                .Where(ta => projectIds.Contains(ta.ProjectTask.ProjectId) && !ta.ProjectTask.IsArchived)
+                .ToListAsync();
+
+            if (from.HasValue)
+                assignments = assignments.Where(ta => ta.ProjectTask.DueDate >= from.Value).ToList();
+            if (to.HasValue)
+                assignments = assignments.Where(ta => ta.ProjectTask.DueDate <= to.Value).ToList();
+
+            var now = DateTime.UtcNow;
+            var vm = new TeamPerformanceReportViewModel { FromDate = from, ToDate = to };
+
+            var byEmployee = assignments
+                .GroupBy(ta => new { ta.EmployeeId, ta.Employee?.FirstName, ta.Employee?.LastName, ta.Employee?.Designation })
+                .ToList();
+
+            foreach (var g in byEmployee.OrderBy(g => g.Key.LastName))
+            {
+                var taskList = g.Select(ta => ta.ProjectTask).Distinct().ToList();
+                var comp  = taskList.Count(t => t.Status == "Completed");
+                var total = taskList.Count;
+                vm.Employees.Add(new EmployeePerformanceRow
+                {
+                    EmployeeId     = g.Key.EmployeeId,
+                    EmployeeName   = $"{g.Key.FirstName} {g.Key.LastName}",
+                    Position       = g.Key.Designation ?? "—",
+                    TotalAssigned  = total,
+                    Completed      = comp,
+                    InProgress     = taskList.Count(t => t.Status == "In Progress"),
+                    Overdue        = taskList.Count(t => t.Status != "Completed" && t.DueDate < now),
+                    CompletionRate = total > 0 ? Math.Round((decimal)comp / total * 100, 1) : 0,
+                    Categories     = taskList
+                        .Where(t => !string.IsNullOrEmpty(t.Category))
+                        .Select(t => t.Category!)
+                        .Distinct().ToList()
+                });
+            }
+
+            vm.TotalEmployees      = vm.Employees.Count;
+            vm.TotalTasksAssigned  = vm.Employees.Sum(e => e.TotalAssigned);
+            vm.TotalTasksCompleted = vm.Employees.Sum(e => e.Completed);
+            vm.TotalOverdue        = vm.Employees.Sum(e => e.Overdue);
+
+            if (Request.Query["print"] == "1")
+                return View("TeamPerformanceReport_Print", vm);
+            return View("TeamPerformanceReport", vm);
+        }
+
+        // ── Helper: projects the current user can see (with PM nav data) ─
+        private async Task<List<Project>> GetAccessibleProjects(ApplicationUser? user)
+        {
+            var query = _context.Projects
+                .Include(p => p.ProjectManager)
+                .Include(p => p.Tasks)
+                .Where(p => !p.IsArchived)
+                .AsQueryable();
+
+            if (user == null) return new List<Project>();
+
+            bool isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+            if (isAdmin) return await query.ToListAsync();
+
+            bool isClient = await _userManager.IsInRoleAsync(user, "Client");
+            if (isClient)
+                return await query.Where(p => p.ClientId == user.Id).ToListAsync();
+
+            bool isPM = await _userManager.IsInRoleAsync(user, "Project Manager") ||
+                        await _userManager.IsInRoleAsync(user, "ProjectManager");
+            if (isPM)
+                return await query.Where(p => p.ProjectManagerId == user.Id).ToListAsync();
+
+            // Employee
+            var ids = await _context.TaskAssignments
+                .Where(ta => ta.EmployeeId == user.Id)
+                .Select(ta => ta.ProjectTask.ProjectId)
+                .Distinct().ToListAsync();
+            return await query.Where(p => ids.Contains(p.Id)).ToListAsync();
+        }
+
     }
 }

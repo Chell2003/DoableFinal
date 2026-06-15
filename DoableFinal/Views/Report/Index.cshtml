@@ -1,205 +1,396 @@
+@using DoableFinal.ViewModels
+@model ReportFilterViewModel
 @{
     ViewData["Title"] = "Reports";
+    var categories = Model.Projects
+        .Select(p => string.IsNullOrEmpty(p.Category) ? "Uncategorized" : p.Category)
+        .Distinct().OrderBy(c => c == "Uncategorized" ? "zzz" : c).ToList();
+    var statuses = Model.Projects.Select(p => p.Status).Where(s => !string.IsNullOrEmpty(s))
+        .Distinct().OrderBy(s => s).ToList();
+    var grouped = Model.Projects
+        .GroupBy(p => string.IsNullOrEmpty(p.Category) ? "Uncategorized" : p.Category)
+        .OrderBy(g => g.Key == "Uncategorized" ? "zzz" : g.Key).ToList();
 }
 
-<div class="container-fluid mt-4">
-    <div class="row">
-        <div class="col-12 col-md-12">
-            <h1 class="mb-4">
-                <i class="fas fa-chart-bar"></i> Project Reports
-            </h1>
+<style>
+    .rpt-hero {
+        background: linear-gradient(135deg,#1a3060 0%,#2d6a9f 100%);
+        border-radius:16px; padding:2rem 2.5rem; color:#fff; margin-bottom:2rem;
+    }
+    .rpt-tab-pill { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1.5rem; }
+    .rpt-tab-pill .btn { border-radius:30px; padding:.4rem 1.1rem; font-size:.85rem; font-weight:600; }
+    .scope-panel { display:none; }
+    .scope-panel.active { display:block; animation:fadeIn .2s ease; }
+    @@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .report-type-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; margin-bottom:1.5rem; }
+    .rpt-type-card {
+        border:2px solid transparent; border-radius:12px; padding:1rem .75rem;
+        text-align:center; cursor:pointer; transition:all .2s ease; background:#fff;
+        box-shadow:0 1px 6px rgba(0,0,0,.07);
+    }
+    .rpt-type-card:hover { transform:translateY(-3px); box-shadow:0 6px 20px rgba(0,0,0,.12); }
+    .rpt-type-card.selected { border-color:var(--bs-primary); background:#f0f6ff; }
+    .rpt-type-card .icon { font-size:1.8rem; margin-bottom:.5rem; }
+    .rpt-type-card h6 { font-size:.85rem; font-weight:700; margin:0 0 2px; }
+    .rpt-type-card small { font-size:.72rem; color:#64748b; }
+    .rpt-config-card { border:none; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.07); }
+    .rpt-config-card .card-header { background:#f8f9fa; border-radius:12px 12px 0 0 !important; padding:.875rem 1.25rem; }
+    .rpt-generate-btn { border-radius:8px; font-weight:600; padding:.6rem 1.5rem; }
+    .scope-badge { background:#e8f0fb; color:#1a3060; border-radius:6px; padding:.3rem .75rem; font-size:.8rem; font-weight:600; }
+    .quick-card {
+        border:none; border-radius:12px; background:linear-gradient(135deg,#f8faff,#fff);
+        box-shadow:0 1px 8px rgba(0,0,0,.07); transition:transform .2s,box-shadow .2s;
+    }
+    .quick-card:hover { transform:translateY(-3px); box-shadow:0 6px 18px rgba(0,0,0,.1); }
+    .quick-card .icon-circle {
+        width:44px; height:44px; border-radius:50%;
+        display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+    }
+</style>
+
+<!-- Hero -->
+<div class="rpt-hero">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <div style="font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;opacity:.75;margin-bottom:.25rem;">Analytics &amp; Reporting</div>
+            <h1 class="h3 fw-bold mb-1">Reports Center</h1>
+            <p class="mb-0 opacity-75">Generate cross-project reports, category breakdowns, team performance insights &amp; more</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <span class="scope-badge"><i class="bi bi-folder me-1"></i>@Model.Projects.Count Projects</span>
+            <span class="scope-badge"><i class="bi bi-tag me-1"></i>@categories.Count Categories</span>
         </div>
     </div>
+</div>
 
-    <!-- Report Type Cards -->
-    <div class="row mb-4">
-        <div class="col-md-6 col-lg-3 mb-3">
-            <div class="card report-card h-100 border-primary">
-                <div class="card-body text-center">
-                    <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
-                    <h5 class="card-title">Status Report</h5>
-                    <p class="card-text">View completed, in-progress, and upcoming tasks</p>
+<!-- Quick access tiles -->
+<h6 class="text-muted fw-semibold text-uppercase small mb-3 mt-1" style="letter-spacing:.07em">Quick Reports</h6>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card quick-card h-100 p-3">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="icon-circle bg-primary bg-opacity-10 text-primary">📁</div>
+                <div>
+                    <div class="fw-semibold small">All Projects</div>
+                    <div style="font-size:.72rem;color:#64748b;">Cross-project overview</div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6 col-lg-3 mb-3">
-            <div class="card report-card h-100 border-info">
-                <div class="card-body text-center">
-                    <i class="fas fa-clock fa-3x text-info mb-3"></i>
-                    <h5 class="card-title">Time Tracking</h5>
-                    <p class="card-text">Track time per task and employee</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3 mb-3">
-            <div class="card report-card h-100 border-warning">
-                <div class="card-body text-center">
-                    <i class="fas fa-users fa-3x text-warning mb-3"></i>
-                    <h5 class="card-title">Workload Report</h5>
-                    <p class="card-text">View task assignments and workload</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3 mb-3">
-            <div class="card report-card h-100 border-success">
-                <div class="card-body text-center">
-                    <i class="fas fa-chart-pie fa-3x text-success mb-3"></i>
-                    <h5 class="card-title">Progress Report</h5>
-                    <p class="card-text">Track project completion and milestones</p>
-                </div>
-            </div>
+            <a href="/Report/AllProjects" class="btn btn-sm btn-primary w-100 mt-auto">Generate</a>
         </div>
     </div>
-
-    <!-- Project Selection -->
-    <div class="row mb-4">
-        <div class="col-12 col-md-12">
-            <div class="card">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Select Project</h5>
-                </div>
-                <div class="card-body">
-                    @if (Model.Projects.Count == 0)
-                    {
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> No projects available
-                        </div>
-                    }
-                    else
-                    {
-                        <form method="get" id="projectForm">
-                            <div class="row">
-                                <div class="col-md-8 mb-3">
-                                    <label for="projectSelect" class="form-label">Project</label>
-                                    <select class="form-select" id="projectSelect" name="projectId" onchange="updateReportLinks()">
-                                        <option value="">-- Select a Project --</option>
-                                        @foreach (var project in Model.Projects)
-                                        {
-                                            <option value="@project.Id">@project.Name</option>
-                                        }
-                                    </select>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label>&nbsp;</label>
-                                    <button type="button" class="btn btn-primary w-100" onclick="loadReport('Status')" id="statusBtn" disabled>
-                                        <i class="fas fa-tasks"></i> View Status Report
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <!-- Report Action Buttons (visible when project selected) -->
-                        <div id="reportButtons" style="display: none;">
-                            <div class="row mt-3">
-                                <div class="col-md-3 mb-2">
-                                    <button type="button" class="btn btn-outline-primary w-100" onclick="loadReport('Status')">
-                                        <i class="fas fa-tasks"></i> Status Report
-                                    </button>
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <button type="button" class="btn btn-outline-info w-100" onclick="showTimeTrackingModal()">
-                                        <i class="fas fa-clock"></i> Time Tracking
-                                    </button>
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <button type="button" class="btn btn-outline-warning w-100" onclick="loadReport('Workload')">
-                                        <i class="fas fa-users"></i> Workload Report
-                                    </button>
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <button type="button" class="btn btn-outline-success w-100" onclick="loadReport('Progress')">
-                                        <i class="fas fa-chart-pie"></i> Progress Report
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    }
+    <div class="col-6 col-md-3">
+        <div class="card quick-card h-100 p-3">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="icon-circle bg-info bg-opacity-10 text-info">👥</div>
+                <div>
+                    <div class="fw-semibold small">Team Performance</div>
+                    <div style="font-size:.72rem;color:#64748b;">All employees</div>
                 </div>
             </div>
+            <a href="/Report/TeamPerformance" class="btn btn-sm btn-info text-white w-100 mt-auto">Generate</a>
         </div>
     </div>
+    @foreach (var cat in categories.Take(2))
+    {
+        <div class="col-6 col-md-3">
+            <div class="card quick-card h-100 p-3">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="icon-circle bg-warning bg-opacity-10 text-warning">🏷</div>
+                    <div>
+                        <div class="fw-semibold small">@cat</div>
+                        <div style="font-size:.72rem;color:#64748b;">Category report</div>
+                    </div>
+                </div>
+                <a href="/Report/CategoryReport?category=@Uri.EscapeDataString(cat)" class="btn btn-sm btn-warning w-100 mt-auto">Generate</a>
+            </div>
+        </div>
+    }
+</div>
 
-    <!-- Date Range Modal for Time Tracking -->
-    <div class="modal fade" id="timeTrackingModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Time Tracking Report - Date Range</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Scope tabs -->
+<h6 class="text-muted fw-semibold text-uppercase small mb-3" style="letter-spacing:.07em">Custom Report Builder</h6>
+<div class="rpt-tab-pill">
+    <button class="btn btn-primary active" onclick="showScope('project', this)">
+        <i class="bi bi-folder me-1"></i>Per Project
+    </button>
+    <button class="btn btn-outline-secondary" onclick="showScope('category', this)">
+        <i class="bi bi-tag me-1"></i>By Category
+    </button>
+    <button class="btn btn-outline-secondary" onclick="showScope('allprojects', this)">
+        <i class="bi bi-grid me-1"></i>All Projects
+    </button>
+    <button class="btn btn-outline-secondary" onclick="showScope('team', this)">
+        <i class="bi bi-people me-1"></i>Team Performance
+    </button>
+</div>
+
+<!-- ── SCOPE: Per Project ───────────────────────────────────────────────── -->
+<div id="scope-project" class="scope-panel active">
+    <div class="card rpt-config-card">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-folder text-primary"></i>
+            <h6 class="mb-0 fw-semibold">Per-Project Report</h6>
+        </div>
+        <div class="card-body p-4">
+            <div class="report-type-grid" id="pj-types">
+                @foreach (var (icon,label,slug,desc) in new[]{
+                    ("📋","Status","Status","Completed, in-progress & upcoming"),
+                    ("⏱","Time Tracking","TimeTracking","Hours logged per task"),
+                    ("👥","Workload","Workload","Employee task assignments"),
+                    ("📈","Progress","Progress","Milestones & health")
+                })
+                {
+                    <div class="rpt-type-card @(slug=="Status"?"selected":"")" onclick="selectType(this,'@slug')" data-type="@slug">
+                        <div class="icon">@icon</div>
+                        <h6>@label</h6>
+                        <small>@desc</small>
+                    </div>
+                }
+            </div>
+
+            <div class="row g-3 align-items-end">
+                @if (grouped.Count > 1)
+                {
+                    <div class="col-12 col-md-3">
+                        <label class="form-label fw-semibold small">Filter Category</label>
+                        <select id="pj-cat-filter" class="form-select" onchange="filterPjProjects()">
+                            <option value="">All Categories</option>
+                            @foreach (var g in grouped)
+                            {
+                                <option value="@g.Key">@g.Key (@g.Count())</option>
+                            }
+                        </select>
+                    </div>
+                }
+                <div class="col-12 col-md-@(grouped.Count > 1 ? "5" : "8")">
+                    <label class="form-label fw-semibold small">Project</label>
+                    <select id="pj-project" class="form-select" onchange="onPjProjectChange()">
+                        <option value="">— Select a project —</option>
+                        @foreach (var g in grouped)
+                        {
+                            <optgroup label="@g.Key" data-cat="@g.Key">
+                                @foreach (var p in g.OrderBy(x => x.Name))
+                                {
+                                    var si = p.Status switch {
+                                        "Completed" => "✅", "In Progress" => "🔄", "On Hold" => "⏸", _ => "📋"
+                                    };
+                                    <option value="@p.Id" data-name="@p.Name" data-cat="@g.Key">@si @p.Name</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
                 </div>
-                <div class="modal-body">
-                    <form id="timeTrackingForm">
-                        <div class="mb-3">
-                            <label for="startDate" class="form-label">Start Date</label>
-                            <input type="date" class="form-control" id="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")">
+                <div id="pj-date-range" class="col-12 d-none">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small">From</label>
+                            <input type="date" id="pj-from" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")"/>
                         </div>
-                        <div class="mb-3">
-                            <label for="endDate" class="form-label">End Date</label>
-                            <input type="date" class="form-control" id="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small">To</label>
+                            <input type="date" id="pj-to" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")"/>
                         </div>
-                    </form>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="loadTimeTrackingReport()">View Report</button>
+                <div class="col-12 col-md-@(grouped.Count > 1 ? "4" : "4") d-flex gap-2">
+                    <button id="pj-view-btn" onclick="generatePjReport(false)"
+                            class="btn btn-primary rpt-generate-btn flex-fill" disabled>
+                        <i class="bi bi-eye me-1"></i>View
+                    </button>
+                    <button id="pj-print-btn" onclick="generatePjReport(true)"
+                            class="btn btn-outline-secondary rpt-generate-btn" disabled title="Print">
+                        <i class="bi bi-printer"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-    .report-card {
-        transition: transform 0.2s, box-shadow 0.2s;
-        cursor: default;
-    }
+<!-- ── SCOPE: By Category ─────────────────────────────────────────────── -->
+<div id="scope-category" class="scope-panel">
+    <div class="card rpt-config-card">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-tag text-warning"></i>
+            <h6 class="mb-0 fw-semibold">Category Report</h6>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted small mb-3">Shows all projects under a selected category — task breakdown, completion rates, overdue counts and per-project progress.</p>
+            @if (!categories.Any())
+            {
+                <div class="alert alert-info">No categories found. Add a category to your projects first.</div>
+            }
+            else
+            {
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-8">
+                        <label class="form-label fw-semibold small">Category</label>
+                        <select id="cat-select" class="form-select">
+                            <option value="">— Select a category —</option>
+                            @foreach (var c in categories)
+                            {
+                                var cnt = grouped.FirstOrDefault(g => g.Key == c)?.Count() ?? 0;
+                                <option value="@c">@c (@cnt projects)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4 d-flex gap-2">
+                        <button onclick="generateCatReport(false)" class="btn btn-warning rpt-generate-btn flex-fill fw-bold">
+                            <i class="bi bi-eye me-1"></i>View
+                        </button>
+                        <button onclick="generateCatReport(true)" class="btn btn-outline-secondary rpt-generate-btn" title="Print">
+                            <i class="bi bi-printer"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
-    .report-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-</style>
+<!-- ── SCOPE: All Projects ───────────────────────────────────────────── -->
+<div id="scope-allprojects" class="scope-panel">
+    <div class="card rpt-config-card">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-grid text-success"></i>
+            <h6 class="mb-0 fw-semibold">All Projects Overview Report</h6>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted small mb-3">A single report covering every accessible project — KPI summary, breakdown by category, and a per-project status table.</p>
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold small">Filter by Status</label>
+                    <select id="all-status" class="form-select">
+                        <option value="">All Statuses</option>
+                        @foreach (var s in statuses)
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label fw-semibold small">Start From</label>
+                    <input type="date" id="all-from" class="form-control"/>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label fw-semibold small">Start To</label>
+                    <input type="date" id="all-to" class="form-control"/>
+                </div>
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <button onclick="generateAllReport(false)" class="btn btn-success rpt-generate-btn flex-fill fw-bold">
+                        <i class="bi bi-eye me-1"></i>View
+                    </button>
+                    <button onclick="generateAllReport(true)" class="btn btn-outline-secondary rpt-generate-btn" title="Print">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── SCOPE: Team Performance ──────────────────────────────────────── -->
+<div id="scope-team" class="scope-panel">
+    <div class="card rpt-config-card">
+        <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-people text-info"></i>
+            <h6 class="mb-0 fw-semibold">Team Performance Report</h6>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted small mb-3">Shows every employee's task assignments, completion rate, overdue count and task category breakdown across all projects.</p>
+            <div class="row g-3 align-items-end">
+                <div class="col-6 col-md-4">
+                    <label class="form-label fw-semibold small">Due Date From</label>
+                    <input type="date" id="team-from" class="form-control"/>
+                </div>
+                <div class="col-6 col-md-4">
+                    <label class="form-label fw-semibold small">Due Date To</label>
+                    <input type="date" id="team-to" class="form-control"/>
+                </div>
+                <div class="col-12 col-md-4 d-flex gap-2">
+                    <button onclick="generateTeamReport(false)" class="btn btn-info text-white rpt-generate-btn flex-fill fw-bold">
+                        <i class="bi bi-eye me-1"></i>View
+                    </button>
+                    <button onclick="generateTeamReport(true)" class="btn btn-outline-secondary rpt-generate-btn" title="Print">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
-    function updateReportLinks() {
-        const projectSelect = document.getElementById('projectSelect');
-        const reportButtons = document.getElementById('reportButtons');
-        const statusBtn = document.getElementById('statusBtn');
-        
-        if (projectSelect.value) {
-            reportButtons.style.display = 'block';
-            statusBtn.disabled = false;
-        } else {
-            reportButtons.style.display = 'none';
-            statusBtn.disabled = true;
-        }
-    }
+var _pjType = 'Status';
 
-    function loadReport(reportType) {
-        const projectId = document.getElementById('projectSelect').value;
-        if (!projectId) {
-            alert('Please select a project first');
-            return;
-        }
-        window.location.href = `/Report/${reportType}/${projectId}`;
-    }
+function showScope(id, btn) {
+    document.querySelectorAll('.scope-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('scope-' + id).classList.add('active');
+    document.querySelectorAll('.rpt-tab-pill .btn').forEach(b => {
+        b.classList.remove('btn-primary','btn-warning','btn-success','btn-info');
+        b.classList.add('btn-outline-secondary');
+    });
+    var colors = {project:'btn-primary',category:'btn-warning',allprojects:'btn-success',team:'btn-info'};
+    btn.classList.remove('btn-outline-secondary');
+    btn.classList.add(colors[id] || 'btn-primary');
+}
 
-    function showTimeTrackingModal() {
-        const modal = new bootstrap.Modal(document.getElementById('timeTrackingModal'));
-        modal.show();
-    }
+function selectType(card, type) {
+    document.querySelectorAll('#pj-types .rpt-type-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    _pjType = type;
+    document.getElementById('pj-date-range').classList.toggle('d-none', type !== 'TimeTracking');
+}
 
-    function loadTimeTrackingReport() {
-        const projectId = document.getElementById('projectSelect').value;
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
-        
-        if (!projectId) {
-            alert('Please select a project first');
-            return;
-        }
-        
-        window.location.href = `/Report/TimeTracking/${projectId}?startDate=${startDate}&endDate=${endDate}`;
-        bootstrap.Modal.getInstance(document.getElementById('timeTrackingModal')).hide();
+function filterPjProjects() {
+    var cat = document.getElementById('pj-cat-filter')?.value;
+    document.querySelectorAll('#pj-project optgroup').forEach(og => {
+        og.style.display = (!cat || og.dataset.cat === cat) ? '' : 'none';
+    });
+    document.getElementById('pj-project').value = '';
+    onPjProjectChange();
+}
+
+function onPjProjectChange() {
+    var hasVal = !!document.getElementById('pj-project').value;
+    document.getElementById('pj-view-btn').disabled = !hasVal;
+    document.getElementById('pj-print-btn').disabled = !hasVal;
+}
+
+function generatePjReport(print) {
+    var id = document.getElementById('pj-project').value;
+    if (!id) { alert('Please select a project.'); return; }
+    if (_pjType === 'TimeTracking') {
+        var f = document.getElementById('pj-from').value;
+        var t = document.getElementById('pj-to').value;
+        var url = '/Report/TimeTracking/' + id + '?startDate=' + f + '&endDate=' + t;
+        if (print) url += '&print=1';
+        window.open(url, print ? '_blank' : '_self');
+    } else {
+        var url = '/Report/' + _pjType + '/' + id + (print ? '?print=1' : '');
+        window.open(url, print ? '_blank' : '_self');
     }
+}
+
+function generateCatReport(print) {
+    var cat = document.getElementById('cat-select').value;
+    if (!cat) { alert('Please select a category.'); return; }
+    var url = '/Report/CategoryReport?category=' + encodeURIComponent(cat) + (print ? '&print=1' : '');
+    window.open(url, print ? '_blank' : '_self');
+}
+
+function generateAllReport(print) {
+    var s = document.getElementById('all-status').value;
+    var f = document.getElementById('all-from').value;
+    var t = document.getElementById('all-to').value;
+    var url = '/Report/AllProjects?' + new URLSearchParams({status:s,from:f,to:t}).toString() + (print ? '&print=1' : '');
+    window.open(url, print ? '_blank' : '_self');
+}
+
+function generateTeamReport(print) {
+    var f = document.getElementById('team-from').value;
+    var t = document.getElementById('team-to').value;
+    var url = '/Report/TeamPerformance?' + new URLSearchParams({from:f,to:t}).toString() + (print ? '&print=1' : '');
+    window.open(url, print ? '_blank' : '_self');
+}
 </script>

@@ -1,0 +1,54 @@
+@using DoableFinal.ViewModels
+@model CategoryReportViewModel
+@{ Layout = null; }
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
+<title>Category Report — @Model.Category</title>
+<link href="/css/reports-print.css" rel="stylesheet"/></head>
+<body><div class="rpt-page">
+  <div class="rpt-cover">
+    <div class="rpt-cover-left">
+      <div class="rpt-report-type">Category Report</div>
+      <div class="rpt-title">@Model.Category</div>
+      <div class="rpt-meta">
+        <span><strong>Projects</strong></span><span>@Model.TotalProjects</span>
+        <span><strong>Completion</strong></span><span>@Model.OverallCompletion%</span>
+        <span><strong>Generated</strong></span><span>@Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC</span>
+      </div>
+    </div>
+    <img src="/images/logo-combined2.png" alt="Doable" class="rpt-logo"/>
+  </div>
+  <div class="rpt-watermark-bar"><span>Doable Project Management System</span><span>CONFIDENTIAL</span></div>
+  <div class="rpt-kpi-grid cols-4">
+    <div class="rpt-kpi blue"><div class="rpt-kpi-val">@Model.TotalProjects</div><div class="rpt-kpi-lbl">Projects</div></div>
+    <div class="rpt-kpi teal"><div class="rpt-kpi-val">@Model.TotalTasks</div><div class="rpt-kpi-lbl">Total Tasks</div></div>
+    <div class="rpt-kpi green"><div class="rpt-kpi-val">@Model.CompletedTasks</div><div class="rpt-kpi-lbl">Completed</div></div>
+    <div class="rpt-kpi red"><div class="rpt-kpi-val">@Model.OverdueTasks</div><div class="rpt-kpi-lbl">Overdue</div></div>
+  </div>
+  <div class="rpt-section">
+    <div class="rpt-progress-wrap"><div class="rpt-progress-fill" style="width:@Model.OverallCompletion%">@Model.OverallCompletion%</div></div>
+    <p style="font-size:8.5pt;color:#64748b;margin-top:4px;">@Model.CompletedTasks of @Model.TotalTasks tasks completed across @Model.TotalProjects projects</p>
+  </div>
+  <div class="rpt-section">
+    <div class="rpt-section-head blue"><div class="rpt-sec-icon">📁</div><h3>Projects in "@Model.Category"</h3><span class="rpt-count">@Model.Projects.Count</span></div>
+    <table class="rpt-table">
+      <thead><tr><th style="width:35%">Project</th><th>Manager</th><th>Status</th><th style="text-align:center">Tasks</th><th style="text-align:center">Done</th><th style="text-align:center">Overdue</th><th style="text-align:center">Progress</th><th>Due</th></tr></thead>
+      <tbody>
+        @foreach (var p in Model.Projects.OrderByDescending(x => x.CompletionPct))
+        {
+          var sc = p.Status switch {"Completed"=>"success","In Progress"=>"primary","On Hold"=>"warning",_=>"muted"};
+          <tr>
+            <td><strong>@p.ProjectName</strong></td>
+            <td>@p.ProjectManager</td>
+            <td><span class="rpt-badge @sc">@p.Status</span></td>
+            <td style="text-align:center">@p.TotalTasks</td>
+            <td style="text-align:center"><span class="rpt-badge success">@p.CompletedTasks</span></td>
+            <td style="text-align:center">@(p.OverdueTasks > 0 ? p.OverdueTasks.ToString() : "—")</td>
+            <td style="text-align:center"><span class="rpt-badge @(p.CompletionPct>=75?"success":p.CompletionPct>=40?"warning":"danger")">@p.CompletionPct%</span></td>
+            <td>@(p.EndDate?.ToString("MMM dd, yy") ?? "—")</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="rpt-footer"><div><strong>Doable</strong> Project Management System</div><div>Generated @Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC</div></div>
+</div><script>window.onload=function(){window.print();}</script></body></html>

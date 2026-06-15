@@ -1,0 +1,88 @@
+@using DoableFinal.ViewModels
+@model CategoryReportViewModel
+@{ ViewData["Title"] = "Category Report — " + Model.Category; }
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <a href="/Report" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        <a href="/Report/CategoryReport?category=@Uri.EscapeDataString(Model.Category)&print=1" target="_blank"
+           class="btn btn-sm btn-outline-primary ms-auto"><i class="bi bi-printer me-1"></i>Print</a>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#1a3060,#2d6a9f);border-radius:14px;padding:1.75rem 2rem;color:#fff;margin-bottom:1.5rem;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div style="font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;opacity:.7">Category Report</div>
+                <h2 class="fw-bold mb-1">@Model.Category</h2>
+                <div style="opacity:.8;font-size:.85rem;">Generated @Model.GeneratedDate.ToString("MMMM dd, yyyy")</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <div class="text-center px-3 py-2" style="background:rgba(255,255,255,.15);border-radius:10px;">
+                    <div style="font-size:1.4rem;font-weight:700">@Model.TotalProjects</div>
+                    <div style="font-size:.72rem;opacity:.8">Projects</div>
+                </div>
+                <div class="text-center px-3 py-2" style="background:rgba(255,255,255,.15);border-radius:10px;">
+                    <div style="font-size:1.4rem;font-weight:700">@Model.OverallCompletion%</div>
+                    <div style="font-size:.72rem;opacity:.8">Complete</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        @foreach (var (val,lbl,col) in new[]{
+            (Model.TotalTasks.ToString(),"Total Tasks","primary"),
+            (Model.CompletedTasks.ToString(),"Completed","success"),
+            (Model.InProgressTasks.ToString(),"In Progress","info"),
+            (Model.OverdueTasks.ToString(),"Overdue","danger")})
+        {
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="fw-bold text-@col" style="font-size:1.8rem;">@val</div>
+                    <div class="text-muted small">@lbl</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold"><i class="bi bi-table me-2 text-primary"></i>Projects in "@Model.Category"</div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 no-sort" data-page-size="10">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Project</th><th>Manager</th><th class="text-center">Status</th>
+                        <th class="text-center">Tasks</th><th class="text-center">Done</th>
+                        <th class="text-center">Overdue</th><th class="text-center">Progress</th><th class="text-center">Due</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Projects.OrderByDescending(x => x.CompletionPct))
+                    {
+                        var sc = p.Status switch {"Completed"=>"success","In Progress"=>"primary","On Hold"=>"warning",_=>"secondary"};
+                        <tr>
+                            <td class="dashboard-td fw-semibold"><a href="/Report/Status/@p.ProjectId">@p.ProjectName</a></td>
+                            <td class="dashboard-td small text-muted">@p.ProjectManager</td>
+                            <td class="text-center dashboard-td"><span class="badge bg-@sc">@p.Status</span></td>
+                            <td class="text-center dashboard-td">@p.TotalTasks</td>
+                            <td class="text-center dashboard-td"><span class="badge bg-success">@p.CompletedTasks</span></td>
+                            <td class="text-center dashboard-td">
+                                @if (p.OverdueTasks > 0) { <span class="badge bg-danger">@p.OverdueTasks</span> } else { <span class="text-muted">—</span> }
+                            </td>
+                            <td class="dashboard-td" style="min-width:100px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-fill" style="height:6px;">
+                                        <div class="progress-bar bg-@(p.CompletionPct>=75?"success":p.CompletionPct>=40?"warning":"danger")"
+                                             style="width:@p.CompletionPct%"></div>
+                                    </div>
+                                    <small class="fw-semibold">@p.CompletionPct%</small>
+                                </div>
+                            </td>
+                            <td class="text-center dashboard-td small">@(p.EndDate?.ToString("MMM dd, yy") ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
