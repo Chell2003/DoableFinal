@@ -12,140 +12,87 @@
 }
 
 <style>
-    /* ── Page chrome ─────────────────────────────── */
-    .rpt-page-title {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #1e3a5f;
-        letter-spacing: -.01em;
-    }
-    .rpt-breadcrumb { font-size: .8rem; color: #6c757d; margin-bottom: 1.5rem; }
-    .rpt-breadcrumb a { color: #2d6a9f; text-decoration: none; }
+    .rpt-page-title { font-size:1.3rem; font-weight:700; color:#1e3a5f; letter-spacing:-.01em; }
+    .rpt-breadcrumb { font-size:.8rem; color:#6c757d; margin-bottom:1.5rem; }
+    .rpt-breadcrumb a { color:#2d6a9f; text-decoration:none; }
 
-    /* ── Filter card ─────────────────────────────── */
-    .filter-card {
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        background: #fff;
-        margin-bottom: 1.5rem;
+    /* ── Mode tabs ─────────────────────────────── */
+    .mode-tabs { display:flex; gap:.5rem; margin-bottom:1.25rem; }
+    .mode-tab {
+        padding:.55rem 1.25rem;
+        border-radius:8px;
+        font-size:.84rem;
+        font-weight:600;
+        border:1.5px solid #d1d5db;
+        background:#fff;
+        color:#374151;
+        cursor:pointer;
+        transition:all .15s;
+        display:flex; align-items:center; gap:.45rem;
     }
+    .mode-tab.active { background:#1e3a5f; color:#fff; border-color:#1e3a5f; }
+    .mode-tab:not(.active):hover { border-color:#2d6a9f; color:#2d6a9f; }
+
+    /* ── Filter card ───────────────────────────── */
+    .filter-card { border:1px solid #e2e8f0; border-radius:10px; background:#fff; margin-bottom:1.5rem; }
     .filter-card .filter-header {
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
-        border-radius: 10px 10px 0 0;
-        padding: .75rem 1.25rem;
-        font-size: .78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .07em;
-        color: #64748b;
+        background:#f8fafc; border-bottom:1px solid #e2e8f0;
+        border-radius:10px 10px 0 0; padding:.75rem 1.25rem;
+        font-size:.78rem; font-weight:700; text-transform:uppercase;
+        letter-spacing:.07em; color:#64748b;
     }
-    .filter-card .filter-body { padding: 1.25rem; }
-    .filter-card label { font-size: .82rem; font-weight: 600; color: #374151; margin-bottom: 4px; }
-    .filter-card .form-select, .filter-card .form-control { font-size: .875rem; border-color: #d1d5db; }
-    .filter-card .form-select:focus, .filter-card .form-control:focus { border-color: #2d6a9f; box-shadow: 0 0 0 3px rgba(45,106,159,.12); }
+    .filter-card .filter-body { padding:1.25rem; }
+    .filter-card label { font-size:.82rem; font-weight:600; color:#374151; margin-bottom:4px; }
+    .filter-card .form-select, .filter-card .form-control { font-size:.875rem; border-color:#d1d5db; }
+    .filter-card .form-select:focus, .filter-card .form-control:focus { border-color:#2d6a9f; box-shadow:0 0 0 3px rgba(45,106,159,.12); }
 
-    /* ── Report type tiles ───────────────────────── */
-    .rpt-type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: .75rem; margin-bottom: 1.5rem; }
-    .rpt-tile {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 1rem;
-        text-align: center;
-        transition: transform .18s, box-shadow .18s, border-color .18s;
-        cursor: default;
-    }
-    .rpt-tile:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.09); border-color: #2d6a9f; }
-    .rpt-tile .tile-icon {
-        width: 44px; height: 44px;
-        border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.3rem;
-        margin: 0 auto .6rem;
-    }
-    .rpt-tile h6 { font-size: .82rem; font-weight: 700; margin: 0 0 3px; color: #1e3a5f; }
-    .rpt-tile small { font-size: .72rem; color: #6c757d; line-height: 1.4; }
+    /* ── Type tiles ────────────────────────────── */
+    .rpt-type-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:.65rem; margin-bottom:1.5rem; }
+    .rpt-tile { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:.9rem; text-align:center; transition:transform .18s, box-shadow .18s, border-color .18s; }
+    .rpt-tile:hover { transform:translateY(-3px); box-shadow:0 6px 20px rgba(0,0,0,.09); border-color:#2d6a9f; }
+    .rpt-tile .tile-icon { width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; margin:0 auto .5rem; }
+    .rpt-tile h6 { font-size:.8rem; font-weight:700; margin:0 0 2px; color:#1e3a5f; }
+    .rpt-tile small { font-size:.7rem; color:#6c757d; line-height:1.4; }
 
-    /* ── Project select ──────────────────────────── */
-    .project-select-wrap { position: relative; }
-    .project-select-wrap select { padding-right: 2.5rem; }
+    /* ── Action buttons ────────────────────────── */
+    .rpt-actions { display:none; gap:.5rem; flex-wrap:wrap; padding:1rem 1.25rem; background:#f0f7ff; border-top:1px solid #bfdbfe; border-radius:0 0 10px 10px; animation:slideDown .22s ease; }
+    .rpt-actions.show { display:flex; }
+    @@keyframes slideDown { from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);} }
+    .rpt-btn { padding:.45rem 1rem; border-radius:7px; font-size:.82rem; font-weight:600; border:none; cursor:pointer; transition:transform .14s,box-shadow .14s; display:flex; align-items:center; gap:.4rem; }
+    .rpt-btn:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.14); }
+    .rpt-btn:active { transform:scale(.96); }
+    .rpt-btn-primary { background:#1e3a5f; color:#fff; }
+    .rpt-btn-info    { background:#0ea5e9; color:#fff; }
+    .rpt-btn-warning { background:#f59e0b; color:#fff; }
+    .rpt-btn-success { background:#10b981; color:#fff; }
+    .rpt-btn-outline { background:#fff; color:#1e3a5f; border:1.5px solid #1e3a5f !important; }
+    .rpt-btn-purple  { background:#8b5cf6; color:#fff; }
 
-    /* ── Action buttons ──────────────────────────── */
-    .rpt-actions {
-        display: none;
-        gap: .5rem;
-        flex-wrap: wrap;
-        padding: 1rem 1.25rem;
-        background: #f0f7ff;
-        border-top: 1px solid #bfdbfe;
-        border-radius: 0 0 10px 10px;
-        animation: slideDown .22s ease;
-    }
-    .rpt-actions.show { display: flex; }
-    @@keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-    .rpt-actions .rpt-btn {
-        padding: .45rem 1rem;
-        border-radius: 7px;
-        font-size: .82rem;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-        transition: transform .14s, box-shadow .14s;
-        display: flex; align-items: center; gap: .4rem;
-    }
-    .rpt-actions .rpt-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.14); }
-    .rpt-actions .rpt-btn:active { transform: scale(.96); }
-    .rpt-btn-primary   { background: #1e3a5f; color: #fff; }
-    .rpt-btn-info      { background: #0ea5e9; color: #fff; }
-    .rpt-btn-warning   { background: #f59e0b; color: #fff; }
-    .rpt-btn-success   { background: #10b981; color: #fff; }
-    .rpt-btn-outline   { background: #fff; color: #1e3a5f; border: 1.5px solid #1e3a5f !important; }
+    /* ── Category action box ───────────────────── */
+    .cat-action-box { display:none; padding:1rem 1.25rem; background:#faf5ff; border-top:1px solid #e9d5ff; border-radius:0 0 10px 10px; animation:slideDown .22s ease; }
+    .cat-action-box.show { display:block; }
+    .cat-info { font-size:.82rem; color:#6d28d9; font-weight:600; margin-bottom:.75rem; }
+    .cat-btn-row { display:flex; gap:.5rem; flex-wrap:wrap; }
 
-    /* ── Selected project badge ──────────────────── */
-    .sel-badge {
-        display: none;
-        align-items: center;
-        gap: .5rem;
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        border-radius: 7px;
-        padding: .35rem .9rem;
-        font-size: .82rem;
-        color: #1e40af;
-        font-weight: 600;
-    }
-    .sel-badge.show { display: inline-flex; }
+    /* ── Summary strip ─────────────────────────── */
+    .summary-strip { display:flex; gap:.75rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+    .summary-pill { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:.45rem .9rem; font-size:.78rem; color:#374151; cursor:pointer; transition:border-color .15s; }
+    .summary-pill:hover { border-color:#2d6a9f; }
+    .summary-pill.active-cat { border-color:#8b5cf6; background:#faf5ff; color:#6d28d9; }
+    .summary-pill strong { color:#1e3a5f; font-size:1rem; display:block; }
 
-    /* ── Summary strip ───────────────────────────── */
-    .summary-strip {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        margin-bottom: 1.5rem;
-    }
-    .summary-pill {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: .5rem 1rem;
-        font-size: .8rem;
-        color: #374151;
-    }
-    .summary-pill strong { color: #1e3a5f; font-size: 1.1rem; display: block; }
+    /* ── Selected badge ────────────────────────── */
+    .sel-badge { display:none; align-items:center; gap:.5rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:7px; padding:.35rem .9rem; font-size:.82rem; color:#1e40af; font-weight:600; }
+    .sel-badge.show { display:inline-flex; }
 </style>
 
 <div class="container-fluid px-4">
-    <!-- Breadcrumb -->
-    <div class="rpt-breadcrumb">
-        <a href="#">Dashboard</a> / <span>Reports</span>
-    </div>
+    <div class="rpt-breadcrumb"><a href="#">Dashboard</a> / <span>Reports</span></div>
 
-    <!-- Title row -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <div class="rpt-page-title"><i class="fas fa-chart-bar me-2" style="color:#2d6a9f;"></i>Reports</div>
-            <div style="font-size:.82rem; color:#6c757d;">Generate and filter project &amp; task reports</div>
+            <div style="font-size:.82rem; color:#6c757d;">Filter by project or by category</div>
         </div>
         <div class="sel-badge" id="selBadge">
             <i class="bi bi-folder-fill"></i>
@@ -153,77 +100,83 @@
         </div>
     </div>
 
-    <!-- Summary pills (project counts by category) -->
+    <!-- Summary pills -->
     @if (Model.Projects.Any())
     {
-        <div class="summary-strip">
-            <div class="summary-pill">
-                <strong>@Model.Projects.Count</strong>Total Projects
+        <div class="summary-strip" id="summaryStrip">
+            <div class="summary-pill" onclick="clickPill('')" id="pill-all">
+                <strong>@Model.Projects.Count</strong>All Projects
             </div>
             @foreach (var g in grouped)
             {
-                <div class="summary-pill">
+                <div class="summary-pill" onclick="clickPill('@g.Key')" id="pill-@g.Key.Replace(" ","-")">
                     <strong>@g.Count()</strong>@g.Key
                 </div>
             }
         </div>
     }
 
+    <!-- Mode tabs -->
+    <div class="mode-tabs">
+        <button class="mode-tab active" id="tabProject" onclick="switchMode('project')">
+            <i class="bi bi-folder"></i> By Project
+        </button>
+        <button class="mode-tab" id="tabCategory" onclick="switchMode('category')">
+            <i class="bi bi-tags"></i> By Category
+        </button>
+    </div>
+
     <!-- Report type tiles -->
     <div class="rpt-type-grid">
         <div class="rpt-tile">
-            <div class="tile-icon" style="background:#eff6ff; color:#2d6a9f;"><i class="fas fa-tasks"></i></div>
-            <h6>Status</h6>
-            <small>Task completion &amp; progress</small>
+            <div class="tile-icon" style="background:#eff6ff;color:#2d6a9f;"><i class="fas fa-tasks"></i></div>
+            <h6>Status</h6><small>Task completion &amp; progress</small>
         </div>
         <div class="rpt-tile">
-            <div class="tile-icon" style="background:#f0fdf4; color:#10b981;"><i class="fas fa-chart-pie"></i></div>
-            <h6>Progress</h6>
-            <small>Milestones &amp; completion rate</small>
+            <div class="tile-icon" style="background:#f0fdf4;color:#10b981;"><i class="fas fa-chart-pie"></i></div>
+            <h6>Progress</h6><small>Milestones &amp; rate</small>
         </div>
         <div class="rpt-tile">
-            <div class="tile-icon" style="background:#fff7ed; color:#f59e0b;"><i class="fas fa-users"></i></div>
-            <h6>Workload</h6>
-            <small>Team task assignments</small>
+            <div class="tile-icon" style="background:#fff7ed;color:#f59e0b;"><i class="fas fa-users"></i></div>
+            <h6>Workload</h6><small>Team assignments</small>
         </div>
         <div class="rpt-tile">
-            <div class="tile-icon" style="background:#f0f9ff; color:#0ea5e9;"><i class="fas fa-clock"></i></div>
-            <h6>Time Tracking</h6>
-            <small>Time logged per task</small>
+            <div class="tile-icon" style="background:#f0f9ff;color:#0ea5e9;"><i class="fas fa-clock"></i></div>
+            <h6>Time Tracking</h6><small>Time logged</small>
         </div>
         <div class="rpt-tile">
-            <div class="tile-icon" style="background:#fdf4ff; color:#a855f7;"><i class="fas fa-layer-group"></i></div>
-            <h6>By Category</h6>
-            <small>Projects &amp; tasks grouped</small>
+            <div class="tile-icon" style="background:#fdf4ff;color:#a855f7;"><i class="fas fa-layer-group"></i></div>
+            <h6>By Category</h6><small>Projects grouped</small>
         </div>
     </div>
 
-    <!-- Filter + Project select card -->
     @if (!Model.Projects.Any())
     {
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>No projects available for reporting.
-        </div>
+        <div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>No projects available for reporting.</div>
     }
     else
     {
         <div class="filter-card">
-            <div class="filter-header"><i class="fas fa-filter me-2"></i>Filter &amp; Select Project</div>
+            <div class="filter-header"><i class="fas fa-filter me-2"></i>Filter &amp; Generate Report</div>
             <div class="filter-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label>Category</label>
-                        <select id="catFilter" class="form-select" onchange="filterProjects()">
-                            <option value="">All Categories</option>
-                            @foreach (var g in grouped)
-                            {
-                                <option value="@g.Key" selected="@(preselectedCategory == g.Key ? "selected" : null)">@g.Key (@g.Count() project@(g.Count()!=1?"s":""))</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-5">
-                        <label>Project</label>
-                        <div class="project-select-wrap">
+
+                <!-- MODE: By Project -->
+                <div id="modeProject">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label>Category</label>
+                            <select id="catFilter" class="form-select" onchange="filterProjects()">
+                                <option value="">All Categories</option>
+                                @foreach (var g in grouped)
+                                {
+                                    <option value="@g.Key" selected="@(preselectedCategory == g.Key ? "selected" : null)">
+                                        📁 @g.Key (@g.Count())
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label>Project</label>
                             <select id="projectSelect" class="form-select" onchange="onProjectChange()">
                                 <option value="">— Choose a project —</option>
                                 @foreach (var g in grouped)
@@ -237,7 +190,7 @@
                                                 "On Hold"     => "⏸",
                                                 _             => "📋"
                                             };
-                                            <option value="@p.Id" data-name="@p.Name" data-cat="@g.Key" data-status="@p.Status">
+                                            <option value="@p.Id" data-name="@p.Name" data-cat="@g.Key">
                                                 @emoji @p.Name
                                             </option>
                                         }
@@ -245,25 +198,57 @@
                                 }
                             </select>
                         </div>
-                    </div>
-                    <div class="col-md-2">
-                        <label>Start Date</label>
-                        <input type="date" id="startDate" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")" />
-                    </div>
-                    <div class="col-md-2">
-                        <label>End Date</label>
-                        <input type="date" id="endDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")" />
+                        <div class="col-md-2">
+                            <label>Start Date</label>
+                            <input type="date" id="startDate" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-2">
+                            <label>End Date</label>
+                            <input type="date" id="endDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")" />
+                        </div>
                     </div>
                 </div>
+
+                <!-- MODE: By Category -->
+                <div id="modeCategory" style="display:none;">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label>Category</label>
+                            <select id="catFilterCat" class="form-select" onchange="onCategoryChange()">
+                                <option value="">— Choose a category —</option>
+                                @foreach (var g in grouped)
+                                {
+                                    <option value="@g.Key" selected="@(preselectedCategory == g.Key ? "selected" : null)">
+                                        📁 @g.Key — @g.Count() project@(g.Count()!=1?"s":"")
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>From Date</label>
+                            <input type="date" id="catFromDate" class="form-control" value="@Model.StartDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-3">
+                            <label>To Date</label>
+                            <input type="date" id="catToDate" class="form-control" value="@Model.EndDate?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="rpt-btn rpt-btn-purple w-100" onclick="goCategoryReport()">
+                                <i class="fas fa-layer-group"></i> Generate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Action buttons (appear after project selection) -->
+            <!-- Project action buttons -->
             <div class="rpt-actions" id="rptActions">
-                <span style="font-size:.8rem; color:#1e40af; font-weight:600; align-self:center; margin-right:.5rem;">
+                <span style="font-size:.8rem;color:#1e40af;font-weight:600;align-self:center;margin-right:.5rem;">
                     <i class="fas fa-folder me-1"></i><span id="actionProjName"></span>
                 </span>
                 <button class="rpt-btn rpt-btn-primary" onclick="goReport('Status')">
-                    <i class="fas fa-tasks"></i> Status Report
+                    <i class="fas fa-tasks"></i> Status
                 </button>
                 <button class="rpt-btn rpt-btn-success" onclick="goReport('Progress')">
                     <i class="fas fa-chart-pie"></i> Progress
@@ -277,6 +262,27 @@
                 <button class="rpt-btn rpt-btn-outline" onclick="goSummary()">
                     <i class="fas fa-layer-group"></i> Projects Summary
                 </button>
+            </div>
+
+            <!-- Category action box -->
+            <div class="cat-action-box" id="catActionBox">
+                <div class="cat-info">
+                    <i class="bi bi-tags me-1"></i>
+                    Category: <span id="catActionName">—</span>
+                    <span id="catProjectCount" style="font-weight:400; margin-left:6px;"></span>
+                </div>
+                <div class="cat-btn-row">
+                    <button class="rpt-btn rpt-btn-purple" onclick="goCatSummary()">
+                        <i class="fas fa-layer-group"></i> Projects Summary
+                    </button>
+                    <button class="rpt-btn rpt-btn-primary" onclick="goCatStatus()">
+                        <i class="fas fa-tasks"></i> All Status Reports
+                    </button>
+                    <small class="text-muted align-self-center">
+                        <i class="fas fa-info-circle me-1"></i>
+                        These reports cover all projects in this category.
+                    </small>
+                </div>
             </div>
         </div>
     }
@@ -315,13 +321,50 @@
 </div>
 
 <script>
-    // Auto-apply preselected category from URL
-    const preselectedCat = '@Html.Raw(preselectedCategory)';
-    if (preselectedCat) {
-        const cf = document.getElementById('catFilter');
-        if (cf) { cf.value = preselectedCat; filterProjects(); }
+    // ── Category data from server ──────────────────────────────
+    const categoryData = {
+        @foreach (var g in grouped)
+        {
+            @:    "@g.Key": @g.Count(),
+        }
+    };
+
+    // ── Mode switching ─────────────────────────────────────────
+    let currentMode = 'project';
+
+    function switchMode(mode) {
+        currentMode = mode;
+        document.getElementById('tabProject').classList.toggle('active', mode === 'project');
+        document.getElementById('tabCategory').classList.toggle('active', mode === 'category');
+        document.getElementById('modeProject').style.display  = mode === 'project'  ? '' : 'none';
+        document.getElementById('modeCategory').style.display = mode === 'category' ? '' : 'none';
+        // Hide action panels
+        document.getElementById('rptActions').classList.remove('show');
+        document.getElementById('catActionBox').classList.remove('show');
+        document.getElementById('selBadge').classList.remove('show');
     }
 
+    // ── Summary pills ──────────────────────────────────────────
+    function clickPill(cat) {
+        // Highlight pill
+        document.querySelectorAll('.summary-pill').forEach(p => p.classList.remove('active-cat'));
+        const key = cat ? 'pill-' + cat.replace(/ /g, '-') : 'pill-all';
+        const el = document.getElementById(key);
+        if (el) el.classList.add('active-cat');
+
+        if (cat) {
+            // Switch to category mode and pre-select
+            switchMode('category');
+            const cf = document.getElementById('catFilterCat');
+            if (cf) { cf.value = cat; onCategoryChange(); }
+        } else {
+            switchMode('project');
+            document.getElementById('catFilter').value = '';
+            filterProjects();
+        }
+    }
+
+    // ── By-project mode ────────────────────────────────────────
     function filterProjects() {
         const cat = document.getElementById('catFilter').value;
         const sel = document.getElementById('projectSelect');
@@ -337,7 +380,6 @@
         const opt = sel.options[sel.selectedIndex];
         const actions = document.getElementById('rptActions');
         const badge = document.getElementById('selBadge');
-
         if (sel.value) {
             const name = opt.dataset.name || opt.text.replace(/^[^\w]+/, '').trim();
             actions.classList.add('show');
@@ -358,18 +400,16 @@
 
     function goSummary() {
         const from = document.getElementById('startDate').value;
-        const to = document.getElementById('endDate').value;
-        const cat = document.getElementById('catFilter').value;
+        const to   = document.getElementById('endDate').value;
+        const cat  = document.getElementById('catFilter').value;
         let url = `/Report/ProjectsSummary?fromDate=${from}&toDate=${to}`;
         if (cat) url += `&category=${encodeURIComponent(cat)}`;
         window.location.href = url;
     }
 
     function showTimeModal() {
-        const s = document.getElementById('startDate').value;
-        const e = document.getElementById('endDate').value;
-        document.getElementById('ttStart').value = s;
-        document.getElementById('ttEnd').value = e;
+        document.getElementById('ttStart').value = document.getElementById('startDate').value;
+        document.getElementById('ttEnd').value   = document.getElementById('endDate').value;
         new bootstrap.Modal(document.getElementById('timeModal')).show();
     }
 
@@ -380,5 +420,55 @@
         const e = document.getElementById('ttEnd').value;
         window.location.href = `/Report/TimeTracking/${id}?startDate=${s}&endDate=${e}`;
         bootstrap.Modal.getInstance(document.getElementById('timeModal')).hide();
+    }
+
+    // ── By-category mode ───────────────────────────────────────
+    function onCategoryChange() {
+        const cat = document.getElementById('catFilterCat').value;
+        const box = document.getElementById('catActionBox');
+        if (cat) {
+            box.classList.add('show');
+            document.getElementById('catActionName').textContent = cat;
+            const cnt = categoryData[cat] || 0;
+            document.getElementById('catProjectCount').textContent = `(${cnt} project${cnt!==1?'s':''})`;
+        } else {
+            box.classList.remove('show');
+        }
+    }
+
+    function goCategoryReport() {
+        const cat  = document.getElementById('catFilterCat').value;
+        const from = document.getElementById('catFromDate').value;
+        const to   = document.getElementById('catToDate').value;
+        if (!cat) { alert('Please select a category.'); return; }
+        let url = `/Report/ProjectsSummary?fromDate=${from}&toDate=${to}&category=${encodeURIComponent(cat)}`;
+        window.location.href = url;
+    }
+
+    function goCatSummary() {
+        const cat  = document.getElementById('catFilterCat').value;
+        const from = document.getElementById('catFromDate').value;
+        const to   = document.getElementById('catToDate').value;
+        window.location.href = `/Report/ProjectsSummary?fromDate=${from}&toDate=${to}&category=${encodeURIComponent(cat)}`;
+    }
+
+    function goCatStatus() {
+        // Go to Projects Summary and let them drill into each project
+        goCatSummary();
+    }
+
+    // ── Auto-apply preselected category from URL ───────────────
+    const preselectedCat = '@Html.Raw(preselectedCategory)';
+    if (preselectedCat) {
+        switchMode('category');
+        const cf = document.getElementById('catFilterCat');
+        if (cf) { cf.value = preselectedCat; onCategoryChange(); }
+        // Also pre-fill project mode filter
+        const cp = document.getElementById('catFilter');
+        if (cp) { cp.value = preselectedCat; filterProjects(); }
+        // Highlight pill
+        const key = 'pill-' + preselectedCat.replace(/ /g, '-');
+        const pill = document.getElementById(key);
+        if (pill) pill.classList.add('active-cat');
     }
 </script>
