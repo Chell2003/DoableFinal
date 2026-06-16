@@ -178,8 +178,7 @@
                         <tr>
                             <th>Title</th>
                             <th>Project</th>
-                            <th>Assigned To</th>
-                            <th>Start Date</th>
+                                                        <th>Start Date</th>
                             <th>Due Date</th>
                             <th>Status</th>
                             <th>Priority</th>
@@ -192,25 +191,6 @@
                             <tr>
                                 <td data-label="Title">@task.Title</td>
                                 <td data-label="Project">@task.Project?.Name</td>
-                                <td data-label="Assigned To">
-                                    @if (task.TaskAssignments != null && task.TaskAssignments.Any())
-                                    {
-                                        <div class="assigned-users">
-                                            @foreach (var assignment in task.TaskAssignments.Take(3))
-                                            {
-                                                <span class="badge bg-light text-dark me-1">
-                                                    <i class="fas fa-user-circle"></i> @((assignment.Employee != null) ? ($"{assignment.Employee.FirstName} {assignment.Employee.LastName}") : "")
-                                                </span>
-                                            }
-                                            @if (task.TaskAssignments.Count() > 3)
-                                            {
-                                                <span class="badge bg-secondary">
-                                                    <i class="fas fa-users"></i> +@(task.TaskAssignments.Count() - 3)
-                                                </span>
-                                            }
-                                        </div>
-                                    }
-                                </td>
                                 <td data-label="Start Date">@task.StartDate.ToString("MMM dd, yyyy")</td>
                                 <td data-label="Due Date">@task.DueDate.ToString("MMM dd, yyyy")</td>
                                 <td data-label="Status">

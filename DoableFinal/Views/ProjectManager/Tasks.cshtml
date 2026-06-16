@@ -96,8 +96,7 @@
                         <tr>
                             <th>Title</th>
                             <th>Project</th>
-                            <th>Assigned To</th>
-                            <th>Status</th>
+                                                        <th>Status</th>
                             <th>Priority</th>
                             <th>Due Date</th>
                             <th class="text-center">Actions</th>
@@ -117,21 +116,6 @@
                             <tr>
                                 <td data-label="Title">@task.Title</td>
                                 <td data-label="Project">@task.Project.Name</td>
-                                <td data-label="Assigned To">
-                                    @if (task.TaskAssignments != null && task.TaskAssignments.Any())
-                                    {
-                                        <ul class="list-unstyled mb-0">
-                                            @foreach (var assignment in task.TaskAssignments)
-                                            {
-                                                <li>@($"{assignment.Employee.FirstName} {assignment.Employee.LastName}")</li>
-                                            }
-                                        </ul>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">Unassigned</span>
-                                    }
-                                </td>
                                 <td data-label="Status">
                                     <span class="badge bg-@(task.Status switch {
                                         "Not Started" => "secondary",
