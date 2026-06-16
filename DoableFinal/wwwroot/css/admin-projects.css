@@ -31,7 +31,7 @@
 
 /* ---------- Create Project Button ---------- */
 .btn-primary {
-    background: linear-gradient(135deg, #347deb, #1a3f80);
+    background: #1a3060;
     border: none;
     border-radius: 10px;
     font-weight: 600;
@@ -43,7 +43,7 @@
 
 .btn-primary:hover,
 .btn-primary:focus {
-    background: linear-gradient(135deg, #1f62cc, #12317a);
+    background: #1a3060;
     border: none;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(52, 125, 235, 0.38);
@@ -63,7 +63,7 @@
 }
 
     .card.mb-4 .card-header {
-        background: linear-gradient(90deg, #1a3f80, #2360c8, #347deb) !important;
+        background: #1a3f80 !important;
         border-bottom: none;
         padding: 0.9rem 1.25rem;
         position: relative;
@@ -187,7 +187,7 @@
 /* Table head */
 .table thead.table-light tr,
 .table-hover thead tr {
-    background: linear-gradient(90deg, #1a3f80, #2360c8, #347deb) !important;
+    background: #1a3f80 !important;
 }
 
 .table thead th {
@@ -330,7 +330,7 @@
 }
 
 .modal-header {
-    background: linear-gradient(90deg, #1a3f80, #347deb);
+    background: #1a3f80;
     border-bottom: none;
     padding: 1.1rem 1.4rem;
 }

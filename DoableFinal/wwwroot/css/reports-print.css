@@ -85,7 +85,7 @@ body {
 }
 
 .rpt-watermark-bar {
-    background: linear-gradient(90deg, var(--brand) 0%, var(--brand-mid) 100%);
+    background: #1a3060;
     color: #fff;
     font-size: 7.5pt;
     letter-spacing: .1em;
@@ -216,7 +216,7 @@ body {
 .rpt-progress-fill {
     height: 100%;
     border-radius: 6px;
-    background: linear-gradient(90deg, var(--success), #4ade80);
+    background: #198754;
     display: flex;
     align-items: center;
     justify-content: center;

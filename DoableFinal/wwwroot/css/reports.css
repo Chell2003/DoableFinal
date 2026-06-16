@@ -83,7 +83,7 @@
 
 /* Status Report — blue */
 .report-card.border-primary::before {
-    background: linear-gradient(90deg, #1a3f80, #347deb, #60aaff);
+    background: #1a3f80;
 }
 .report-card.border-primary::after {
     background: #347deb;
@@ -91,7 +91,7 @@
 
 /* Time Tracking — teal/info */
 .report-card.border-info::before {
-    background: linear-gradient(90deg, #085041, #1d9e75, #5dcaa5);
+    background: #198754;
 }
 .report-card.border-info::after {
     background: #1d9e75;
@@ -99,7 +99,7 @@
 
 /* Workload Report — amber */
 .report-card.border-warning::before {
-    background: linear-gradient(90deg, #633806, #ba7517, #ef9f27);
+    background: #fd7e14;
 }
 .report-card.border-warning::after {
     background: #ba7517;
@@ -107,7 +107,7 @@
 
 /* Progress Report — green */
 .report-card.border-success::before {
-    background: linear-gradient(90deg, #173404, #3b6d11, #639922);
+    background: #198754;
 }
 .report-card.border-success::after {
     background: #3b6d11;
@@ -185,7 +185,7 @@
 }
 
 .card .card-header.bg-light {
-    background: linear-gradient(90deg, #1a3f80, #2360c8, #347deb) !important;
+    background: #1a3f80 !important;
     border-bottom: none;
     padding: 0.9rem 1.25rem;
     position: relative;
@@ -233,7 +233,7 @@
 
 /* ---------- Primary Buttons ---------- */
 .btn-primary {
-    background: linear-gradient(135deg, #347deb, #1a3f80);
+    background: #1a3060;
     border: none;
     border-radius: 10px;
     font-size: 0.88rem;
@@ -244,14 +244,14 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #1f62cc, #12317a);
+    background: #1a3060;
     border: none;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(52, 125, 235, 0.36);
 }
 
 .btn-primary:disabled {
-    background: linear-gradient(135deg, #b0c8f5, #8aaee0);
+    background: #b0c8f5;
     border: none;
     opacity: 1;
     cursor: not-allowed;
@@ -365,7 +365,7 @@
 }
 
 .modal-header {
-    background: linear-gradient(90deg, #1a3f80, #347deb);
+    background: #1a3f80;
     border-bottom: none;
     padding: 1.1rem 1.4rem;
 }

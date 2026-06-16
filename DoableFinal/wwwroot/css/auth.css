@@ -1,5 +1,5 @@
 /* =============================================
-   GLOBAL AUTH THEME — QONNEC (#347deb)
+   GLOBAL AUTH THEME  QONNEC (#347deb)
 ============================================= */
 
 @keyframes heroFadeUp {
@@ -41,7 +41,7 @@
 /* PAGE */
 .auth-page {
     min-height: 100vh;
-    background: linear-gradient(160deg, #eef3fc 0%, #f8faff 50%, #e6eef9 100%);
+    background: #f0f4fc;
     position: relative;
     overflow: hidden;
     padding: 3rem 0 4rem;
@@ -91,7 +91,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg,#0f2660,#347deb,#60aaff);
+        background: #1a3060;
         background-size: 200% auto;
         animation: shimmerMove 3s linear infinite;
     }
@@ -130,7 +130,7 @@
 
 /* BUTTON */
 .btn-auth {
-    background: linear-gradient(135deg,#347deb,#1a3f80);
+    background: #1a3060;
     border-radius: 12px;
     font-weight: 700;
     color: #fff;
@@ -139,7 +139,7 @@
 }
 
     .btn-auth:hover {
-        background: linear-gradient(135deg,white,#1f62cc);
+        background: #1f62cc;
         color:white;
     }
 

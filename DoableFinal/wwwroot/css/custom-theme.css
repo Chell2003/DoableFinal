@@ -134,7 +134,7 @@ a:hover {
     }
 
 .btn-send-reply {
-    background: linear-gradient(135deg, #347deb, #5a9cff);
+    background: #0d6efd;
     border: none;
     font-weight: 500;
     padding: 10px;
