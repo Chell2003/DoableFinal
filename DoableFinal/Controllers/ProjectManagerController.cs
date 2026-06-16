@@ -523,8 +523,8 @@ namespace DoableFinal.Controllers
                 await _context.SaveChangesAsync();
 
                 // Generate reference number: PROJECT_ACRONYM-YEAR-ID
-                var project = await _context.Projects.FindAsync(task.ProjectId);
-                task.ReferenceNumber = GenerateTaskReference(project?.Name, task.Id);
+                var refProject = await _context.Projects.FindAsync(task.ProjectId);
+                task.ReferenceNumber = GenerateTaskReference(refProject?.Name, task.Id);
                 await _context.SaveChangesAsync();
 
                 // Add assignments if specified
