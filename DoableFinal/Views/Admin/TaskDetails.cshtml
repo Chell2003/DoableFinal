@@ -48,7 +48,15 @@
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Title:</div>
-                        <div class="col-12 col-md-9">@Model.Title</div>
+                        <div class="col-12 col-md-9">
+                            @Model.Title
+                            @if (!string.IsNullOrEmpty(Model.ReferenceNumber))
+                            {
+                                <span class="ms-2" style="background:#e8f0fb;border:1px solid #b8daff;border-radius:6px;padding:3px 10px;font-size:.8rem;font-weight:700;color:#1a3060;font-family:monospace;letter-spacing:.04em;">
+                                    <i class="bi bi-hash me-1"></i>@Model.ReferenceNumber
+                                </span>
+                            }
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-3 fw-bold">Description:</div>

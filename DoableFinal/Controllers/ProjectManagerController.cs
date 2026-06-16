@@ -522,8 +522,9 @@ namespace DoableFinal.Controllers
                 _context.Tasks.Add(task);
                 await _context.SaveChangesAsync();
 
-                // Generate reference number after save (uses the auto-incremented Id)
-                task.ReferenceNumber = $"TASK-{DateTime.UtcNow.Year}-{task.Id:D5}";
+                // Generate reference number: PROJECT_ACRONYM-YEAR-ID
+                var project = await _context.Projects.FindAsync(task.ProjectId);
+                task.ReferenceNumber = GenerateTaskReference(project?.Name, task.Id);
                 await _context.SaveChangesAsync();
 
                 // Add assignments if specified
@@ -1673,6 +1674,37 @@ namespace DoableFinal.Controllers
             };
 
             return View(model);
+        }
+
+        /// <summary>
+        /// Generates a task reference number from the project name acronym.
+        /// Example: "Weekly Performance Report" → "WPR-2026-00042"
+        /// </summary>
+        private static string GenerateTaskReference(string? projectName, int taskId)
+        {
+            var acronym = "TSK";
+            if (!string.IsNullOrWhiteSpace(projectName))
+            {
+                var words = projectName
+                    .Split(new[] { ' ', '-', '_', '/' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(w => w.Length > 0)
+                    .ToArray();
+
+                if (words.Length == 1)
+                {
+                    // Single word: take first 3 uppercase letters
+                    acronym = words[0].Length >= 3
+                        ? words[0].Substring(0, 3).ToUpper()
+                        : words[0].ToUpper();
+                }
+                else
+                {
+                    // Multiple words: first letter of each word (max 5)
+                    acronym = string.Concat(words.Take(5).Select(w => char.ToUpper(w[0])));
+                }
+            }
+
+            return $"{acronym}-{DateTime.UtcNow.Year}-{taskId:D5}";
         }
     }
 }

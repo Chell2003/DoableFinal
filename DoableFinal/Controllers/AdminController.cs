@@ -2354,6 +2354,11 @@ namespace DoableFinal.Controllers
                 _context.Tasks.Add(task);
                 await _context.SaveChangesAsync();
 
+                // Generate reference number: PROJECT_ACRONYM-YEAR-ID
+                var refProject = await _context.Projects.FindAsync(task.ProjectId);
+                task.ReferenceNumber = GenerateTaskReference(refProject?.Name, task.Id);
+                await _context.SaveChangesAsync();
+
                 // Add assignments if specified
                 if (model.AssignedToIds != null && model.AssignedToIds.Any())
                 {
@@ -3409,6 +3414,35 @@ namespace DoableFinal.Controllers
                 _logger.LogError(ex, "Error saving section data");
                 return Json(new { success = false, message = "Error saving section: " + ex.Message });
             }
+        }
+
+        /// <summary>
+        /// Generates a task reference number from the project name acronym.
+        /// Example: "Weekly Performance Report" → "WPR-2026-00042"
+        /// </summary>
+        private static string GenerateTaskReference(string? projectName, int taskId)
+        {
+            var acronym = "TSK";
+            if (!string.IsNullOrWhiteSpace(projectName))
+            {
+                var words = projectName
+                    .Split(new[] { ' ', '-', '_', '/' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(w => w.Length > 0)
+                    .ToArray();
+
+                if (words.Length == 1)
+                {
+                    acronym = words[0].Length >= 3
+                        ? words[0].Substring(0, 3).ToUpper()
+                        : words[0].ToUpper();
+                }
+                else
+                {
+                    acronym = string.Concat(words.Take(5).Select(w => char.ToUpper(w[0])));
+                }
+            }
+
+            return $"{acronym}-{DateTime.UtcNow.Year}-{taskId:D5}";
         }
     }
 }
