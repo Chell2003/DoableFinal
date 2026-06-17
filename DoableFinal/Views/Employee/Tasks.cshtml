@@ -89,15 +89,15 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover table-sticky-actions">
+                            <table class="table table-hover table-fit-screen">
                                 <thead>
                                     <tr>
-                                        <th>Task</th>
-                                        <th class="col-hide-xs">Project</th>
-                                        <th>Status</th>
-                                        <th>Priority</th>
-                                        <th>Due Date</th>
-                                        <th>Actions</th>
+                                        <th style="width:28%;">Task</th>
+                                        <th class="col-hide-xs" style="width:18%;">Project</th>
+                                        <th style="width:16%;">Status</th>
+                                        <th style="width:14%;">Priority</th>
+                                        <th style="width:14%;">Due Date</th>
+                                        <th class="actions-col">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -113,12 +113,10 @@
                                     {
                                         <tr data-task-id="@task.Id">
                                             <td data-label="Task">
-                                                <div>
-                                                    <h6 class="mb-0">@task.Title</h6>
-                                                    <small class="text-muted">@task.Description</small>
-                                                </div>
+                                                <h6 class="mb-0">@task.Title</h6>
+                                                <small class="text-muted d-none d-lg-inline">@task.Description</small>
                                             </td>
-                                            <td data-label="Project">
+                                            <td data-label="Project" class="col-hide-xs">
                                                 <a asp-controller="Projects" asp-action="Details" asp-route-id="@task.ProjectId" 
                                                    class="text-decoration-none">@task.Project?.Name</a>
                                             </td>
@@ -141,9 +139,11 @@
                                                     @task.DueDate.ToString("MMM dd, yyyy")
                                                 </span>
                                             </td>
-                                            <td data-label="Actions">
+                                            <td data-label="Actions" class="actions-col">
                                                 <a asp-controller="Employee" asp-action="TaskDetails" asp-route-id="@task.Id" 
-                                                   class="btn btn-sm btn-outline-primary">View</a>
+                                                   class="btn btn-sm btn-outline-primary" title="View">
+                                                    <i class="fas fa-eye"></i><span class="btn-text d-none d-xl-inline ms-1">View</span>
+                                                </a>
                                             </td>
                                         </tr>
                                     }

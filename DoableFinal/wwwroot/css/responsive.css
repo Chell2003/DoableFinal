@@ -106,67 +106,57 @@ html, body {
 }
 
 /* ------------------------------------------------------------------
-   6. TABLES — horizontal scroll on small screens, uniform row heights
+   6. TABLES — fit entirely within the screen, no horizontal scroll
    ------------------------------------------------------------------ */
 .table-responsive {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Ensure table cells don't grow too wide */
-.table td, .table th {
+/* table-fit-screen: columns shrink proportionally so the whole table
+   — including the Actions column — stays visible without needing to
+   scroll right. Used on task tables where Actions was previously the
+   last column and got pushed off-screen. */
+.table-fit-screen {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.table-fit-screen td,
+.table-fit-screen th {
+    white-space: normal;       /* allow wrapping instead of forcing overflow */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    vertical-align: middle;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.6rem;
+}
+
+.table-fit-screen .actions-col {
+    width: 88px;
+    text-align: center;
     white-space: nowrap;
 }
 
-/* Allow wrapping only for description/name columns */
-.table td.cell-wrap, .table th.cell-wrap {
-    white-space: normal;
-    min-width: 120px;
+.table-fit-screen .actions-col .btn,
+.table-fit-screen .actions-col a {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.78rem;
 }
 
-/* ── Sticky Actions column ───────────────────────────────────────
-   Task tables (Admin/Client/Employee/PM Tasks pages) put Actions as
-   the last column, so on narrower screens the user had to scroll all
-   the way right to reach the action buttons. Pin that last column to
-   the right edge of the scroll container so it's always visible,
-   while everything else still scrolls underneath it normally. */
-.table-sticky-actions th:last-child,
-.table-sticky-actions td:last-child {
-    position: sticky;
-    right: 0;
-    z-index: 2;
-    background: #fff;
-    box-shadow: -6px 0 8px -6px rgba(0, 0, 0, 0.12);
-}
-
-.table-sticky-actions thead th:last-child {
-    background: #fff; /* default: matches plain <thead> with no extra class */
-    z-index: 3;
-}
-
-.table-sticky-actions thead.table-light th:last-child,
-.table-sticky-actions thead th.table-light:last-child {
-    background: #f8f9fa;
-}
-
-.table-sticky-actions thead.table-dark th:last-child,
-.table-sticky-actions thead th.table-dark:last-child {
-    background: #212529;
-    color: #fff;
-}
-
-.table-sticky-actions tbody tr:nth-child(even) td:last-child {
-    background: #f8f9fa; /* keep striping consistent under the sticky cell */
-}
-
-/* On mobile the table becomes a stacked card layout (section 6b below)
-   where sticky positioning doesn't apply/isn't needed — Actions already
-   shows as a normal labeled row inside each card. */
-@media (max-width: 768px) {
-    .table-sticky-actions th:last-child,
-    .table-sticky-actions td:last-child {
-        position: static;
-        box-shadow: none;
+/* On narrow screens, drop to icon-only action buttons so the column
+   stays compact and never forces a scrollbar */
+@media (max-width: 1024px) {
+    .table-fit-screen .actions-col .btn-text {
+        display: none;
     }
+}
+
+/* Non-essential columns disappear before Actions ever needs to shrink
+   below a usable width — keeps Title/Status/Priority/Actions visible
+   at all times, this matches col-hide-sm/col-hide-xs used elsewhere */
+@media (max-width: 768px) {
+    .table-fit-screen { table-layout: auto; } /* mobile uses the card layout instead */
 }
 
 @media (max-width: 768px) {
