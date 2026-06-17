@@ -569,22 +569,31 @@ h2, .h2 {
        At 1025px and up, every dimension is a locked pixel/rem value so the
        page renders identically on a 1366px laptop, a 1920px monitor, or a
        2560px ultra-wide — browser zoom simply magnifies this fixed canvas
-       rather than reflowing it. */
+       rather than reflowing it.
+
+       IMPORTANT: the sidebar takes a real, separate 240px slice of the
+       viewport (see sidebar.css #content { margin-left: 240px }). The
+       canvas width below is sized to fit alongside that sidebar on a
+       1366px laptop — the smallest common desktop resolution — WITHOUT
+       causing horizontal overflow:
+         1366px viewport − 240px sidebar − ~16px scrollbar/chrome
+         = ~1100px available → canvas locked at 1100px to fit safely. */
 
     html {
         font-size: 16px; /* locked — no clamp(), no vw */
     }
 
-    /* Locked design width. The canvas is centered and never grows or
-       shrinks with the viewport above 1025px; extra monitor width just
-       shows as empty margin on either side. */
+    /* Locked design width that fits next to the 240px sidebar on a
+       1366px-wide laptop screen without overflowing. On wider monitors
+       the canvas stays this same size and is centered in the remaining
+       space — it does not grow. */
     .container-fluid {
-        width: 1280px;
-        max-width: 1280px;
+        width: 1100px;
+        max-width: 1100px;
         margin-left: auto;
         margin-right: auto;
-        padding-left: 24px;
-        padding-right: 24px;
+        padding-left: 16px;
+        padding-right: 16px;
     }
 
     /* Fixed stat-card sizing — same on every desktop/monitor size */
