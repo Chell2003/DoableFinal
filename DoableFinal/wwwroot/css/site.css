@@ -293,14 +293,27 @@ body {
     background: #a0a0a0;
 }
 
-/* Hide horizontal scrollbar on table-responsive completely */
+/* Thin, visible horizontal scrollbar on table-responsive — content that
+   overflows must have a discoverable way to scroll to it, especially at
+   high browser zoom levels where fluid-scaled content can outgrow its
+   container. Hiding it entirely caused overflow to silently clip instead. */
 .table-responsive::-webkit-scrollbar {
-    height: 0px;
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
 }
 
 .table-responsive {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    -ms-overflow-style: auto;
+    overflow-x: auto;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {

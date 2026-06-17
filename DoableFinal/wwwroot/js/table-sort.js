@@ -221,8 +221,14 @@
         wrapper.appendChild(left);
         wrapper.appendChild(right);
 
-        // place wrapper after the table
-        table.parentNode.insertBefore(wrapper, table.nextSibling);
+        // Place wrapper AFTER the scrollable container (not inside it), so
+        // the Show/pagination controls stay fully visible and never scroll
+        // off-screen horizontally with the table content. If the table is
+        // wrapped in .table-responsive, anchor to that wrapper instead of
+        // the table itself.
+        var scrollContainer = table.closest('.table-responsive');
+        var anchor = scrollContainer || table;
+        anchor.parentNode.insertBefore(wrapper, anchor.nextSibling);
 
         // store references
         table._pagination = { wrapper: wrapper, selector: selector, prev: prev, next: next, info: info };
