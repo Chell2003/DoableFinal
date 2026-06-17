@@ -123,6 +123,52 @@ html, body {
     min-width: 120px;
 }
 
+/* ── Sticky Actions column ───────────────────────────────────────
+   Task tables (Admin/Client/Employee/PM Tasks pages) put Actions as
+   the last column, so on narrower screens the user had to scroll all
+   the way right to reach the action buttons. Pin that last column to
+   the right edge of the scroll container so it's always visible,
+   while everything else still scrolls underneath it normally. */
+.table-sticky-actions th:last-child,
+.table-sticky-actions td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    background: #fff;
+    box-shadow: -6px 0 8px -6px rgba(0, 0, 0, 0.12);
+}
+
+.table-sticky-actions thead th:last-child {
+    background: #fff; /* default: matches plain <thead> with no extra class */
+    z-index: 3;
+}
+
+.table-sticky-actions thead.table-light th:last-child,
+.table-sticky-actions thead th.table-light:last-child {
+    background: #f8f9fa;
+}
+
+.table-sticky-actions thead.table-dark th:last-child,
+.table-sticky-actions thead th.table-dark:last-child {
+    background: #212529;
+    color: #fff;
+}
+
+.table-sticky-actions tbody tr:nth-child(even) td:last-child {
+    background: #f8f9fa; /* keep striping consistent under the sticky cell */
+}
+
+/* On mobile the table becomes a stacked card layout (section 6b below)
+   where sticky positioning doesn't apply/isn't needed — Actions already
+   shows as a normal labeled row inside each card. */
+@media (max-width: 768px) {
+    .table-sticky-actions th:last-child,
+    .table-sticky-actions td:last-child {
+        position: static;
+        box-shadow: none;
+    }
+}
+
 @media (max-width: 768px) {
     /* Slightly smaller font inside tables on mobile */
     .table.table-sm td,
