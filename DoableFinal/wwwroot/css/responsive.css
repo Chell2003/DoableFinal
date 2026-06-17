@@ -507,9 +507,11 @@ html, body {
 }
 
 /* ------------------------------------------------------------------
-   23. FLUID FIT-TO-SCREEN — every viewport, no fixed breakpoint gaps
-   Covers: small phones, large phones, tablets, small laptops,
-           desktops, ultra-wide monitors
+   23. FLUID FIT-TO-SCREEN — phones & tablets only (max-width: 1024px)
+   Desktop/laptop/monitor (1025px+) uses the LOCKED block further below
+   instead — nothing in that range may use vw/clamp(), since any
+   viewport-relative unit recalculates as zoom changes the effective
+   viewport width, causing the layout to visibly shift when zoomed.
    ------------------------------------------------------------------ */
 
 /* Never allow ANY element to force horizontal scroll on the page */
@@ -517,52 +519,54 @@ img, video, iframe, canvas, svg, table, .card, .modal-content {
     max-width: 100%;
 }
 
-/* Containers scale fluidly instead of jumping at fixed breakpoints */
-.container-fluid {
-    padding-left: clamp(10px, 2vw, 28px);
-    padding-right: clamp(10px, 2vw, 28px);
-}
+@media (max-width: 1024px) {
+    /* Containers scale fluidly instead of jumping at fixed breakpoints */
+    .container-fluid {
+        padding-left: clamp(10px, 2vw, 28px);
+        padding-right: clamp(10px, 2vw, 28px);
+    }
 
-/* content-wrapper: fluid padding instead of one fixed value */
-.content-wrapper {
-    padding: clamp(10px, 2vw, 20px);
-}
+    /* content-wrapper: fluid padding instead of one fixed value */
+    .content-wrapper {
+        padding: clamp(10px, 2vw, 20px);
+    }
 
-/* Stat cards: fluid internal spacing */
-.stat-card {
-    padding: clamp(0.85rem, 2vw, 1.5rem);
-}
+    /* Stat cards: fluid internal spacing */
+    .stat-card {
+        padding: clamp(0.85rem, 2vw, 1.5rem);
+    }
 
-.stat-card .stat-value {
-    font-size: clamp(1.3rem, 2.4vw, 2rem);
-}
+    .stat-card .stat-value {
+        font-size: clamp(1.3rem, 2.4vw, 2rem);
+    }
 
-.stat-card .stat-icon {
-    font-size: clamp(1.2rem, 1.8vw, 2rem);
-}
+    .stat-card .stat-icon {
+        font-size: clamp(1.2rem, 1.8vw, 2rem);
+    }
 
-/* Card headers/bodies: fluid padding */
-.card-header {
-    padding: clamp(0.6rem, 1.4vw, 1rem) clamp(0.75rem, 1.6vw, 1.25rem);
-}
+    /* Card headers/bodies: fluid padding */
+    .card-header {
+        padding: clamp(0.6rem, 1.4vw, 1rem) clamp(0.75rem, 1.6vw, 1.25rem);
+    }
 
-.card-body {
-    padding: clamp(0.75rem, 2vw, 1.25rem);
-}
+    .card-body {
+        padding: clamp(0.75rem, 2vw, 1.25rem);
+    }
 
-/* Page headers: fluid title size, no jump from 1.2rem to full size */
-h1.h3, .h3 {
-    font-size: clamp(1.15rem, 1.6vw + 0.5rem, 1.75rem);
-}
+    /* Page headers: fluid title size, no jump from 1.2rem to full size */
+    h1.h3, .h3 {
+        font-size: clamp(1.15rem, 1.6vw + 0.5rem, 1.75rem);
+    }
 
-h2, .h2 {
-    font-size: clamp(1.05rem, 1.4vw + 0.5rem, 1.5rem);
-}
+    h2, .h2 {
+        font-size: clamp(1.05rem, 1.4vw + 0.5rem, 1.5rem);
+    }
 
-/* Buttons: fluid horizontal padding so labels don't crowd on narrow tablets */
-.btn {
-    padding-left: clamp(0.6rem, 1.2vw, 1rem);
-    padding-right: clamp(0.6rem, 1.2vw, 1rem);
+    /* Buttons: fluid horizontal padding so labels don't crowd on narrow tablets */
+    .btn {
+        padding-left: clamp(0.6rem, 1.2vw, 1rem);
+        padding-right: clamp(0.6rem, 1.2vw, 1rem);
+    }
 }
 
 /* ---- Intermediate breakpoint: small laptops / large tablets (769–1024px) ---- */
