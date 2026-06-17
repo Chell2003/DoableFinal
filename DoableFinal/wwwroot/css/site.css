@@ -14,24 +14,27 @@
 }
 
 html {
-    font-size: 14px;
     position: relative;
     min-height: 100%;
 }
 
-@media (min-width: 768px) {
+/* Mobile/tablet: fluid font-size, scales smoothly with viewport width.
+   clamp(min, preferred, max) — never smaller than 14px, never larger
+   than 16px. This range is intentionally responsive; the desktop/
+   monitor range (1025px+) is fixed-width and overrides this in
+   responsive.css so zoom/monitor size never changes that layout. */
+@media (max-width: 1024px) {
     html {
-        font-size: 16px;
+        font-size: clamp(14px, 0.85vw + 11px, 16px);
     }
 }
 
-html {
-    /* Fluid base font-size — scales smoothly with viewport width.
-       clamp(min, preferred, max):
-       - never smaller than 14px (small phones)
-       - never larger than 16px (large desktop monitors)
-       - in between, scales with viewport width via vw unit */
-    font-size: clamp(14px, 0.85vw + 11px, 16px);
+/* Desktop/laptop/monitor baseline before responsive.css's fixed-width
+   rule takes over at 1025px+ — kept here only as a safe fallback. */
+@media (min-width: 1025px) {
+    html {
+        font-size: 16px;
+    }
 }
 
 body {

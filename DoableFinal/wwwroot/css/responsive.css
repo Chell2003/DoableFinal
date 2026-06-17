@@ -564,45 +564,49 @@ h2, .h2 {
    laptop and a 2560px monitor show the exact same design, just bigger.
    ------------------------------------------------------------------ */
 @media (min-width: 1025px) {
-    /* Single fluid scale factor for the whole desktop/laptop/monitor range.
-       1025px → 16px   |   1920px → 18px   |   2560px+ → 19px (capped) */
+    /* FIXED-WIDTH DESKTOP CANVAS — intentionally NOT fluid.
+       The layout below 1025px (phones/tablets) stays responsive as before.
+       At 1025px and up, every dimension is a locked pixel/rem value so the
+       page renders identically on a 1366px laptop, a 1920px monitor, or a
+       2560px ultra-wide — browser zoom simply magnifies this fixed canvas
+       rather than reflowing it. */
+
     html {
-        font-size: clamp(16px, 0.45vw + 11.4px, 19px);
+        font-size: 16px; /* locked — no clamp(), no vw */
     }
 
-    /* Container grows with the viewport but stays centered and never
-       forces the grid to add/remove columns — Bootstrap's col-* classes
-       keep their md/lg breakpoint structure exactly as authored. */
+    /* Locked design width. The canvas is centered and never grows or
+       shrinks with the viewport above 1025px; extra monitor width just
+       shows as empty margin on either side. */
     .container-fluid {
-        width: 100%;
-        max-width: 1800px;
+        width: 1280px;
+        max-width: 1280px;
         margin-left: auto;
         margin-right: auto;
-        padding-left: clamp(20px, 1.6vw, 40px);
-        padding-right: clamp(20px, 1.6vw, 40px);
+        padding-left: 24px;
+        padding-right: 24px;
     }
 
-    /* Stat card internals scale with the same fluid font, not fixed
-       breakpoint jumps — keeps proportions identical at any width */
+    /* Fixed stat-card sizing — same on every desktop/monitor size */
     .stat-card {
-        padding: clamp(1.25rem, 1.4vw, 1.75rem);
+        padding: 1.5rem;
     }
 
     .stat-card .stat-value {
-        font-size: clamp(1.6rem, 1.6vw, 2.1rem);
+        font-size: 2rem;
     }
 
     .stat-card .stat-icon {
-        font-size: clamp(1.4rem, 1.3vw, 1.9rem);
+        font-size: 1.75rem;
     }
 
-    /* Card spacing scales proportionally instead of stepping at 1600px */
+    /* Fixed card spacing — no per-monitor scaling */
     .card-header {
-        padding: clamp(0.75rem, 0.9vw, 1.1rem) clamp(1rem, 1.1vw, 1.4rem);
+        padding: 0.875rem 1.25rem;
     }
 
     .card-body {
-        padding: clamp(1rem, 1.2vw, 1.5rem);
+        padding: 1.25rem;
     }
 }
 
