@@ -564,32 +564,29 @@ h2, .h2 {
    laptop and a 2560px monitor show the exact same design, just bigger.
    ------------------------------------------------------------------ */
 @media (min-width: 1025px) {
-    /* FIXED-WIDTH DESKTOP CANVAS — intentionally NOT fluid.
+    /* SEMI-FIXED DESKTOP CANVAS.
        The layout below 1025px (phones/tablets) stays responsive as before.
-       At 1025px and up, every dimension is a locked pixel/rem value so the
-       page renders identically on a 1366px laptop, a 1920px monitor, or a
-       2560px ultra-wide — browser zoom simply magnifies this fixed canvas
-       rather than reflowing it.
+       At 1025px and up, the STRUCTURE is locked (sidebar width, card
+       padding, font sizes, grid arrangement never change) so zoom and
+       monitor size never break or reflow the design. The CANVAS WIDTH
+       itself, however, is allowed to grow with the viewport between a
+       floor and a ceiling, so larger monitors fill their extra space
+       instead of showing dead empty margin on both sides.
 
-       IMPORTANT: the sidebar takes a real, separate 240px slice of the
-       viewport (see sidebar.css #content { margin-left: 240px }). The
-       canvas width below is sized to fit alongside that sidebar on a
-       1366px laptop — the smallest common desktop resolution — WITHOUT
-       causing horizontal overflow:
-         1366px viewport − 240px sidebar − ~16px scrollbar/chrome
-         = ~1100px available → canvas locked at 1100px to fit safely. */
+       Floor:   ~1100px (fits next to the 240px sidebar on a 1366px laptop)
+       Ceiling: 1600px  (keeps text lines from stretching too wide on a
+                         2560px+ ultra-wide monitor)
+       Between those, width simply tracks the viewport — no vw-based
+       font/spacing scaling is involved, only the canvas width itself. */
 
     html {
         font-size: 16px; /* locked — no clamp(), no vw */
     }
 
-    /* Locked design width that fits next to the 240px sidebar on a
-       1366px-wide laptop screen without overflowing. On wider monitors
-       the canvas stays this same size and is centered in the remaining
-       space — it does not grow. */
     .container-fluid {
-        width: 1100px;
-        max-width: 1100px;
+        width: calc(100% - 32px);
+        min-width: 1084px;   /* floor: fits next to 240px sidebar on 1366px laptop */
+        max-width: 1600px;   /* ceiling: avoids overly long text lines on ultra-wide */
         margin-left: auto;
         margin-right: auto;
         padding-left: 16px;
