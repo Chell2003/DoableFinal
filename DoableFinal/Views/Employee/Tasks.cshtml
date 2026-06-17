@@ -92,11 +92,12 @@
                             <table class="table table-hover table-fit-screen">
                                 <thead>
                                     <tr>
-                                        <th style="width:28%;">Task</th>
-                                        <th class="col-hide-xs" style="width:18%;">Project</th>
-                                        <th style="width:16%;">Status</th>
-                                        <th style="width:14%;">Priority</th>
-                                        <th style="width:14%;">Due Date</th>
+                                        <th style="width:13%;">Ref #</th>
+                                        <th style="width:24%;">Task</th>
+                                        <th class="col-hide-xs" style="width:16%;">Project</th>
+                                        <th style="width:14%;">Status</th>
+                                        <th style="width:12%;">Priority</th>
+                                        <th style="width:12%;">Due Date</th>
                                         <th class="actions-col">Actions</th>
                                     </tr>
                                 </thead>
@@ -104,7 +105,7 @@
                                     @if (!Model.Any())
                                     {
                                         <tr>
-                                            <td colspan="6" class="text-center py-4 text-muted">
+                                            <td colspan="7" class="text-center py-4 text-muted">
                                                 <i class="bi bi-inbox"></i> No tasks found
                                             </td>
                                         </tr>
@@ -112,6 +113,7 @@
                                     @foreach (var task in Model)
                                     {
                                         <tr data-task-id="@task.Id">
+                                            <td data-label="Ref #"><code class="small text-muted">@(task.ReferenceNumber ?? "—")</code></td>
                                             <td data-label="Task">
                                                 <h6 class="mb-0">@task.Title</h6>
                                                 <small class="text-muted d-none d-lg-inline">@task.Description</small>

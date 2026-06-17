@@ -94,11 +94,12 @@
                 <table class="table table-hover align-middle mb-0 table-fit-screen">
                    <thead class="table-light">
                         <tr>
-                            <th style="width:26%;">Title</th>
-                            <th style="width:22%;" class="col-hide-sm">Project</th>
-                            <th style="width:16%;">Status</th>
-                            <th style="width:14%;">Priority</th>
-                            <th style="width:14%;">Due Date</th>
+                            <th style="width:14%;">Ref #</th>
+                            <th style="width:22%;">Title</th>
+                            <th style="width:18%;" class="col-hide-sm">Project</th>
+                            <th style="width:14%;">Status</th>
+                            <th style="width:12%;">Priority</th>
+                            <th style="width:12%;">Due Date</th>
                             <th class="actions-col">Actions</th>
                         </tr>
                     </thead>
@@ -106,7 +107,7 @@
                         @if (!Model.Any())
                         {
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">
+                                <td colspan="7" class="text-center py-4 text-muted">
                                     <i class="bi bi-inbox"></i> No tasks found
                                 </td>
                             </tr>
@@ -114,6 +115,7 @@
                         @foreach (var task in Model)
                         {
                             <tr>
+                                <td data-label="Ref #"><code class="small text-muted">@(task.ReferenceNumber ?? "—")</code></td>
                                 <td data-label="Title">@task.Title</td>
                                 <td data-label="Project" class="col-hide-sm">@task.Project.Name</td>
                                 <td data-label="Status">
