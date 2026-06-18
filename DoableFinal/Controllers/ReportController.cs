@@ -171,6 +171,115 @@ namespace DoableFinal.Controllers
             return View(grouped);
         }
 
+        // GET: Report/CategoryReport?category=X&fromDate=&toDate=
+        public async Task<IActionResult> CategoryReport(string category, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            if (string.IsNullOrEmpty(category))
+                return RedirectToAction("Index");
+
+            var currentUser = await GetCurrentUser();
+            var from = fromDate ?? new DateTime(DateTime.UtcNow.Year, 1, 1);
+            var to   = toDate   ?? DateTime.UtcNow;
+
+            var projectsQuery = _context.Projects
+                .Include(p => p.Client)
+                .Include(p => p.ProjectManager)
+                .Include(p => p.Tasks)
+                    .ThenInclude(t => t.TaskAssignments)
+                        .ThenInclude(ta => ta.Employee)
+                .Where(p => !p.IsArchived && p.Category == category)
+                .AsQueryable();
+
+            if (currentUser != null)
+            {
+                bool isClient = await _userManager.IsInRoleAsync(currentUser, "Client");
+                bool isPM     = await _userManager.IsInRoleAsync(currentUser, "Project Manager") ||
+                                await _userManager.IsInRoleAsync(currentUser, "ProjectManager");
+                if (isClient) projectsQuery = projectsQuery.Where(p => p.ClientId == currentUser.Id);
+                else if (isPM) projectsQuery = projectsQuery.Where(p => p.ProjectManagerId == currentUser.Id);
+            }
+
+            var projects = await projectsQuery.ToListAsync();
+
+            var projectRows = projects.Select(p =>
+            {
+                var tasks       = p.Tasks?.Where(t => !t.IsArchived).ToList() ?? new();
+                var total       = tasks.Count;
+                var done        = tasks.Count(t => t.Status == "Completed");
+                var inProg      = tasks.Count(t => t.Status == "In Progress");
+                var notStarted  = tasks.Count(t => t.Status == "Not Started");
+                var overdue     = tasks.Count(t => t.Status != "Completed" && t.DueDate < DateTime.UtcNow);
+                var pct         = total > 0 ? (int)Math.Round((double)done / total * 100) : 0;
+                return new CategoryProjectRow
+                {
+                    Id             = p.Id,
+                    Name           = p.Name,
+                    Status         = p.Status,
+                    StartDate      = p.StartDate,
+                    EndDate        = p.EndDate,
+                    ClientName     = p.Client  != null ? $"{p.Client.FirstName} {p.Client.LastName}"         : "—",
+                    ManagerName    = p.ProjectManager != null ? $"{p.ProjectManager.FirstName} {p.ProjectManager.LastName}" : "—",
+                    TotalTasks     = total,
+                    CompletedTasks = done,
+                    InProgressTasks= inProg,
+                    NotStartedTasks= notStarted,
+                    OverdueTasks   = overdue,
+                    Progress       = pct
+                };
+            }).OrderBy(p => p.Name).ToList();
+
+            var taskRows = projects.SelectMany(p =>
+                (p.Tasks ?? new List<ProjectTask>())
+                .Where(t => !t.IsArchived)
+                .Select(t => new CategoryTaskRow
+                {
+                    TaskTitle    = t.Title,
+                    ProjectName  = p.Name,
+                    TaskCategory = t.Category,
+                    Priority     = t.Priority,
+                    Status       = t.Status,
+                    DueDate      = t.DueDate,
+                    CompletedAt  = t.CompletedAt,
+                    AssignedTo   = t.TaskAssignments != null && t.TaskAssignments.Any()
+                        ? string.Join(", ", t.TaskAssignments.Select(ta => ta.Employee != null ? $"{ta.Employee.FirstName} {ta.Employee.LastName}" : "—"))
+                        : "Unassigned"
+                })
+            ).OrderBy(t => t.DueDate).ToList();
+
+            var vm = new CategoryReportViewModel
+            {
+                Category         = category,
+                FromDate         = from.ToString("MMM dd, yyyy"),
+                ToDate           = to.ToString("MMM dd, yyyy"),
+                GeneratedDate    = DateTime.UtcNow,
+                TotalProjects    = projects.Count,
+                TotalTasks       = taskRows.Count,
+                CompletedTasks   = taskRows.Count(t => t.Status == "Completed"),
+                InProgressTasks  = taskRows.Count(t => t.Status == "In Progress"),
+                NotStartedTasks  = taskRows.Count(t => t.Status == "Not Started"),
+                OverdueTasks     = taskRows.Count(t => t.Status != "Completed" && t.DueDate < DateTime.UtcNow),
+                AvgProgress      = projectRows.Any() ? (int)Math.Round(projectRows.Average(p => (double)p.Progress)) : 0,
+                Projects         = projectRows,
+                Tasks            = taskRows,
+                ProjectsCompleted  = projects.Count(p => p.Status == "Completed"),
+                ProjectsInProgress = projects.Count(p => p.Status == "In Progress"),
+                ProjectsOnHold     = projects.Count(p => p.Status == "On Hold"),
+                ProjectsNotStarted = projects.Count(p => p.Status == "Not Started")
+            };
+
+            ViewBag.FromDateRaw = from.ToString("yyyy-MM-dd");
+            ViewBag.ToDateRaw   = to.ToString("yyyy-MM-dd");
+            return View(vm);
+        }
+
+        // GET: Report/CategoryReportPrint
+        public async Task<IActionResult> CategoryReportPrint(string category, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            return await CategoryReport(category, fromDate, toDate) is ViewResult vr
+                ? View("CategoryReport_Print", vr.Model)
+                : NotFound();
+        }
+
         // GET: Report/Status/5
         public async Task<IActionResult> Status(int id)
         {

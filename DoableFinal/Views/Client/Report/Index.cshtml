@@ -272,15 +272,15 @@
                     <span id="catProjectCount" style="font-weight:400; margin-left:6px;"></span>
                 </div>
                 <div class="cat-btn-row">
+                    <button class="rpt-btn rpt-btn-primary" onclick="goCatStatus()">
+                        <i class="fas fa-chart-bar"></i> Full Category Report
+                    </button>
                     <button class="rpt-btn rpt-btn-purple" onclick="goCatSummary()">
                         <i class="fas fa-layer-group"></i> Projects Summary
                     </button>
-                    <button class="rpt-btn rpt-btn-primary" onclick="goCatStatus()">
-                        <i class="fas fa-tasks"></i> All Status Reports
-                    </button>
-                    <small class="text-muted align-self-center">
+                    <small class="text-muted align-self-center" style="font-size:.75rem;">
                         <i class="fas fa-info-circle me-1"></i>
-                        These reports cover all projects in this category.
+                        Covers all projects &amp; tasks in this category
                     </small>
                 </div>
             </div>
@@ -453,8 +453,10 @@
     }
 
     function goCatStatus() {
-        // Go to Projects Summary and let them drill into each project
-        goCatSummary();
+        const cat  = document.getElementById('catFilterCat').value;
+        const from = document.getElementById('catFromDate').value;
+        const to   = document.getElementById('catToDate').value;
+        window.location.href = `/Report/CategoryReport?category=${encodeURIComponent(cat)}&fromDate=${from}&toDate=${to}`;
     }
 
     // ── Auto-apply preselected category from URL ───────────────
