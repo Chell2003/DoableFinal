@@ -61,8 +61,8 @@
                     {
                         var sc = p.Status switch {"Completed"=>"success","In Progress"=>"primary","On Hold"=>"warning",_=>"secondary"};
                         <tr>
-                            <td class="dashboard-td fw-semibold"><a href="/Report/Status/@p.ProjectId">@p.ProjectName</a></td>
-                            <td class="dashboard-td small text-muted">@p.ProjectManager</td>
+                            <td class="dashboard-td fw-semibold"><a href="/Report/Status/@p.Id">@p.Name</a></td>
+                            <td class="dashboard-td small text-muted">@p.ManagerName</td>
                             <td class="text-center dashboard-td"><span class="badge bg-@sc">@p.Status</span></td>
                             <td class="text-center dashboard-td">@p.TotalTasks</td>
                             <td class="text-center dashboard-td"><span class="badge bg-success">@p.CompletedTasks</span></td>
