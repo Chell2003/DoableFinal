@@ -33,7 +33,7 @@
     <table class="rpt-table">
       <thead><tr><th style="width:35%">Project</th><th>Manager</th><th>Status</th><th style="text-align:center">Tasks</th><th style="text-align:center">Done</th><th style="text-align:center">Overdue</th><th style="text-align:center">Progress</th><th>Due</th></tr></thead>
       <tbody>
-        @foreach (var p in Model.Projects.OrderByDescending(x => x.CompletionPct))
+        @foreach (var p in Model.Projects.OrderByDescending(x => x.Progress))
         {
           var sc = p.Status switch {"Completed"=>"success","In Progress"=>"primary","On Hold"=>"warning",_=>"muted"};
           <tr>
