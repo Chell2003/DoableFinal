@@ -461,62 +461,6 @@ namespace DoableFinal.Controllers
             }
         }
 
-        // ── GET: Report/CategoryReport?category=Bug+Fix ───────────────────
-        public async Task<IActionResult> CategoryReport(string category)
-        {
-            var currentUser = await GetCurrentUser();
-            var projects = await GetAccessibleProjects(currentUser);
-
-            var filtered = projects.Where(p =>
-                string.Equals(p.Category ?? "Uncategorized", category ?? "Uncategorized",
-                    StringComparison.OrdinalIgnoreCase)).ToList();
-
-            var projectIds = filtered.Select(p => p.Id).ToList();
-
-            var tasks = await _context.Tasks
-                .Where(t => projectIds.Contains(t.ProjectId) && !t.IsArchived)
-                .ToListAsync();
-
-            var now = DateTime.UtcNow;
-            var vm = new CategoryReportViewModel
-            {
-                Category         = category ?? "Uncategorized",
-                TotalProjects    = filtered.Count,
-                TotalTasks       = tasks.Count,
-                CompletedTasks   = tasks.Count(t => t.Status == "Completed"),
-                InProgressTasks  = tasks.Count(t => t.Status == "In Progress"),
-                OverdueTasks     = tasks.Count(t => t.Status != "Completed" && t.DueDate < now),
-            };
-            vm.OverallCompletion = vm.TotalTasks > 0
-                ? Math.Round((decimal)vm.CompletedTasks / vm.TotalTasks * 100, 1) : 0;
-
-            foreach (var p in filtered)
-            {
-                var ptasks = tasks.Where(t => t.ProjectId == p.Id).ToList();
-                var comp   = ptasks.Count(t => t.Status == "Completed");
-                var total  = ptasks.Count;
-                var pm     = p.ProjectManager != null
-                    ? $"{p.ProjectManager.FirstName} {p.ProjectManager.LastName}" : "—";
-                vm.Projects.Add(new CategoryProjectSummary
-                {
-                    ProjectId      = p.Id,
-                    ProjectName    = p.Name,
-                    Status         = p.Status,
-                    ProjectManager = pm,
-                    TotalTasks     = total,
-                    CompletedTasks = comp,
-                    InProgressTasks= ptasks.Count(t => t.Status == "In Progress"),
-                    OverdueTasks   = ptasks.Count(t => t.Status != "Completed" && t.DueDate < now),
-                    CompletionPct  = total > 0 ? Math.Round((decimal)comp / total * 100, 1) : 0,
-                    EndDate        = p.EndDate
-                });
-            }
-
-            if (Request.Query["print"] == "1")
-                return View("CategoryReport_Print", vm);
-            return View("CategoryReport", vm);
-        }
-
         // ── GET: Report/AllProjects ────────────────────────────────────────
         public async Task<IActionResult> AllProjects(string? status = null, DateTime? from = null, DateTime? to = null)
         {

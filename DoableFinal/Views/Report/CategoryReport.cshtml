@@ -22,7 +22,7 @@
                     <div style="font-size:.72rem;opacity:.8">Projects</div>
                 </div>
                 <div class="text-center px-3 py-2" style="background:rgba(255,255,255,.15);border-radius:10px;">
-                    <div style="font-size:1.4rem;font-weight:700">@Model.OverallCompletion%</div>
+                    <div style="font-size:1.4rem;font-weight:700">@Model.AvgProgress%</div>
                     <div style="font-size:.72rem;opacity:.8">Complete</div>
                 </div>
             </div>
@@ -72,10 +72,10 @@
                             <td class="dashboard-td" style="min-width:100px;">
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="progress flex-fill" style="height:6px;">
-                                        <div class="progress-bar bg-@(p.CompletionPct>=75?"success":p.CompletionPct>=40?"warning":"danger")"
-                                             style="width:@p.CompletionPct%"></div>
+                                        <div class="progress-bar bg-@(p.Progress>=75?"success":p.Progress>=40?"warning":"danger")"
+                                             style="width:@p.Progress%"></div>
                                     </div>
-                                    <small class="fw-semibold">@p.CompletionPct%</small>
+                                    <small class="fw-semibold">@p.Progress%</small>
                                 </div>
                             </td>
                             <td class="text-center dashboard-td small">@(p.EndDate?.ToString("MMM dd, yy") ?? "—")</td>

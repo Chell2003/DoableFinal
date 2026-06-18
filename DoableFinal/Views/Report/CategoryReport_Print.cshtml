@@ -11,7 +11,7 @@
       <div class="rpt-title">@Model.Category</div>
       <div class="rpt-meta">
         <span><strong>Projects</strong></span><span>@Model.TotalProjects</span>
-        <span><strong>Completion</strong></span><span>@Model.OverallCompletion%</span>
+        <span><strong>Completion</strong></span><span>@Model.AvgProgress%</span>
         <span><strong>Generated</strong></span><span>@Model.GeneratedDate.ToString("MMMM dd, yyyy 'at' hh:mm tt") UTC</span>
       </div>
     </div>
@@ -25,7 +25,7 @@
     <div class="rpt-kpi red"><div class="rpt-kpi-val">@Model.OverdueTasks</div><div class="rpt-kpi-lbl">Overdue</div></div>
   </div>
   <div class="rpt-section">
-    <div class="rpt-progress-wrap"><div class="rpt-progress-fill" style="width:@Model.OverallCompletion%">@Model.OverallCompletion%</div></div>
+    <div class="rpt-progress-wrap"><div class="rpt-progress-fill" style="width:@Model.AvgProgress%">@Model.AvgProgress%</div></div>
     <p style="font-size:8.5pt;color:#64748b;margin-top:4px;">@Model.CompletedTasks of @Model.TotalTasks tasks completed across @Model.TotalProjects projects</p>
   </div>
   <div class="rpt-section">
@@ -37,13 +37,13 @@
         {
           var sc = p.Status switch {"Completed"=>"success","In Progress"=>"primary","On Hold"=>"warning",_=>"muted"};
           <tr>
-            <td><strong>@p.ProjectName</strong></td>
-            <td>@p.ProjectManager</td>
+            <td><strong>@p.Name</strong></td>
+            <td>@p.ManagerName</td>
             <td><span class="rpt-badge @sc">@p.Status</span></td>
             <td style="text-align:center">@p.TotalTasks</td>
             <td style="text-align:center"><span class="rpt-badge success">@p.CompletedTasks</span></td>
             <td style="text-align:center">@(p.OverdueTasks > 0 ? p.OverdueTasks.ToString() : "—")</td>
-            <td style="text-align:center"><span class="rpt-badge @(p.CompletionPct>=75?"success":p.CompletionPct>=40?"warning":"danger")">@p.CompletionPct%</span></td>
+            <td style="text-align:center"><span class="rpt-badge @(p.Progress>=75?"success":p.Progress>=40?"warning":"danger")">@p.Progress%</span></td>
             <td>@(p.EndDate?.ToString("MMM dd, yy") ?? "—")</td>
           </tr>
         }
