@@ -210,20 +210,59 @@ namespace DoableFinal.ViewModels
     }
 }
 
-    // ── Cross-project / Overview report models ────────────────────────
-
+namespace DoableFinal.ViewModels
+{
+    // ── Category-level full report ViewModels ──────────────────────────
     public class CategoryReportViewModel
     {
         public string Category { get; set; }
+        public string? FromDate { get; set; }
+        public string? ToDate { get; set; }
         public DateTime GeneratedDate { get; set; } = DateTime.UtcNow;
-        public List<CategoryProjectSummary> Projects { get; set; } = new();
-        public int TotalProjects  { get; set; }
-        public int TotalTasks     { get; set; }
+        public int TotalProjects { get; set; }
+        public int TotalTasks { get; set; }
         public int CompletedTasks { get; set; }
-        public int OverdueTasks   { get; set; }
-        public int InProgressTasks{ get; set; }
-        public decimal OverallCompletion { get; set; }
+        public int InProgressTasks { get; set; }
+        public int NotStartedTasks { get; set; }
+        public int OverdueTasks { get; set; }
+        public int AvgProgress { get; set; }
+        public List<CategoryProjectRow> Projects { get; set; } = new();
+        public List<CategoryTaskRow> Tasks { get; set; } = new();
+        public int ProjectsCompleted { get; set; }
+        public int ProjectsInProgress { get; set; }
+        public int ProjectsOnHold { get; set; }
+        public int ProjectsNotStarted { get; set; }
     }
+
+    public class CategoryProjectRow
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Status { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public string ClientName { get; set; }
+        public string ManagerName { get; set; }
+        public int TotalTasks { get; set; }
+        public int CompletedTasks { get; set; }
+        public int InProgressTasks { get; set; }
+        public int NotStartedTasks { get; set; }
+        public int OverdueTasks { get; set; }
+        public int Progress { get; set; }
+    }
+
+    public class CategoryTaskRow
+    {
+        public string TaskTitle { get; set; }
+        public string ProjectName { get; set; }
+        public string? TaskCategory { get; set; }
+        public string Priority { get; set; }
+        public string Status { get; set; }
+        public DateTime DueDate { get; set; }
+        public DateTime? CompletedAt { get; set; }
+        public string AssignedTo { get; set; }
+    }
+}
 
     public class CategoryProjectSummary
     {
