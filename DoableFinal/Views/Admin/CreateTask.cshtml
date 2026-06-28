@@ -5,7 +5,16 @@
     var preselectedProjectId = ViewBag.PreselectedProjectId as int?;
     bool hasPreselectedProject = preselectedProjectId.HasValue && preselectedProjectId.Value > 0;
 }
+<style>
+    @@media (max-width: 767.98px) {
+        .form-name-category > [class*="col-"] {
+            width: 100% !important;
+        }
 
+        .form-name-category .mb-0 {
+            margin-bottom: .75rem !important;
+        }
+    }</style>
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
@@ -21,6 +30,7 @@
                     <form asp-action="CreateTask" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+                        <div class="row g-3 form-name-category">
                         @if (hasPreselectedProject)
                         {
                             <!-- Project is auto-set — hidden field, display-only label -->
@@ -56,22 +66,25 @@
                             </div>
                             <div class="col-12 col-md-4">
                                 <div class="mb-3">
-                                    <label asp-for="Category" class="form-label fw-semibold"></label>
-                                    <input asp-for="Category" class="form-control" placeholder="e.g. Bug Fix, Feature" list="taskCategoryList" />
-                                    <datalist id="taskCategoryList">
-                                        <option value="Additional Feature"></option>
-                                        <option value="Bug Fix"></option>
-                                        <option value="New Module"></option>
-                                        <option value="Maintenance"></option>
-                                        <option value="Research"></option>
-                                        <option value="Client Request"></option>
-                                        <option value="Internal"></option>
-                                    </datalist>
-                                    <span asp-validation-for="Category" class="text-danger"></span>
+                                        <label asp-for="Category" class="form-label fw-semibold">Category</label>
+                                        <select asp-for="Category" class="form-select" id="categorySelect">
+                                            <option value="">-- Select Category --</option>
+                                            <option value="Additional Feature">Additional Feature</option>
+                                            <option value="Bug Fix">Bug Fix</option>
+                                            <option value="New Module">New Module</option>
+                                            <option value="Maintenance">Maintenance</option>
+                                            <option value="Research">Research</option>
+                                            <option value="Client Request">Client Request</option>
+                                            <option value="Internal Project">Internal Project</option>
+                                            <option value="Client Onboarding">Client Onboarding</option>
+                                            <option value="Other">Other (specify)</option>
+                                        </select>
+                                        <input type="text" id="categoryCustom" name="Category" class="form-control mt-2" placeholder="Enter custom category…" maxlength="100" style="display:none;" />
+                                        <span asp-validation-for="Category" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
-
+                        </div>
                         <div class="mb-3">
                             <label asp-for="Description" class="form-label fw-semibold"></label>
                             <textarea asp-for="Description" class="form-control" rows="3"></textarea>
@@ -284,5 +297,27 @@
 
             updateDateConstraints();
         });
+
+           // Category: show custom text input when "Other" is selected
+            $('#categorySelect').on('change', function () {
+                var custom = $('#categoryCustom');
+                if ($(this).val() === 'Other') {
+                    $(this).removeAttr('name');          // don't post the select
+                    custom.attr('name', 'Category').show().focus();
+                } else {
+                    $(this).attr('name', 'Category');    // post the select value
+                    custom.removeAttr('name').hide().val('');
+                }
+            });
+
+            // On page load restore state if model was invalid and returned "Other"
+            (function () {
+                var sel = $('#categorySelect');
+                var val = sel.val();
+                if (val === 'Other' || (val === '' && '@Model?.Category' !== '' && !sel.find('option[value="@Model?.Category"]').length)) {
+                    sel.val('Other').trigger('change');
+                    $('#categoryCustom').val('@Model?.Category');
+                }
+            })();
     </script>
 }
