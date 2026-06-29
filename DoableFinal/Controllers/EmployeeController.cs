@@ -400,7 +400,7 @@ namespace DoableFinal.Controllers
         }
 
         // Update Tasks method to use TaskAssignments
-        public async Task<IActionResult> Tasks(string? q = "", string? statusFilter = "", string? fromDate = "", string? toDate = "")
+        public async Task<IActionResult> Tasks(string? q = "", string? statusFilter = "", string? categoryFilter = "", string? fromDate = "", string? toDate = "")
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -431,6 +431,14 @@ namespace DoableFinal.Controllers
             {
                 query = query.Where(t => t.Status == statusFilter);
             }
+            // Filter by project category
+            if (!string.IsNullOrEmpty(categoryFilter))
+            {
+                query = query.Where(t =>
+                    t.Project != null &&
+                    t.Project.Category != null &&
+                    t.Project.Category.ToLower().Contains(categoryFilter.ToLower()));
+            }
 
             // Date range filtering
             if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParse(fromDate, out var startDate))
@@ -449,6 +457,7 @@ namespace DoableFinal.Controllers
 
             ViewBag.SearchQuery = q;
             ViewBag.StatusFilter = statusFilter;
+            ViewBag.CategoryFilter = categoryFilter;
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
             ViewBag.AvailableStatuses = new List<string> { "Open", "In Progress", "Resolved", "Closed" };

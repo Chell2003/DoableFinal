@@ -1015,6 +1015,7 @@ namespace DoableFinal.Controllers
             string? filter = "",
             string? q = "",
             string? statusFilter = "",
+            string? categoryFilter = "",
             string? fromDate = "",
             string? toDate = "")
         {
@@ -1071,7 +1072,14 @@ namespace DoableFinal.Controllers
             {
                 query = query.Where(t => t.Status == statusFilter);
             }
-
+            // Category filter
+            if (!string.IsNullOrEmpty(categoryFilter))
+            {
+                query = query.Where(t =>
+                    t.Project != null &&
+                    t.Project.Category != null &&
+                    t.Project.Category.ToLower().Contains(categoryFilter.ToLower()));
+            }
             // Date filters
             if (!string.IsNullOrEmpty(fromDate) &&
                 DateTime.TryParse(fromDate, out var startDate))
@@ -1097,6 +1105,7 @@ namespace DoableFinal.Controllers
 
             ViewBag.SearchQuery = q;
             ViewBag.StatusFilter = statusFilter;
+            ViewBag.CategoryFilter = categoryFilter;
             ViewBag.FromDate = fromDate;
             ViewBag.ToDate = toDate;
 
@@ -1571,7 +1580,7 @@ namespace DoableFinal.Controllers
                 ClientName = project.Client != null ? ($"{project.Client.FirstName} {project.Client.LastName}") : string.Empty,
                 ProjectManagerName = project.ProjectManager != null ? ($"{project.ProjectManager.FirstName} {project.ProjectManager.LastName}") : string.Empty
             };
-
+            ViewBag.CanEditStartDate = project.Status == "Not Started";
             ViewBag.Clients = await _context.Users.Where(u => u.Role == "Client").ToListAsync();
             ViewBag.ProjectManagers = await _context.Users.Where(u => u.Role == "Project Manager").ToListAsync();
 
@@ -1596,22 +1605,32 @@ namespace DoableFinal.Controllers
                     return RedirectToAction(nameof(ProjectDetails), new { id = project.Id });
                 }
 
-                // Validate start date is not in the past
-                if (model.StartDate.Date < DateTime.Today)
+                // Validate Start Date
+                if (project.Status == "Not Started")
                 {
-                    ModelState.AddModelError("StartDate", "Start date cannot be in the past");
-                    ViewBag.Clients = await _context.Users.Where(u => u.Role == "Client").ToListAsync();
-                    ViewBag.ProjectManagers = await _context.Users.Where(u => u.Role == "Project Manager").ToListAsync();
-                    return View(model);
-                }
+                    // Only Not Started projects can change their start date
+                    if (model.StartDate.Date < DateTime.Today)
+                    {
+                        ModelState.AddModelError("StartDate", "Start date cannot be in the past.");
 
-                // If project is already started (In Progress/Completed), don't allow changing start date to future date
-                if (project.Status != "Not Started" && model.StartDate.Date > project.StartDate.Date)
+                        ViewBag.Clients = await _context.Users.Where(u => u.Role == "Client").ToListAsync();
+                        ViewBag.ProjectManagers = await _context.Users.Where(u => u.Role == "Project Manager").ToListAsync();
+
+                        return View(model);
+                    }
+                }
+                else
                 {
-                    ModelState.AddModelError("StartDate", "Cannot change start date for a project that has already started");
-                    ViewBag.Clients = await _context.Users.Where(u => u.Role == "Client").ToListAsync();
-                    ViewBag.ProjectManagers = await _context.Users.Where(u => u.Role == "Project Manager").ToListAsync();
-                    return View(model);
+                    // Once a project has started, the Start Date cannot be changed
+                    if (model.StartDate.Date != project.StartDate.Date)
+                    {
+                        ModelState.AddModelError("StartDate", "The Start Date cannot be changed once the project has started.");
+
+                        ViewBag.Clients = await _context.Users.Where(u => u.Role == "Client").ToListAsync();
+                        ViewBag.ProjectManagers = await _context.Users.Where(u => u.Role == "Project Manager").ToListAsync();
+
+                        return View(model);
+                    }
                 }
 
                 var oldStatus = project.Status;
@@ -1633,7 +1652,7 @@ namespace DoableFinal.Controllers
                 }
 
                 TempData["ProjectMessage"] = "Project updated successfully.";
-                return RedirectToAction(nameof(Projects));
+                return RedirectToAction(nameof(ProjectDetails), new { id = project.Id });
             }
 
             ViewBag.Clients = await _context.Users.Where(u => u.Role == "Client").ToListAsync();

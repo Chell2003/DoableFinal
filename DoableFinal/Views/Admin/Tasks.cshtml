@@ -4,6 +4,7 @@
     ViewData["Title"] = "Tasks";
         var query = Context.Request.Query["q"].ToString();
     var statusFilter = Context.Request.Query["statusFilter"].ToString();
+    var categoryFilter = Context.Request.Query["categoryFilter"].ToString();
     var fromDate = Context.Request.Query["fromDate"].ToString();
     var toDate = Context.Request.Query["toDate"].ToString();
 
@@ -55,7 +56,7 @@
                        value="@query" />
             </div>
 
-            <div class="col-12 col-md-3">
+           <div class="col-12 col-md-2">
                 <label class="form-label">Status</label>
 
                 <select name="statusFilter"
@@ -80,8 +81,28 @@
                     }
                 </select>
             </div>
-
             <div class="col-12 col-md-3">
+                <label class="form-label">Category</label>
+
+                <input type="text"
+                       name="categoryFilter"
+                       class="form-control"
+                       placeholder="e.g. Bug Fix"
+                       value="@categoryFilter"
+                       list="catOptions"/>
+
+                <datalist id="catOptions">
+                    <option value="Additional Feature"></option>
+                    <option value="Bug Fix"></option>
+                    <option value="New Module"></option>
+                    <option value="Maintenance"></option>
+                    <option value="Research"></option>
+                    <option value="Client Request"></option>
+                    <option value="Internal Project"></option>
+                </datalist>
+            </div>
+
+            <div class="col-12 col-md-2">
                 <label class="form-label">&nbsp;</label>
 
                 <button type="submit"

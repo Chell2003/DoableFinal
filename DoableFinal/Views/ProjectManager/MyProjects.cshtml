@@ -45,12 +45,12 @@
         </div>
         <div class="card-body">
             <form method="get" class="row g-3" role="search" aria-label="Project search and filter">
-                <div class="col-12 col-md-6">
+                <div class="col-md-5">
                     <label for="searchInput" class="form-label">Search</label>
                     <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by project name or client..." value="@query" aria-label="Search projects" />
                 </div>
 
-                <div class="col-12 col-md-3">
+                <div class="col-md-2">
                     <label for="statusFilter" class="form-label">Status</label>
                     <select id="statusFilter" name="statusFilter" class="form-select">
                         <option value="">All statuses</option>
@@ -61,7 +61,7 @@
                     </select>
                 </div>
 
-                <div class="col-12 col-md-3">
+                <div class="col-md-3">
                     <label for="categoryFilter" class="form-label">Category</label>
                     <input type="text" id="categoryFilter" name="categoryFilter" class="form-control"
                            placeholder="e.g. Bug Fix, New Module" value="@categoryFilter" list="catOptions" />
@@ -76,13 +76,12 @@
                     </datalist>
                 </div>
 
-                <div class="col-12 col-md-12">
-                    <button id="applyBtn" class="btn btn-primary" type="submit">
+                <div class="col-md-2">
+                     <label for="applyBtn" class="form-label">&nbsp;</label>
+                    <button id="applyBtn" class="btn btn-primary w-100" type="submit">
                         <i class="bi bi-search"></i> Apply Filters
                     </button>
-                    <a href="@Url.Action("MyProjects")" class="btn btn-outline-secondary ms-2">
-                        <i class="bi bi-x-circle"></i> Reset
-                    </a>
+                  
                 </div>
 
                 <div class="col-12">

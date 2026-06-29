@@ -5,6 +5,7 @@
     Layout = "_Layout";
     var query = Context.Request.Query["q"].ToString();
     var statusFilter = Context.Request.Query["statusFilter"].ToString();
+    var categoryFilter = Context.Request.Query["categoryFilter"].ToString();
     var fromDate = Context.Request.Query["fromDate"].ToString();
     var toDate = Context.Request.Query["toDate"].ToString();
 }
@@ -30,7 +31,7 @@
                                 <input type="search" id="searchInput" name="q" class="form-control" placeholder="Search by title or project..." value="@query" aria-label="Search tasks" />
                             </div>
 
-                            <div class="col-12 col-md-3">
+                        <div class="col-12 col-md-2">
                                 <label for="statusFilter" class="form-label">Status</label>
                                 <select id="statusFilter" name="statusFilter" class="form-select">
                                     <option value="">All statuses</option>
@@ -47,8 +48,27 @@
                                     }
                                 </select>
                             </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label">Category</label>
 
-                            <div class="col-12 col-md-3">
+                            <input type="text"
+                                   name="categoryFilter"
+                                   class="form-control"
+                                   placeholder="e.g. Bug Fix"
+                                   value="@categoryFilter"
+                                   list="catOptions" />
+
+                            <datalist id="catOptions">
+                                <option value="Additional Feature"></option>
+                                <option value="Bug Fix"></option>
+                                <option value="New Module"></option>
+                                <option value="Maintenance"></option>
+                                <option value="Research"></option>
+                                <option value="Client Request"></option>
+                                <option value="Internal Project"></option>
+                            </datalist>
+                        </div>
+                        <div class="col-12 col-md-2">
                                 <label for="applyBtn" class="form-label">&nbsp;</label>
                                 <button id="applyBtn" class="btn btn-primary w-100" type="submit">
                                     <i class="bi bi-search"></i> Apply Filters
